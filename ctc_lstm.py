@@ -117,9 +117,10 @@ def main():
             # progress report
             progress_loss = curr_loss/curr_samples
             progress_ler = curr_ler/curr_labels
-            print('progress: (%d/%d) loss=%.4f ler=%.4f' % bt+1,
-                training_generator.__len__(), progress_loss, progress_ler)
-
+            print('\rprogress: (%d/%d) loss=%.4f ler=%.4f' % bt+1,
+                training_generator.__len__(), progress_loss, progress_ler,
+                end='')
+        print('\n',end='')
         curr_loss /= curr_samples
         curr_ler = curr_ler*100.0/curr_labels
         curr_val_loss = 0.0
@@ -169,6 +170,7 @@ def main():
         prev_val_ler = curr_val_ler
 
     # evaluation
+    '''
     if args.eval is not None:
 
         eval_in = Input(shape=(None, args.feat_dim))
@@ -186,3 +188,4 @@ def main():
                 data, keys = eval_generator.__getitem__(smp)
                 predict = eval_model.predict_on_batch(x=data)
                 kaldi_io.write(keys[0], predict)
+    '''

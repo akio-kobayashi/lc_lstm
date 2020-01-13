@@ -10,7 +10,7 @@ import tensorflow as tf
 
 class DataGenerator(Sequence):
 
-    def __init__(self, file, alphabets, batch_size=64, feat_dim=40, n_labels=1024, shuffle=True):
+    def __init__(self, file, batch_size=64, feat_dim=40, n_labels=1024, shuffle=True):
 
         self.file=file
         self.batch_size=batch_size
@@ -26,12 +26,6 @@ class DataGenerator(Sequence):
 
         if self.shuffle:
             random.shuffle(self.keys)
-
-        n=0
-        with open(alphabets, 'r') as f:
-            sym=f.readline().strip()
-            self.sym_map[sym] = n
-            n+=1
 
     def __len__(self):
         return int(np.ceil(self.n_samples)/self.batch_size)
@@ -51,7 +45,7 @@ class DataGenerator(Sequence):
             return [input_sequences, label_sequences, inputs_lengths, labels_lengths]
         else:
             return [input_sequences, label_sequences, inputs_lengths, labels_lengths], list_keys_temp
- 
+
     def on_epoch_end(self):
         if self.shuffle == True:
             random.shuffle(self.keys)
@@ -67,9 +61,9 @@ class DataGenerator(Sequence):
               max_input_len = mat.shape[0]
             in_seq.append(mat.shape[0])
 
-            label = self.h5fd[key+'/label'][()]
-            ids = [self.sym_map[c] for c in [label.split('')]:
-            labels.append(ids)
+            # label is a list of integers starting from 0
+            label = self.h5fd[key+'/labels'][()]
+            labels.append(label)
             if len(ids) > max_output_len:
               max_output_len = len(ids)
             lb_seq.append(len(ids))
