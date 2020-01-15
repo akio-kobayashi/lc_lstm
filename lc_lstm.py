@@ -184,7 +184,7 @@ def main():
         if prev_val_acc > curr_val_acc:
             patience += 1
             if patience >= max_patience:
-                prev_lr = k_get_value(model$optimizer$lr)
+                prev_lr = K.get_value(model.optimizer.lr)
                 curr_lr = prev_lr * args.factor
                 if curr_lr < args.min_lr:
                     curr_lr = args.min_lr
