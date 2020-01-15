@@ -158,7 +158,7 @@ def main():
                     curr_lr = args.min_lr
                 else:
                     print("lerning rate chaged %.4f to %.4f" % prev_lr, curr_lr)
-                    k_set_value(model$optimizer$lr = curr_lr)
+                    K.set_value(model.optimizer.lr,curr_lr)
                 patience=0
         else:
             patience=0

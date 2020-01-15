@@ -89,7 +89,7 @@ def main():
     parser.add_argument('--lstm-depth', type=int ,default=2,
                         help='number of LSTM layers')
     parser.add_argument('--factor', type=float, default=0.5,help='lerarning rate decaying factor')
-    parser.add_argument('--min-lr', type=float default=1.0e-6, help='minimum learning rate')
+    parser.add_argument('--min-lr', type=float, default=1.0e-6, help='minimum learning rate')
     parser.add_argument('--process-frames', type=int, default=10, help='process frames')
     parser.add_argument('--extra-frames', type=int, default=10, help='extra frames')
     args = parser.parse_args()
@@ -190,7 +190,7 @@ def main():
                     curr_lr = args.min_lr
                 else:
                     print("lerning rate chaged %.4f to %.4f" % prev_lr, curr_lr)
-                    k_set_value(model$optimizer$lr = curr_lr)
+                    K.set_value(model.optimizer.lr,curr_lr)
                 patience=0
         else:
             patience=0
@@ -219,7 +219,7 @@ def main():
             args.process_frames, args.extra_frames)
         path=os.path.join(args.snapshot,args.eval_out+'.ark')
 
-        with kaldi_io.File(path, 'w') as f:
+        with h5py.File(path, 'w') as f:
             for smp in range(eval_generator.__len()__):
                 x, mask, y, keys = eval_generator.__getitem__(smp)
                 model.reset_states()
@@ -229,6 +229,10 @@ def main():
                     y_in = np.squeeze(y[b,:,:,:])
                     states = get_states(model)
                     predict = eval_model.predict_on_batch(x=[x_in,mask_in])
+                    set_states(eval_model, states)
+                    #
+                    x_part = x_in[:, 0:args.process_frames, :]
+                    mask_part = mask_in[:, 0:args.process_frames, :]
 
-                kaldi_io.write(keys[0], predict)
+                f.create_dataset(keys[0], predict)
     '''
