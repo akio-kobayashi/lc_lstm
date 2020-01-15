@@ -108,6 +108,7 @@ def main():
         curr_loss = 0.0
         curr_samples=0
         curr_labels=0
+        curr_ler=0.0
         print('progress:')
         for bt in range(training_generator.__len__()):
             data = training_generator.__getitem__(bt)
