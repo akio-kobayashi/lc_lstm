@@ -61,7 +61,7 @@ class DataGenerator(Sequence):
         labels=[]
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
-            if mat.shape[0] > max_len:
+            if mat.shape[0] > max_input_len:
               max_input_len = mat.shape[0]
             in_seq.append(mat.shape[0])
 
