@@ -1,5 +1,8 @@
 #!/bin/sh
 
+export CUDA_VISIBLE_DEVICES=0
+cd ~/lc_lstm
+
 # librispeech
 train=./train_clean_100.h5
 valid=./dev_clean.h5
