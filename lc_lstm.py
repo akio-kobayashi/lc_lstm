@@ -38,7 +38,7 @@ def set_states(model, states):
 
 def build_model(inputs, masks, units, n_labels, feat_dim, init_lr):
 
-    outputs = Masking(inputs, mask_value=0.0)(inputs)
+    outputs = Masking(mask_value=0.0)(inputs)
     for n in range (depth):
         # forward, keep current states
         x=LSTM(units, kernel_initializer='glorot_uniform',

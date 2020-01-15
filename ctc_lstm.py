@@ -30,7 +30,7 @@ max_label_len=1024
 
 def build_model(inputs, units, n_labels, feat_dim, init_lr):
 
-    outputs = Masking(inputs, mask_value=0.0)(inputs)
+    outputs = Masking(mask_value=0.0)(inputs)
     for n in range (depth):
         outputs=Bidirectional(LSTM(units, kernel_initializer='glorot_uniform',
                                        return_sequences=True,
