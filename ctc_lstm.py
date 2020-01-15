@@ -35,6 +35,8 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
         outputs=Bidirectional(LSTM(units, kernel_initializer='glorot_uniform',
                                        return_sequences=True,
                                        unit_forget_bias=True,
+                                       kernel_constraint=max_norm(5),
+                                       recurrent_constraint=max_norm(5),
                                        name='lstm_'+str(n)))(outputs)
 
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
