@@ -142,7 +142,7 @@ def main():
         curr_val_labels = 0
 
         #for bt in range(valid_generator.__len__()):
-        for bt in range(10):
+        for bt in range(2):
             data = valid_generator.__getitem__(bt)
             # eval_on_batch will return sequence error rate (ser) and label error rate (ler)
             # the function returns ['loss', 'ler', 'ser']
@@ -154,7 +154,9 @@ def main():
             curr_val_samples += samples
             curr_val_labels += np.sum(data[3])
             curr_val_ler += np.sum(np.array(ler))
-
+            print(type(samples))
+            print(type(curr_val_loss))
+            print(type(curr_val_ler))
         print('Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler),file=sys.stderr)
 
         curr_val_loss /= curr_val_samples
