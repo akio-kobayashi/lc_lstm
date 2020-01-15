@@ -36,7 +36,7 @@ def set_states(model, states):
     for (d,_), s in zip(model.state_updates, states):
         K.set_value(d, s)
 
-def build_model(inputs, masks, units, n_labels, feat_dim, init_lr):
+def build_model(inputs, masks, units, depth, n_labels, feat_dim, init_lr):
 
     outputs = Masking(mask_value=0.0)(inputs)
     for n in range (depth):
@@ -98,7 +98,7 @@ def main():
 
     inputs = Input(batch_shape=(args.batch_size, None, args.feat_dim))
     masks = Input(batch_shape=(args.batch_size, None, args.feat_dim))
-    model = build_model(inputs, masks, args.units, args.n_labels, args.feat_dim, args.learn_rate)
+    model = build_model(inputs, masks, args.units, args.lstm_depth, args.n_labels, args.feat_dim, args.learn_rate)
 
     training_generator = FixedDataGenerator(
         args.data, args.batch_size, args.feat_dim, args.n_labels,

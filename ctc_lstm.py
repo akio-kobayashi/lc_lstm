@@ -28,7 +28,7 @@ keras.backend.set_session(sess)
 
 max_label_len=1024
 
-def build_model(inputs, units, n_labels, feat_dim, init_lr):
+def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
 
     outputs = Masking(mask_value=0.0)(inputs)
     for n in range (depth):
@@ -80,7 +80,7 @@ def main():
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
-    model = build_model(inputs, args.units, args.n_labels, args.feat_dim, args.learn_rate)
+    model = build_model(inputs, args.units, args.lstm_depth, args.n_labels, args.feat_dim, args.learn_rate)
     print("prepare model...")
 
     training_generator = DataGenerator(args.data, args.key_file,
