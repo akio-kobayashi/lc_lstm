@@ -53,7 +53,6 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
 def main():
 
     parser = argparse.ArgumentParser()
-    #parser.add_argument('--symobls', type=str, required=True, help='symbols list')
     parser.add_argument('--data', type=str, required=True, help='training data')
     parser.add_argument('--key-file', type=str, help='keys')
     parser.add_argument('--valid', type=str, required=True, help='validation data')
@@ -111,7 +110,7 @@ def main():
         curr_samples=0
         curr_labels=0
         curr_ler=0.0
-        print('progress:')
+        #print('progress:')
         for bt in range(training_generator.__len__()):
             data = training_generator.__getitem__(bt)
             # data = [input_sequences, label_sequences, inputs_lengths, labels_length]
@@ -129,9 +128,10 @@ def main():
             # progress report
             progress_loss = curr_loss/curr_samples
             progress_ler = curr_ler*100.0/curr_labels
-            print('\rprogress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
+            #print('\rprogress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
+            print('progress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
                 training_generator.__len__(), progress_loss, progress_ler),
-                end='')
+                end='\n')
         print('\n',end='')
         curr_loss /= curr_samples
         curr_ler = curr_ler*100.0/curr_labels
