@@ -36,8 +36,8 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
         outputs=Bidirectional(LSTM(units, kernel_initializer='glorot_uniform',
                                        return_sequences=True,
                                        unit_forget_bias=True,
-                                       kernel_constraint=max_norm(5),
-                                       recurrent_constraint=max_norm(5),
+                                       kernel_constraint=max_norm(2),
+                                       recurrent_constraint=max_norm(2),
                                        dropout=0.1,
                                        recurrent_dropout=0.1,
                                        name='lstm_'+str(n)))(outputs)
@@ -130,9 +130,9 @@ def main():
             progress_ler = curr_ler*100.0/curr_labels
             #print('\rprogress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
             print('progress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
-                training_generator.__len__(), progress_loss, progress_ler))
+                training_generator.__len__(), progress_loss, progress_ler),file=sys.stderr)
         #        end='')
-        print('\n',end='')
+        print('\n',end='',file=sys.stderr)
         curr_loss /= curr_samples
         curr_ler = curr_ler*100.0/curr_labels
         curr_val_loss = 0.0
@@ -153,7 +153,7 @@ def main():
             curr_val_labels += np.sum(data[3])
             curr_val_ler += np.sum(np.array(ler))
 
-        print('Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler))
+        print('Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler),file=sys.stderr)
 
         curr_val_loss /= curr_val_samples
         curr_val_ler = curr_val_ler*100.0/curr_val_labels
@@ -165,13 +165,13 @@ def main():
                 if curr_lr < args.min_lr:
                     curr_lr = args.min_lr
                 else:
-                    print("lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr))
+                    print("lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr), file=sys.stderr)
                     K.set_value(model.optimizer.lr,curr_lr)
                 patience=0
         else:
             patience=0
 
-        print('Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler))
+        print('Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler), file=sys.stderr)
 
         # save best model in .h5
         if min_val_ler > curr_val_ler:
