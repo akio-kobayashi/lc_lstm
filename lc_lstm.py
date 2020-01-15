@@ -201,7 +201,7 @@ def main():
         if min_val_acc < curr_val_acc:
             min_val_acc = curr_val_acc
             path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
-            # model.save()
+            model.save_weights(path)
 
         prev_val_acc = curr_val_acc
 
@@ -212,7 +212,7 @@ def main():
         eval_in = Input(batch_shape=(1, None, args.feat_dim))
         eval_model = build_model(eval_in, args.units, args.n_labels, args.feat_dim, args.learn_rate)
         path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
-        eval_model.load(path)
+        eval_model.load_weights(path, by_name=True)
 
         eval_generator = DataGenerator(
             args.eval, 1, args.feat_dim, args.n_labels,

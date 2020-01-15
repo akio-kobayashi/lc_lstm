@@ -75,7 +75,7 @@ def main():
     parser.add_argument('--lstm-depth', type=int ,default=2,
                         help='number of LSTM layers')
     parser.add_argument('--factor', type=float, default=0.5,help='lerarning rate decaying factor')
-    parser.add_argument('--min-lr', type=float default=1.0e-6, help='minimum learning rate')
+    parser.add_argument('--min-lr', type=float, default=1.0e-6, help='minimum learning rate')
 
     args = parser.parse_args()
 
@@ -180,7 +180,7 @@ def main():
         eval_in = Input(shape=(None, args.feat_dim))
         eval_model = build_model(eval_in, args.units, args.n_labels, args.feat_dim, args.learn_rate)
         path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
-        eval_model.load(path)
+        eval_model.load_weights(path, by_name=True)
 
         eval_generator = DataGenerator(args.eval, None, 1,
                             args.feat_dim, args.n_labels)
@@ -191,5 +191,5 @@ def main():
                 data, keys = eval_generator.__getitem__(smp, return_keys=True)
                 predict = eval_model.predict_on_batch(x=data)
                 rolled=np.roll(predict, 1, axis=2) # shift for <blk>
-                f.create_dataset(keys[0], data=predict)
+                f.create_dataset(keys[0], data=rolled)
     '''
