@@ -119,7 +119,7 @@ def main():
             samples = data[0].shape[0]
             curr_loss += loss * samples
             curr_samples += samples
-            [loss, ler, ser] = model.test_on_batch(x=data, y=data[1])
+            [loss, ler, ser] = model.test_on_batch(x=data)
             curr_labels += np.sum(data[3])
             curr_ler += ler
 
@@ -142,7 +142,7 @@ def main():
             # eval_on_batch will return sequence error rate (ser) and label error rate (ler)
             # the function returns ['loss', 'ler', 'ser']
             # 'ler' should not be normalized by true lengths
-            [loss, ler, ser] = model.test_on_batch(x=data, y=data[1])
+            [loss, ler, ser] = model.test_on_batch(x=data)
             # for micro-mean
             samples = data[0].shape[0]
             curr_val_loss += loss * samples
