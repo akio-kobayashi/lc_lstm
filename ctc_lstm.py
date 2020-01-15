@@ -69,8 +69,8 @@ def main():
     parser.add_argument('--eval-output-prefix', type=str, default='eval_out')
     parser.add_argument('--learn-rate', type=float, default=1.0e-3,
                         help='initial learn rate')
-    parser.add_argument('--log-dir', type=str, default='./',
-                        help='tensorboard log directory')
+    #parser.add_argument('--log-dir', type=str, default='./',
+    #                    help='tensorboard log directory')
     parser.add_argument('--units', type=int ,default=16, help='number of LSTM cells')
     parser.add_argument('--lstm-depth', type=int ,default=2,
                         help='number of LSTM layers')
@@ -97,7 +97,7 @@ def main():
     #model_cp = ModelCheckpoint(cp_path, monitor='val_categorical_accuracy',
     #                           save_best_only=True,
     #                           save_weights_only=True, verbose=1)
-    tensorboard = TensorBoard(log_dir=args.log_dir)
+    #tensorboard = TensorBoard(log_dir=args.log_dir)
 
     prev_val_ler = 1.0e10
     patience = 0
