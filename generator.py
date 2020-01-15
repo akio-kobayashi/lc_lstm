@@ -24,7 +24,7 @@ class DataGenerator(Sequence):
         if key_file is not None:
             with open(key_file, 'r') as f:
                 for line in f:
-                    self.keys.append(f.strip())
+                    self.keys.append(line.strip())
         else:
             for key in self.h5fd.keys():
                 self.keys.append(key)
