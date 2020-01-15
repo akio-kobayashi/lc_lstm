@@ -81,11 +81,14 @@ def main():
 
     inputs = Input(shape=(None, args.feat_dim))
     model = build_model(inputs, args.units, args.n_labels, args.feat_dim, args.learn_rate)
+    print("prepare model...")
 
     training_generator = DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels)
     valid_generator = DataGenerator(args.valid, None,
                         args.batch_size, args.feat_dim, args.n_labels)
+    print("prepare generators...")
+
     # callbacks
     #reduce_lr = ReduceLROnPlateau(monitor='val_ler',
     #                              factor=0.5, patience=5,
@@ -100,6 +103,7 @@ def main():
     patience = 0
     min_val_ler = 1.0e10
 
+    print("start training...")
     for ep in range(args.epochs):
         curr_loss = 0.0
         curr_samples=0
