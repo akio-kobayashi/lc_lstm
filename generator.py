@@ -76,7 +76,7 @@ class DataGenerator(Sequence):
 
         input_sequences = np.zeros((self.batch_size, max_input_len, self.feat_dim))
         for i, key in enumerate(list_keys_temp):
-            mat = self.h5fd([key])[()]
+            mat = self.h5fd[key+'/data'][()]
             input_sequences[i, 0:mat.shape[0], :] = np.expand_dims(mat, axis=0)
 
         label_sequences=pad_sequences(lb_seq, maxlen=max_output_len, padding='post', value=0)
