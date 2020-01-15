@@ -125,8 +125,8 @@ def main():
             progress_loss = curr_loss/curr_samples
             progress_ler = curr_ler/curr_labels
             print('\rprogress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
-                training_generator.__len__(), progress_loss,1))# progress_ler),
-                #end='')
+                training_generator.__len__(), progress_loss, progress_ler[0]),
+                end='')
         print('\n',end='')
         curr_loss /= curr_samples
         curr_ler = curr_ler*100.0/curr_labels
@@ -148,7 +148,7 @@ def main():
             curr_val_labels += np.sum(data[3])
             curr_val_ler += ler
 
-        print('Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler))
+        print('Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler[0]))
 
         curr_val_loss /= curr_val_samples
         curr_val_ler = curr_val_ler*100.0/curr_val_labels
@@ -166,7 +166,7 @@ def main():
         else:
             patience=0
 
-        print('Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler))
+        print('Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler[0]))
 
         # save best model in .h5
         if min_val_ler > curr_val_ler:
