@@ -34,6 +34,7 @@ def build_model(inputs, units, n_labels, feat_dim, init_lr):
     for n in range (depth):
         outputs=Bidirectional(LSTM(units, kernel_initializer='glorot_uniform',
                                        return_sequences=True,
+                                       unit_forget_bias=True,
                                        name='lstm_'+str(n)))(outputs)
 
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
@@ -47,11 +48,16 @@ def build_model(inputs, units, n_labels, feat_dim, init_lr):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--symobls', type=str, required=True, help='symbols list')
+    #parser.add_argument('--symobls', type=str, required=True, help='symbols list')
     parser.add_argument('--data', type=str, required=True, help='training data')
+    parser.add_argument('--key-file', type=str, help='keys')
     parser.add_argument('--valid', type=str, required=True, help='validation data')
     parser.add_argument('--eval', type=str, help='evaluation data')
     parser.add_argument('--feat-dim', default=40, type=int, help='feats dim')
+    '''
+    n_labels = 32 librispeech
+    n_labels = 49 tedlium_v1
+    '''
     parser.add_argument('--n-labels', default=1024, type=int, required=True,
                         help='number of output labels')
     parser.add_argument('--batch-size', default=64, type=int, help='mini-batch size')
@@ -76,12 +82,10 @@ def main():
     inputs = Input(shape=(None, args.feat_dim))
     model = build_model(inputs, args.units, args.n_labels, args.feat_dim, args.learn_rate)
 
-    training_generator = DataGenerator(args.data, args.symbols,
-                                      dim=(args.seq_dim, args.feat_dim),
-                                      batch_size=args.batch_size)
-    valid_generator = DataGenerator(args.valid,args.symbols,
-                                    dim=(args.seq_dim, args.feat_dim),
-                                    batch_size=args.batch_size)
+    training_generator = DataGenerator(args.data, args.key_file,
+                        args.batch_size, args.feat_dim, args.n_labels)
+    valid_generator = DataGenerator(args.valid, None,
+                        args.batch_size, args.feat_dim, args.n_labels)
     # callbacks
     #reduce_lr = ReduceLROnPlateau(monitor='val_ler',
     #                              factor=0.5, patience=5,
@@ -144,7 +148,7 @@ def main():
         print('Epoch %d (train) loss=%.4f ler=%.4f' % ep+1, curr_loss, curr_ler)
 
         curr_val_loss /= curr_val_samples
-        curr_val_ler = curr_vale_ler*100.0/curr_val_labels
+        curr_val_ler = curr_val_ler*100.0/curr_val_labels
         if prev_val_ler < curr_val_ler:
             patience += 1
             if patience >= max_patience:
@@ -178,14 +182,14 @@ def main():
         path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
         eval_model.load(path)
 
-        eval_generator = DataGenerator(args.eval,args.symbols,
-                                    dim=(args.seq_dim, args.feat_dim),
-                                    batch_size=1)
-        path=os.path.join(args.snapshot,args.eval_out+'.ark')
+        eval_generator = DataGenerator(args.eval, None, 1,
+                            args.feat_dim, args.n_labels)
+        path=os.path.join(args.snapshot,args.eval_out+'.h5')
 
-        with kaldi_io.File(path, 'w') as f:
+        with h5py.File(path, 'w') as f:
             for smp in range(eval_generator.__len()__):
-                data, keys = eval_generator.__getitem__(smp)
+                data, keys = eval_generator.__getitem__(smp, return_keys=True)
                 predict = eval_model.predict_on_batch(x=data)
-                kaldi_io.write(keys[0], predict)
+                rolled=np.roll(predict, 1, axis=2) # shift for <blk>
+                f.create_dataset(keys[0], data=predict)
     '''

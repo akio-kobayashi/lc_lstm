@@ -1,3 +1,4 @@
+import numpy as np
 
 def expected_num_blocks(mat, procs, extras):
     length = mat.shape[0]
@@ -14,15 +15,15 @@ def expected_num_blocks(mat, procs, extras):
     frames = blocks * procs + extras
     return [blocks, frames]
 
-def split_utt(mat, procs, extras, n_blocks, feat_dim):
+def split_utt(mat, procs, extras, n_blocks, feat_dim, max_blocks):
     '''
     return
-        [ matrix w/ (shape=[n_blocks, time, feat]), input_length]
+        [ matrix w/ shape=[max_blocks, procs+extras, feat_dim],
+            input_mask w/ shape=[max_blocks, procs+extras, feat_dim] ]
     '''
     length = mat.shape[0]
-    block_length=[]
-
-    src=np.array(shape=(n_blocks, procs+extras, feat_dim))
+    src=np.zeros(shape=(max_blocks, procs+extras, feat_dim))
+    mask=np.zeros(shape=(max_blocks, proc+extras, feat_dim))
     start = 0
     for b in range(n_blocks):
         end = np.min(length, start+procs+extras)
@@ -31,33 +32,27 @@ def split_utt(mat, procs, extras, n_blocks, feat_dim):
         else:
             frames = procs
             # or procs+extras in case all input-farmes are used
-        block_length.append(frames)
-        src[b, frames, :] = np.expand_dims(mat[start:end, :], axis=0)
+        mask[b, 0:frames, :] = 1.0
+        src[b, 0:frames, :] = np.expand_dims(mat[start:end, :], axis=0)
         start += procs
-    input_length = np.array(block_length)
 
-    return [src, input_length]
+    return [src, mask]
 
-def split_label(label, procs, extras, n_blocks):
+def split_label(label, procs, extras, n_blocks, n_classes, max_blocks):
     '''
-    return [ matrix w/ (block_size, max_frames), label_length ]
+    return matrix w/ shape=[block_size, procs+extras, n_classes]
     '''
-    block_list=[]
     length = len(label)
+    src=np.zeros(shape=(max_blocks, proc+extras, n_classes))
     start = 0
-    max_frames=0
     for b in range(n_blocks):
         end = np.min(length, start+procs+extras)
         if length < start+procs+extras:
             frames = length
         else:
-            frames = procs
-        if frames > max_frames:
-            max_frames = frames
-        block_length.append(frames)
-        lst = label[start:end]
-        block_list.append(lst)
-    blocks = pad_sequences(block_list, maxlen=max_frames, padding='post', value=0.0)
-    label_length = np.array(block_list)
+            frames = procs+extras
+        labels = keras.utils.to_categorical(np.array(label[start:end]), num_classes=n_classes)
+        src[b, 0:frames:, :] = np.expand_dims(labels, axis=0)
+        start += procs
 
-    return [blocks, label_length]
+    return return src;

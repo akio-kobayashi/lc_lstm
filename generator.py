@@ -10,7 +10,7 @@ import tensorflow as tf
 
 class DataGenerator(Sequence):
 
-    def __init__(self, file, batch_size=64, feat_dim=40, n_labels=1024, shuffle=True):
+    def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024, shuffle=False):
 
         self.file=file
         self.batch_size=batch_size
@@ -21,8 +21,13 @@ class DataGenerator(Sequence):
 
         self.h5fd = h5py.File(self.file, 'r')
         self.n_samples = len(self.h5fd.keys())
-        for key in self.h5fd.keys():
-            self.keys.append(key)
+        if key_file is not None:
+            with open(key_file, 'r') as f:
+                for line in f:
+                    self.keys.append(f.strip())
+        else:
+            for key in self.h5fd.keys():
+                self.keys.append(key)
 
         if self.shuffle:
             random.shuffle(self.keys)
