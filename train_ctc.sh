@@ -12,7 +12,7 @@ units=320
 lstm_depth=4
 
 #training
-batch_size=16
+batch_size=64
 epochs=50
 learn_rate=1.0e-4
 factor=0.9
