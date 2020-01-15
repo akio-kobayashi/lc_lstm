@@ -19,11 +19,11 @@ os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
 random.seed(1024)
 
-config = tf.ConfigProto(
-    gpu_options=tf.GPUOptions(allow_growth = True),
+config = tf.compat.v1.ConfigProto(
+    gpu_options=tf.compat.v1.GPUOptions(allow_growth = True),
     intra_op_parallelism_threads=1,
     inter_op_parallelism_threads=1)
-sess = tf.Session(config=config)
+sess = tf.compat.v1.Session(config=config)
 keras.backend.set_session(sess)
 
 max_label_len=1024
