@@ -69,9 +69,9 @@ class DataGenerator(Sequence):
             # label is a list of integers starting from 0
             label = self.h5fd[key+'/labels'][()]
             labels.append(label)
-            if len(ids) > max_output_len:
-              max_output_len = len(ids)
-            lb_seq.append(len(ids))
+            if len(label) > max_output_len:
+              max_output_len = len(label)
+            lb_seq.append(len(label))
 
         input_sequences = np.zeros((self.batch_size, max_input_len, self.feat_dim))
         for i, key in enumerate(list_keys_temp):
