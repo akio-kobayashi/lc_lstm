@@ -125,8 +125,8 @@ def main():
             progress_loss = curr_loss/curr_samples
             progress_ler = curr_ler/curr_labels
             print('\rprogress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
-                training_generator.__len__(), progress_loss,1)# progress_ler),
-                end='')
+                training_generator.__len__(), progress_loss,1))# progress_ler),
+                #end='')
         print('\n',end='')
         curr_loss /= curr_samples
         curr_ler = curr_ler*100.0/curr_labels
