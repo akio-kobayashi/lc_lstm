@@ -6,6 +6,7 @@ import copy
 from keras import backend as K
 from keras.utils import Sequence
 import keras.utils
+from keras.preprocessing import sequence
 import tensorflow as tf
 
 class DataGenerator(Sequence):
