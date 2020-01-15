@@ -40,7 +40,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
 
-    model=CTCModel([inputs], [outputs])
+    model=CTCModel.CTCModel([inputs], [outputs])
     model.compile(keras.optimizers.Adam(lr=init_lr))
 
     return model
