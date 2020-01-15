@@ -111,7 +111,8 @@ def main():
         curr_labels=0
         curr_ler=0.0
         #print('progress:')
-        for bt in range(training_generator.__len__()):
+        #for bt in range(training_generator.__len__()):
+        for bt in range(10):
             data = training_generator.__getitem__(bt)
             # data = [input_sequences, label_sequences, inputs_lengths, labels_length]
             # y (true labels) is set to None, because not used in tensorflow CTC training.
@@ -140,7 +141,8 @@ def main():
         curr_val_samples = 0
         curr_val_labels = 0
 
-        for bt in range(valid_generator.__len__()):
+        #for bt in range(valid_generator.__len__()):
+        for bt in range(10):
             data = valid_generator.__getitem__(bt)
             # eval_on_batch will return sequence error rate (ser) and label error rate (ler)
             # the function returns ['loss', 'ler', 'ser']
