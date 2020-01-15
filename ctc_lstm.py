@@ -113,7 +113,6 @@ def main():
             # y (true labels) is set to None, because not used in tensorflow CTC training.
             # 'train_on_batch' will return CTC-loss value
             loss = model.train_on_batch(x=data,y=data[1])
-            print(len(loss))
             # for micro-mean
             samples = data[0].shape[0]
             curr_loss += loss * samples
@@ -126,7 +125,7 @@ def main():
             progress_loss = curr_loss/curr_samples
             progress_ler = curr_ler/curr_labels
             print('\rprogress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
-                training_generator.__len__(), progress_loss, progress_ler),
+                training_generator.__len__(), progress_loss,1)# progress_ler),
                 end='')
         print('\n',end='')
         curr_loss /= curr_samples
