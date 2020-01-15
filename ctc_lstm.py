@@ -81,13 +81,11 @@ def main():
 
     inputs = Input(shape=(None, args.feat_dim))
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels, args.feat_dim, args.learn_rate)
-    print("prepare model...")
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels)
     valid_generator = generator.DataGenerator(args.valid, None,
                         args.batch_size, args.feat_dim, args.n_labels)
-    print("prepare generators...")
 
     # callbacks
     #reduce_lr = ReduceLROnPlateau(monitor='val_ler',
@@ -103,7 +101,6 @@ def main():
     patience = 0
     min_val_ler = 1.0e10
 
-    print("start training...")
     for ep in range(args.epochs):
         curr_loss = 0.0
         curr_samples=0
@@ -127,8 +124,8 @@ def main():
             # progress report
             progress_loss = curr_loss/curr_samples
             progress_ler = curr_ler/curr_labels
-            print('\rprogress: (%d/%d) loss=%.4f ler=%.4f' % bt+1,
-                training_generator.__len__(), progress_loss, progress_ler,
+            print('\rprogress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
+                training_generator.__len__(), progress_loss, progress_ler),
                 end='')
         print('\n',end='')
         curr_loss /= curr_samples
@@ -151,7 +148,7 @@ def main():
             curr_val_labels += np.sum(data[3])
             curr_val_ler += ler
 
-        print('Epoch %d (train) loss=%.4f ler=%.4f' % ep+1, curr_loss, curr_ler)
+        print('Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler))
 
         curr_val_loss /= curr_val_samples
         curr_val_ler = curr_val_ler*100.0/curr_val_labels
@@ -163,13 +160,13 @@ def main():
                 if curr_lr < args.min_lr:
                     curr_lr = args.min_lr
                 else:
-                    print("lerning rate chaged %.4f to %.4f" % prev_lr, curr_lr)
+                    print("lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr))
                     K.set_value(model.optimizer.lr,curr_lr)
                 patience=0
         else:
             patience=0
 
-        print('Epoch %d (valid) loss=%.4f ler=%.4f' % ep+1, curr_val_loss, curr_val_ler)
+        print('Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler))
 
         # save best model in .h5
         if min_val_ler > curr_val_ler:
