@@ -83,9 +83,9 @@ def main():
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels, args.feat_dim, args.learn_rate)
     print("prepare model...")
 
-    training_generator = DataGenerator(args.data, args.key_file,
+    training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels)
-    valid_generator = DataGenerator(args.valid, None,
+    valid_generator = generator.DataGenerator(args.valid, None,
                         args.batch_size, args.feat_dim, args.n_labels)
     print("prepare generators...")
 
