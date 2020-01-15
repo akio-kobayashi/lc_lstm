@@ -81,7 +81,7 @@ class DataGenerator(Sequence):
             input_sequences[i, 0:mat.shape[0], :] = np.expand_dims(mat, axis=0)
 
         label_sequences=sequence.pad_sequences(labels, maxlen=max_output_len, padding='post', value=0)
-        inputs_lengths=np.arrray(in_seq)
+        inputs_lengths=np.array(in_seq)
         labels_lengths=np.array(lb_seq)
 
         return input_sequences, label_sequences, inputs_lengths, labels_lengths
