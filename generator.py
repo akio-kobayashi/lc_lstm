@@ -70,7 +70,7 @@ class DataGenerator(Sequence):
 
             # label is a list of integers starting from 0
             label = self.h5fd[key+'/labels'][()]
-            labels.append(label)
+            labels.append(np.array(label))
             if len(label) > max_output_len:
               max_output_len = len(label)
             lb_seq.append(len(label))
@@ -80,7 +80,7 @@ class DataGenerator(Sequence):
             mat = self.h5fd[key+'/data'][()]
             input_sequences[i, 0:mat.shape[0], :] = np.expand_dims(mat, axis=0)
 
-        label_sequences=sequence.pad_sequences(lb_seq, maxlen=max_output_len, padding='post', value=0)
+        label_sequences=sequence.pad_sequences(labels, maxlen=max_output_len, padding='post', value=0)
         inputs_lengths=np.arrray(in_seq)
         labels_lengths=np.array(lb_seq)
 
