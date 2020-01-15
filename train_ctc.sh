@@ -14,7 +14,7 @@ lstm_depth=4
 #training
 batch_size=32
 epochs=50
-learn_rate=1.0e-4
+learn_rate=1.0e-6
 factor=0.9
 
 mkdir -p ./snaps
