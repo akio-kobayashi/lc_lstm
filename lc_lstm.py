@@ -36,7 +36,7 @@ def set_states(model, states):
     for (d,_), s in zip(model.state_updates, states):
         K.set_value(d, s)
 
-def build_model(inputs, units, n_labels, feat_dim, init_lr):
+def build_model(inputs, masks, units, n_labels, feat_dim, init_lr):
 
     outputs = Masking(inputs, mask_value=0.0)(inputs)
     for n in range (depth):
@@ -59,9 +59,11 @@ def build_model(inputs, units, n_labels, feat_dim, init_lr):
 
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
+    outputs = tf.muitiply(outputs, masks)
 
+    model = Model([inputs, masks], outputs)
     model.compile(keras.optimizers.Adam(lr=init_lr), loss='categorical_cross_entropy',
-                mtrics='categorical_accuracy')
+                metrics='categorical_accuracy')
 
     return model
 
@@ -95,7 +97,8 @@ def main():
     args = parser.parse_args()
 
     inputs = Input(batch_shape=(args.batch_size, None, args.feat_dim))
-    model = build_model(inputs, args.units, args.n_labels, args.feat_dim, args.learn_rate)
+    masks = Input(batch_shape=(args.batch_size, None, args.feat_dim))
+    model = build_model(inputs, masks, args.units, args.n_labels, args.feat_dim, args.learn_rate)
 
     training_generator = FixedDataGenerator(
         args.data, args.batch_size, args.feat_dim, args.n_labels,
@@ -210,7 +213,8 @@ def main():
     if args.eval is not None:
 
         eval_in = Input(batch_shape=(1, None, args.feat_dim))
-        eval_model = build_model(eval_in, args.units, args.n_labels, args.feat_dim, args.learn_rate)
+        eval_mask = Input(batch_shape=(1, None, args.feat_dim))
+        eval_model = build_model(eval_in, eval_mask, args.units, args.n_labels, args.feat_dim, args.learn_rate)
         path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
         eval_model.load_weights(path, by_name=True)
 
