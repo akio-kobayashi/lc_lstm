@@ -12,8 +12,8 @@ import numpy as np
 import random
 import tensorflow as tf
 #import functools
-import CTCModel
-import generator
+#import CTCModel
+import ce_generator
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -40,15 +40,17 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
 
-    model=CTCModel.CTCModel([inputs], [outputs])
-    model.compile(keras.optimizers.Adam(lr=init_lr))
+    model=Model(inputs, outputs)
+    # we can get accuracy from data along with batch/temporal axes.
+    model.compile(keras.optimizers.Adam(lr=init_lr),
+        loss=['categorical_cross_entropy'],
+        metrics=['categorical_accuracy'])
 
     return model
 
 def main():
 
     parser = argparse.ArgumentParser()
-    #parser.add_argument('--symobls', type=str, required=True, help='symbols list')
     parser.add_argument('--data', type=str, required=True, help='training data')
     parser.add_argument('--key-file', type=str, help='keys')
     parser.add_argument('--valid', type=str, required=True, help='validation data')
@@ -82,9 +84,9 @@ def main():
     inputs = Input(shape=(None, args.feat_dim))
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels, args.feat_dim, args.learn_rate)
 
-    training_generator = generator.DataGenerator(args.data, args.key_file,
+    training_generator = generator.CEDataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels)
-    valid_generator = generator.DataGenerator(args.valid, None,
+    valid_generator = generator.CEDataGenerator(args.valid, None,
                         args.batch_size, args.feat_dim, args.n_labels)
 
     # callbacks
@@ -97,62 +99,53 @@ def main():
     #                           save_weights_only=True, verbose=1)
     #tensorboard = TensorBoard(log_dir=args.log_dir)
 
-    prev_val_ler = 1.0e10
+    prev_val_acc = 0.0
     patience = 0
-    min_val_ler = 1.0e10
+    max_val_acc = 0.0
 
     for ep in range(args.epochs):
         curr_loss = 0.0
         curr_samples=0
         curr_labels=0
-        curr_ler=0.0
+        curr_acc=0.0
         print('progress:')
         for bt in range(training_generator.__len__()):
             data = training_generator.__getitem__(bt)
-            # data = [input_sequences, label_sequences, inputs_lengths, labels_length]
-            # y (true labels) is set to None, because not used in tensorflow CTC training.
-            # 'train_on_batch' will return CTC-loss value
-            loss = model.train_on_batch(x=data,y=data[1])
+            # data = [input_sequences, label_sequences, inputs_lengths]
+            loss,acc = model.train_on_batch(x=data[0],y=data[1])
             # for micro-mean
             samples = data[0].shape[0]
             curr_loss += loss * samples
+            curr_acc += np.sum(np.array(acc))*samples
             curr_samples += samples
-            [loss, ler, ser] = model.test_on_batch(x=data)
-            curr_labels += np.sum(data[3])
-            curr_ler += np.sum(np.array(ler))
 
             # progress report
             progress_loss = curr_loss/curr_samples
-            progress_ler = curr_ler*100.0/curr_labels
-            print('\rprogress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
-                training_generator.__len__(), progress_loss, progress_ler),
+            progress_acc = curr_acc*100.0/curr_samples
+            print('\rprogress: (%d/%d) loss=%.4f acc=%.4f' % (bt+1,
+                training_generator.__len__(), progress_loss, progress_acc),
                 end='')
         print('\n',end='')
         curr_loss /= curr_samples
-        curr_ler = curr_ler*100.0/curr_labels
+        curr_acc = curr_acc*100.0/curr_samples
         curr_val_loss = 0.0
-        curr_val_ler = 0.0
+        curr_val_acc = 0.0
         curr_val_samples = 0
-        curr_val_labels = 0
 
         for bt in range(valid_generator.__len__()):
             data = valid_generator.__getitem__(bt)
-            # eval_on_batch will return sequence error rate (ser) and label error rate (ler)
-            # the function returns ['loss', 'ler', 'ser']
-            # 'ler' should not be normalized by true lengths
-            [loss, ler, ser] = model.test_on_batch(x=data)
+            loss, acc = model.test_on_batch(x=data[0], y=data[1])
             # for micro-mean
             samples = data[0].shape[0]
             curr_val_loss += loss * samples
+            curr_val_acc += np.sum(np.array(acc))*samples
             curr_val_samples += samples
-            curr_val_labels += np.sum(data[3])
-            curr_val_ler += np.sum(np.array(ler))
 
-        print('Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler))
+        print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, curr_acc))
 
         curr_val_loss /= curr_val_samples
-        curr_val_ler = curr_val_ler*100.0/curr_val_labels
-        if prev_val_ler < curr_val_ler:
+        curr_val_acc = curr_val_acc*100.0/curr_val_samples
+        if prev_val_acc > curr_val_acc:
             patience += 1
             if patience >= max_patience:
                 prev_lr = K.get_value(model.optimizer.lr)
@@ -166,15 +159,15 @@ def main():
         else:
             patience=0
 
-        print('Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler))
+        print('Epoch %d (valid) loss=%.4f acc=%.4f' % (ep+1, curr_val_loss, curr_val_acc))
 
         # save best model in .h5
-        if min_val_ler > curr_val_ler:
-            min_val_ler = curr_val_ler
+        if max_val_acc < curr_val_acc:
+            max_val_acc = curr_val_acc
             path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
             model.save_weights(path)
 
-        prev_val_ler = curr_val_ler
+        prev_val_acc = curr_val_acc
 
     # evaluation
     '''
@@ -185,14 +178,14 @@ def main():
         path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
         eval_model.load_weights(path, by_name=True)
 
-        eval_generator = DataGenerator(args.eval, None, 1,
+        eval_generator = CEDataGenerator(args.eval, None, 1,
                             args.feat_dim, args.n_labels)
         path=os.path.join(args.snapshot,args.eval_out+'.h5')
 
         with h5py.File(path, 'w') as f:
             for smp in range(eval_generator.__len()__):
                 data, keys = eval_generator.__getitem__(smp, return_keys=True)
-                predict = eval_model.predict_on_batch(x=data)
+                predict = eval_model.predict_on_batch(x=data[0])
                 rolled=np.roll(predict, 1, axis=2) # shift for <blk>
                 f.create_dataset(keys[0], data=rolled)
     '''

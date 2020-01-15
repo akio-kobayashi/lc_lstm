@@ -149,7 +149,7 @@ def main():
             progress_loss = curr_loss/curr_samples
             progress_acc = curr_acc/curr_samples
             print('\rprogress: (%d/%d) loss=%.4f acc=%.4f' % (bt+1,
-                training_generator.__len__(), progress_loss, progress_acc),
+                training_generator.__len__(), progress_loss[0], progress_acc[0]),
                 end='')
         print('\n',end='')
         curr_loss /= curr_samples
@@ -180,7 +180,7 @@ def main():
                 mask_part = mask_in[:, 0:args.process_frames,:]
                 model.predict_on_batch(x=[x_part, mask_part])
 
-        print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, curr_acc))
+        print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss[0], curr_acc[0]))
 
         curr_val_loss /= curr_val_samples
         curr_val_ler = curr_val_ler*100.0/curr_val_samples
@@ -192,13 +192,13 @@ def main():
                 if curr_lr < args.min_lr:
                     curr_lr = args.min_lr
                 else:
-                    print("lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr))
+                    print("lerning rate chaged %.4f to %.4f" % (prev_lr[0], curr_lr[0]))
                     K.set_value(model.optimizer.lr,curr_lr)
                 patience=0
         else:
             patience=0
 
-        print('Epoch %d (valid) loss=%.4f acc=%.4f' % (ep+1, curr_val_loss, curr_val_acc))
+        print('Epoch %d (valid) loss=%.4f acc=%.4f' % (ep+1, curr_val_loss[0], curr_val_acc[0]))
 
         # save best model in .h5
         if min_val_acc < curr_val_acc:
