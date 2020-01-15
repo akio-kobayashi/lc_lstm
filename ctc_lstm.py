@@ -197,3 +197,6 @@ def main():
                 rolled=np.roll(predict, 1, axis=2) # shift for <blk>
                 f.create_dataset(keys[0], data=rolled)
     '''
+
+if __name__ == "__main__":
+    main()

@@ -240,3 +240,6 @@ def main():
 
                 f.create_dataset(keys[0], predict)
     '''
+
+if __name__ == "__main__":
+    main()
