@@ -38,6 +38,8 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
                                        unit_forget_bias=True,
                                        kernel_constraint=max_norm(5),
                                        recurrent_constraint=max_norm(5),
+                                       kernel_dropout=0.1,
+                                       recurrent_dropout=0.1,
                                        name='lstm_'+str(n)))(outputs)
 
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
