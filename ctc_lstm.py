@@ -113,7 +113,7 @@ def main():
             # data = [input_sequences, label_sequences, inputs_lengths, labels_length]
             # y (true labels) is set to None, because not used in tensorflow CTC training.
             # 'train_on_batch' will return CTC-loss value
-            loss = model.train_on_batch(x=data,y=None)
+            loss = model.train_on_batch(x=data,y=data[1])
             # for micro-mean
             samples = data[0].shape[0]
             curr_loss += loss * samples
