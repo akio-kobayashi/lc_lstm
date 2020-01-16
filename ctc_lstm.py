@@ -150,7 +150,7 @@ def main():
             loss, ler, ser = model.test_on_batch(x=data)
             # for micro-mean
             samples = data[0].shape[0]
-            curr_val_loss += np.sum(loss) * samples
+            curr_val_loss += np.sum(np.array(loss)) * samples
             curr_val_samples += samples
             curr_val_labels += np.sum(data[3])
             curr_val_ler += np.sum(np.array(ler))
