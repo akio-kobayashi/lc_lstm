@@ -130,7 +130,7 @@ def main():
 
             pred = model.predict([data[0], data[3]], batch_size=args.batch_size, max_value=args.n_labels)
             for i in range(10):  # print the 10 first predictions
-                print("Prediction :", [j for j in pred[0][i] if j!=-1] )
+                print("Prediction :", [j for j in pred[i] if j!=-1] )
             # progress report
             progress_loss = curr_loss/curr_samples
             progress_ler = curr_ler*100.0/curr_labels
