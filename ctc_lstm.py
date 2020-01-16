@@ -46,7 +46,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
     outputs = Activation('softmax', name='softmax')(outputs)
 
     model=CTCModel.CTCModel([inputs], [outputs], greedy=False)
-    model.compile(keras.optimizers.RMSprop(lr=init_lr))
+    model.compile(keras.optimizers.SGD(lr=init_lr, clipnorm=5.))
 
     return model
 
