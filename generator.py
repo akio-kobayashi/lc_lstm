@@ -3,10 +3,10 @@ import sys, os, re, gzip, struct
 import random
 import h5py
 import copy
-from keras import backend as K
-from keras.utils import Sequence
-import keras.utils
-from keras.preprocessing import sequence
+from tensorflow.keras.backend as K
+from tensorflow.keras.utils import Sequence
+import tensorflow.keras.utils
+from tensorflow.keras.preprocessing import sequence
 import tensorflow as tf
 
 class DataGenerator(Sequence):
@@ -62,7 +62,7 @@ class DataGenerator(Sequence):
         labels=[]
         in_seq=[]
         lb_seq=[]
-        
+
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
             if mat.shape[0] > max_input_len:
