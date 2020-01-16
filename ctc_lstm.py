@@ -3,15 +3,16 @@ import os
 import sys
 import subprocess
 import time
-from keras.models import Model
-from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, RNN
-from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
-from keras.constraints import max_norm
-import keras.utils
-import keras.backend as K
+import tensorflow as tf
+import tensorflow.keras
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, RNN
+from tensorflow.keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
+from tensorflow.keras.constraints import max_norm
+import tensorflow.keras.utils
+import tensorflow.keras.backend as K
 import numpy as np
 import random
-import tensorflow as tf
 from tensorflow.keras.experimental import PeepholeLSTMCell
 #from tf.keras.experimental import PeeholeLSTMCell
 #import functools
