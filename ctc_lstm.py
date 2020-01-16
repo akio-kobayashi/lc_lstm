@@ -123,7 +123,8 @@ def main():
             samples = data[0].shape[0]
             curr_loss += loss * samples
             curr_samples += samples
-            ler, _ = model.evaluate(data)
+            out = model.evaluate(data)
+            print(type(out))
             curr_labels += np.sum(data[3])
             curr_ler += np.sum(np.array(ler))
 
