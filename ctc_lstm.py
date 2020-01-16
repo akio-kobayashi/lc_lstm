@@ -39,7 +39,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
                         units, kernel_initializer='glorot_uniform',
                         unit_forget_bias=True),
                         return_sequences=True,
-                        )(outputs)
+                        ))(outputs)
 #                                      dropout=0.1,
 #                                      recurrent_dropout=0.1,
 #                                      kernel_constraint=max_norm(2),
