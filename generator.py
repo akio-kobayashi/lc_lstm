@@ -74,7 +74,7 @@ class DataGenerator(Sequence):
             #print (key)
             #print(mat)
             #print(label)
-            #print(len(label))
+            print(mat.shape[0])
             labels.append(np.array(label))
             if len(label) > max_output_len:
               max_output_len = len(label)
