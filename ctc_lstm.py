@@ -8,7 +8,7 @@ from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation
 from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
 from keras.constraints import max_norm
 import keras.utils
-import keras.backend
+import keras.backend as K
 import numpy as np
 import random
 import tensorflow as tf
@@ -149,12 +149,9 @@ def main():
             # the function returns ['loss', 'ler', 'ser']
             # 'ler' should not be normalized by true lengths
             loss, ler, ser = model.test_on_batch(x=data)
-            for k in range(len(loss)):
-                print(type(loss[k]))
-                #print("%.4f" % loss[k])
             # for micro-mean
             samples = data[0].shape[0]
-            curr_val_loss += np.sum(np.array(loss)) * samples
+            curr_val_loss += loss[0] * samples
             curr_val_samples += samples
             curr_val_labels += np.sum(data[3])
             curr_val_ler += np.sum(np.array(ler))
@@ -177,8 +174,6 @@ def main():
         else:
             patience=0
 
-        print(type(curr_val_loss))
-        print(type(curr_val_ler))
         print('Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss[0], curr_val_ler), file=sys.stderr)
 
         # save best model in .h5
