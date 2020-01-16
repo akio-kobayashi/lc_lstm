@@ -52,6 +52,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
 
 def main():
 
+    print (keras.__version__)
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, required=True, help='training data')
     parser.add_argument('--key-file', type=str, help='keys')
