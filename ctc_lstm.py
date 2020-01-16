@@ -4,7 +4,7 @@ import sys
 import subprocess
 import time
 from keras.models import Model
-from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation
+from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, RNN
 from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
 from keras.constraints import max_norm
 import keras.utils
