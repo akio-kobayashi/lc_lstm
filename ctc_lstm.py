@@ -36,11 +36,11 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
         outputs=Bidirectional(LSTM(units, kernel_initializer='glorot_uniform',
                                        return_sequences=True,
                                        unit_forget_bias=True,
-                                       kernel_constraint=max_norm(2),
-                                       recurrent_constraint=max_norm(2),
-                                       dropout=0.1,
-                                       recurrent_dropout=0.1,
                                        name='lstm_'+str(n)))(outputs)
+#                                      dropout=0.1,
+#                                      recurrent_dropout=0.1,
+#                                      kernel_constraint=max_norm(2),
+#                                      recurrent_constraint=max_norm(2),
 
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
