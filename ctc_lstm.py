@@ -123,7 +123,7 @@ def main():
             samples = data[0].shape[0]
             curr_loss += loss * samples
             curr_samples += samples
-            [loss, ler, ser] = model.test_on_batch(x=data)
+            ler, _ = model.evaluate(data)
             curr_labels += np.sum(data[3])
             curr_ler += np.sum(np.array(ler))
 
@@ -137,7 +137,7 @@ def main():
         print('\n',end='',file=sys.stderr)
         curr_loss /= curr_samples
         curr_ler = curr_ler*100.0/curr_labels
-        curr_val_loss = 0.0
+        #curr_val_loss = 0.0
         curr_val_ler = 0.0
         curr_val_samples = 0
         curr_val_labels = 0
@@ -148,17 +148,17 @@ def main():
             # eval_on_batch will return sequence error rate (ser) and label error rate (ler)
             # the function returns ['loss', 'ler', 'ser']
             # 'ler' should not be normalized by true lengths
-            loss, ler, ser = model.test_on_batch(x=data)
+            ler, _ = model.evaluate(data)
             # for micro-mean
             samples = data[0].shape[0]
-            curr_val_loss += loss[0] * samples
+            #curr_val_loss += loss[0] * samples
             curr_val_samples += samples
             curr_val_labels += np.sum(data[3])
             curr_val_ler += np.sum(np.array(ler))
 
         print('Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler),file=sys.stderr)
 
-        curr_val_loss /= curr_val_samples
+        #curr_val_loss /= curr_val_samples
         curr_val_ler = curr_val_ler*100.0/curr_val_labels
         if prev_val_ler < curr_val_ler:
             patience += 1
@@ -174,7 +174,8 @@ def main():
         else:
             patience=0
 
-        print('Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler), file=sys.stderr)
+        print('Epoch %d (valid) ler=%.4f' % (ep+1, curr_val_ler), file=sys.stderr)
+        #print('Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler), file=sys.stderr)
 
         # save best model in .h5
         if min_val_ler > curr_val_ler:

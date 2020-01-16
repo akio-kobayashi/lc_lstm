@@ -90,7 +90,6 @@ class CTCModel:
         out_decoded_dense = Lambda(self.ctc_complete_decoding_lambda_func, output_shape=(None, None), name='CTCdecode', arguments={'greedy': self.greedy,
                                      'beam_width': self.beam_width, 'top_paths': self.top_paths},dtype="float32")(
             self.outputs + [input_length])
-        print(out_decoded_dense)
         # Lambda layer to perform an analysis (CER and SER)
         out_analysis = Lambda(self.ctc_complete_analysis_lambda_func, output_shape=(None,), name='CTCanalysis',
                                    arguments={'greedy': self.greedy,
