@@ -45,7 +45,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
 
-    model=CTCModel.CTCModel([inputs], [outputs])
+    model=CTCModel.CTCModel([inputs], [outputs], greedy=False)
     model.compile(keras.optimizers.RMSprop(lr=init_lr))
 
     return model
@@ -163,13 +163,13 @@ def main():
         if prev_val_ler < curr_val_ler:
             patience += 1
             if patience >= max_patience:
-                prev_lr = K.get_value(model.optimizer.lr)
+                prev_lr = K.get_value(model.model_train.optimizer.lr)
                 curr_lr = prev_lr * args.factor
                 if curr_lr < args.min_lr:
                     curr_lr = args.min_lr
                 else:
                     print("lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr), file=sys.stderr)
-                    K.set_value(model.optimizer.lr,curr_lr)
+                    K.set_value(model.model_train.optimizer.lr,curr_lr)
                 patience=0
         else:
             patience=0
