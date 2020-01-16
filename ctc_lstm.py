@@ -103,6 +103,7 @@ def main():
 
     prev_val_ler = 1.0e10
     patience = 0
+    max_patience=5
     min_val_ler = 1.0e10
 
     for ep in range(args.epochs):
