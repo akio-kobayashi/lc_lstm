@@ -28,7 +28,7 @@ config = tf.compat.v1.ConfigProto(
     intra_op_parallelism_threads=1,
     inter_op_parallelism_threads=1)
 sess = tf.compat.v1.Session(config=config)
-keras.backend.set_session(sess)
+K.set_session(sess)
 
 max_label_len=1024
 
