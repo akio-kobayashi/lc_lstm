@@ -12,7 +12,7 @@ import keras.backend as K
 import numpy as np
 import random
 import tensorflow as tf
-import tensorflow.keras.experimental
+from tensorflow.keras.experimental import PeepholeLSTMCell
 #from tf.keras.experimental import PeeholeLSTMCell
 #import functools
 import CTCModel
