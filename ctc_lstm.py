@@ -175,7 +175,7 @@ def main():
 
         print(type(curr_val_loss))
         print(type(curr_val_ler))
-        print('Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler), file=sys.stderr)
+        print('Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss[0], curr_val_ler), file=sys.stderr)
 
         # save best model in .h5
         if min_val_ler > curr_val_ler:
