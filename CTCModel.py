@@ -890,7 +890,7 @@ class CTCModel:
                 beam_width=beam_width, top_paths=top_paths)
 
         cast_decoded = tf.cast(decoded[0], tf.float32)
-
+        print(cast_decoded)
         sparse_y = K.ctc_label_dense_to_sparse(labels, tf.cast(tf.squeeze(label_len), tf.int32))
         #ed_tensor = tf_edit_distance(cast_decoded, sparse_y, norm=True)
         ed_tensor = tf_edit_distance(cast_decoded, sparse_y, norm=False)
@@ -906,7 +906,7 @@ class CTCModel:
         self.model_train.load_weights(path, by_name=by_name)
         self.model_pred.load_weights(path, by_name=by_name)
         self.model_eval.load_weights(path, by_name=by_name)
-        
+
     def save_model(self, path_dir, charset=None):
         """ Save a model in path_dir
         save model_train, model_pred and model_eval in json
