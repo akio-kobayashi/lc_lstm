@@ -124,7 +124,7 @@ def main():
             curr_loss += loss * samples
             curr_samples += samples
             out = model.evaluate(data)
-            print(type(out))
+            print(len(out))
             curr_labels += np.sum(data[3])
             curr_ler += np.sum(np.array(ler))
 
