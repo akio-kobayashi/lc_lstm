@@ -120,8 +120,8 @@ def main():
         curr_labels=0
         curr_ler=0.0
         #print('progress:')
-        #for bt in range(training_generator.__len__()):
-        for bt in range(10):
+        for bt in range(training_generator.__len__()):
+        #for bt in range(10):
             data = training_generator.__getitem__(bt)
             # data = [input_sequences, label_sequences, inputs_lengths, labels_length]
             # y (true labels) is set to None, because not used in tensorflow CTC training.
@@ -147,14 +147,14 @@ def main():
         #        end='')
         print('\n',end='',file=sys.stderr)
         curr_loss /= curr_samples
-        curr_ler = curr_ler*100.0/(10*args.batch_size)
+        curr_ler = curr_ler*100.0/(training_generator.__len__()*args.batch_size)
         curr_val_loss = 0.0
         curr_val_ler = 0.0
         curr_val_samples = 0
         curr_val_labels = 0
 
-        #for bt in range(valid_generator.__len__()):
-        for bt in range(2):
+        for bt in range(valid_generator.__len__()):
+        #for bt in range(2):
             data = valid_generator.__getitem__(bt)
             # eval_on_batch will return sequence error rate (ser) and label error rate (ler)
             # the function returns ['loss', 'ler', 'ser']
@@ -169,7 +169,7 @@ def main():
         print('Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler),file=sys.stderr)
 
         curr_val_loss /= curr_val_samples
-        curr_val_ler = curr_val_ler*100.0/(2*args.batch_size)
+        curr_val_ler = curr_val_ler*100.0/(valid_generator.__len__()*args.batch_size)
         if prev_val_ler < curr_val_ler:
             patience += 1
             if patience >= max_patience:
