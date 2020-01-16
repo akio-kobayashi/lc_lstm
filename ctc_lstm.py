@@ -149,7 +149,7 @@ def main():
             # the function returns ['loss', 'ler', 'ser']
             # 'ler' should not be normalized by true lengths
             loss, ler, ser = model.test_on_batch(x=data)
-            print("%.4f" % (loss)
+            print("%.4f" % (loss))
             # for micro-mean
             samples = data[0].shape[0]
             curr_val_loss += np.sum(np.array(loss)) * samples
