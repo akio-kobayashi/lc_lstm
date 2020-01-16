@@ -6,13 +6,13 @@ import time
 from keras.models import Model
 from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation
 from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
-from tensorflow.keras.experimental import PeeholeLSTMCell
 from keras.constraints import max_norm
 import keras.utils
 import keras.backend as K
 import numpy as np
 import random
 import tensorflow as tf
+from tf.keras.experimental import PeeholeLSTMCell
 #import functools
 import CTCModel
 import generator
