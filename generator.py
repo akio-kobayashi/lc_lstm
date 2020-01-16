@@ -70,8 +70,9 @@ class DataGenerator(Sequence):
 
             # label is a list of integers starting from 0
             label = self.h5fd[key+'/labels'][()]
+            print(mat)
             print(label)
-            print(len(label))
+            #print(len(label))
             labels.append(np.array(label))
             if len(label) > max_output_len:
               max_output_len = len(label)
