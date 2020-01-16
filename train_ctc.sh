@@ -12,12 +12,12 @@ n_labels=32
 # features
 feat_dim=40
 units=320
-lstm_depth=4
+lstm_depth=3
 
 #training
-batch_size=32
+batch_size=16
 epochs=50
-learn_rate=1.0e-5
+learn_rate=1.0e-4
 factor=0.9
 
 mkdir -p ./snaps
