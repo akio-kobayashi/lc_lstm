@@ -6,6 +6,7 @@ import time
 from keras.models import Model
 from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation
 from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
+from tensorflow.keras.experimental import PeeholeLSTMCell
 from keras.constraints import max_norm
 import keras.utils
 import keras.backend as K
@@ -34,10 +35,11 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
     for n in range (depth):
-        outputs=Bidirectional(LSTM(units, kernel_initializer='glorot_uniform',
-                                       return_sequences=True,
-                                       unit_forget_bias=True,
-                                       name='lstm_'+str(n)))(outputs)
+        outputs=Bidirectional(RNN(PeepholeLSTMCell(
+                        units, kernel_initializer='glorot_uniform',
+                        unit_forget_bias=True),
+                        return_sequences=True,
+                        )(outputs)
 #                                      dropout=0.1,
 #                                      recurrent_dropout=0.1,
 #                                      kernel_constraint=max_norm(2),
