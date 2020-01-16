@@ -37,7 +37,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
     for n in range (depth):
-        outputs=Bidirectional(GRU(units, return_sequences=True))(outputs)
+        outputs=Bidirectional(GRU(units, recurrent_initializer='glorot_uniform', return_sequences=True))(outputs)
         #outputs=Bidirectional(RNN(tf.compat.v1.keras.experimental.PeepholeLSTMCell(
         #                units, kernel_initializer='glorot_uniform',
         #                unit_forget_bias=True),
