@@ -148,7 +148,8 @@ def main():
             # eval_on_batch will return sequence error rate (ser) and label error rate (ler)
             # the function returns ['loss', 'ler', 'ser']
             # 'ler' should not be normalized by true lengths
-            ler, _ = model.evaluate(data)
+            out = model.evaluate(data)
+            print(type(out))
             # for micro-mean
             samples = data[0].shape[0]
             #curr_val_loss += loss[0] * samples
