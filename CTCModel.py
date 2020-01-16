@@ -896,8 +896,8 @@ class CTCModel:
         cast_decoded = tf.cast(decoded[0], tf.float32)
 
         sparse_y = K.ctc_label_dense_to_sparse(labels, tf.cast(tf.squeeze(label_len), tf.int32))
-        #ed_tensor = tf_edit_distance(cast_decoded, sparse_y, norm=True)
-        ed_tensor = tf_edit_distance(cast_decoded, sparse_y, norm=False)
+        ed_tensor = tf_edit_distance(cast_decoded, sparse_y, norm=True)
+        #ed_tensor = tf_edit_distance(cast_decoded, sparse_y, norm=False)
         ler_per_seq = Kreshape_To1D(ed_tensor)
 
         return K.cast(ler_per_seq, dtype='float32')
