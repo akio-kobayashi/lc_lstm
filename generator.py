@@ -3,10 +3,10 @@ import sys, os, re, gzip, struct
 import random
 import h5py
 import copy
-import tensorflow.keras.backend as K
-from tensorflow.keras.utils import Sequence
-import tensorflow.keras.utils
-from tensorflow.keras.preprocessing import sequence
+import keras.backend as K
+from keras.utils import Sequence
+import keras.utils
+from keras.preprocessing import sequence
 import tensorflow as tf
 
 class DataGenerator(Sequence):

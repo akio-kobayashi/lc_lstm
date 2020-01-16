@@ -4,16 +4,16 @@ import sys
 import subprocess
 import time
 import tensorflow as tf
-import tensorflow.keras
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, RNN
-from tensorflow.keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
-from tensorflow.keras.constraints import max_norm
-import tensorflow.keras.utils
-import tensorflow.keras.backend as K
+#import tensorflow.keras
+from keras.models import Model
+from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, RNN
+from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
+from keras.constraints import max_norm
+import keras.utils
+import keras.backend as K
 import numpy as np
 import random
-from tensorflow.keras.experimental import PeepholeLSTMCell
+from tf.keras.experimental import PeepholeLSTMCell
 #from tf.keras.experimental import PeeholeLSTMCell
 #import functools
 import CTCModel
@@ -37,7 +37,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
     for n in range (depth):
-        outputs=Bidirectional(RNN(tensorflow.keras.experimental.PeepholeLSTMCell(
+        outputs=Bidirectional(RNN(tf.keras.experimental.PeepholeLSTMCell(
                         units, kernel_initializer='glorot_uniform',
                         unit_forget_bias=True),
                         return_sequences=True,
@@ -51,7 +51,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
     outputs = Activation('softmax', name='softmax')(outputs)
 
     model=CTCModel.CTCModel([inputs], [outputs], greedy=False)
-    model.compile(tensorflow.keras.optimizers.SGD(lr=init_lr, clipnorm=5.))
+    model.compile(keras.optimizers.SGD(lr=init_lr, clipnorm=5.))
 
     return model
 
