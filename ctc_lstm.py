@@ -108,6 +108,7 @@ def main():
     max_patience=5
     min_val_ler = 1.0e10
 
+
     for ep in range(args.epochs):
         curr_loss = 0.0
         curr_samples=0
