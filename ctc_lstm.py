@@ -154,10 +154,7 @@ def main():
             curr_val_samples += samples
             curr_val_labels += np.sum(data[3])
             curr_val_ler += np.sum(np.array(ler))
-            print(len(loss))
-            print(type(samples))
-            print(type(curr_val_loss))
-            print(type(curr_val_ler))
+
         print('Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler),file=sys.stderr)
 
         curr_val_loss /= curr_val_samples
@@ -176,6 +173,8 @@ def main():
         else:
             patience=0
 
+        print(type(curr_val_loss))
+        print(type(curr_val_ler))
         print('Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler), file=sys.stderr)
 
         # save best model in .h5
