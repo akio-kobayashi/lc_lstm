@@ -127,7 +127,6 @@ def main():
             curr_loss += loss * samples
             curr_samples += samples
             loss, ler, _ = model.evaluate(data)
-            curr_labels += np.sum(data[3])
             curr_ler += np.sum(np.array(ler))
 
             pred = model.predict([data[0], data[3]], batch_size=args.batch_size, max_value=args.n_labels)
@@ -136,14 +135,14 @@ def main():
                 #print("Prediction :", [j for j in pred[i] if j!=-1] )
             # progress report
             progress_loss = curr_loss/curr_samples
-            progress_ler = curr_ler*100.0/curr_labels
+            progress_ler = curr_ler*100.0/((bt+1)*args.batch_size)
             #print('\rprogress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
             print('progress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
                 training_generator.__len__(), progress_loss, progress_ler),file=sys.stderr)
         #        end='')
         print('\n',end='',file=sys.stderr)
         curr_loss /= curr_samples
-        curr_ler = curr_ler*100.0/curr_labels
+        curr_ler = curr_ler*100.0/(10*args.batch_size)
         curr_val_loss = 0.0
         curr_val_ler = 0.0
         curr_val_samples = 0
@@ -160,13 +159,12 @@ def main():
             samples = data[0].shape[0]
             curr_val_loss += loss[0] * samples
             curr_val_samples += samples
-            curr_val_labels += np.sum(data[3])
             curr_val_ler += np.sum(np.array(ler))
 
         print('Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler),file=sys.stderr)
 
         curr_val_loss /= curr_val_samples
-        curr_val_ler = curr_val_ler*100.0/curr_val_labels
+        curr_val_ler = curr_val_ler*100.0/(2*args.batch_size)
         if prev_val_ler < curr_val_ler:
             patience += 1
             if patience >= max_patience:
