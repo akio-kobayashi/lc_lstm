@@ -12,7 +12,7 @@ import keras.backend as K
 import numpy as np
 import random
 import tensorflow as tf
-from tf.keras.experimental import PeeholeLSTMCell
+#from tf.keras.experimental import PeeholeLSTMCell
 #import functools
 import CTCModel
 import generator
@@ -35,7 +35,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
     for n in range (depth):
-        outputs=Bidirectional(RNN(PeepholeLSTMCell(
+        outputs=Bidirectional(RNN(tf.keras.experimental.PeepholeLSTMCell(
                         units, kernel_initializer='glorot_uniform',
                         unit_forget_bias=True),
                         return_sequences=True,
