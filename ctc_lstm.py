@@ -49,7 +49,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
 #                                      recurrent_constraint=max_norm(2),
 
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
-    outputs = Activation('softmax', name='softmax')(outputs)
+    #outputs = Activation('softmax', name='softmax')(outputs)
 
     model=CTCModel.CTCModel([inputs], [outputs], greedy=False)
     model.compile(keras.optimizers.SGD(lr=init_lr, clipnorm=50.))
