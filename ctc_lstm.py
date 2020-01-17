@@ -39,8 +39,8 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
     for n in range (depth):
         outputs=Bidirectional(CuDNNGRU(units,
         kernel_initializer='glorot_uniform',
-        recurrent_activation='sigmoid',
         return_sequences=True))(outputs)
+#        recurrent_activation='sigmoid',
         #outputs=Bidirectional(RNN(tf.compat.v1.keras.experimental.PeepholeLSTMCell(
         #                units, kernel_initializer='glorot_uniform',
         #                unit_forget_bias=True),
