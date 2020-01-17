@@ -118,7 +118,7 @@ def main():
         curr_loss = 0.0
         curr_samples=0
         curr_labels=0
-        curr_ler=0.0
+        curr_ler=[]
         #print('progress:')
         for bt in range(training_generator.__len__()):
         #for bt in range(10):
@@ -132,7 +132,7 @@ def main():
             curr_loss += loss * samples
             curr_samples += samples
             loss, ler, _ = model.evaluate(data)
-            curr_ler += np.sum(np.array(ler))
+            curr_ler.append(ler)
 
             #pred = model.predict([data[0], data[3]], batch_size=args.batch_size, max_value=args.n_labels)
             #for i in range(10):  # print the 10 first predictions
@@ -140,16 +140,16 @@ def main():
                 #print("Prediction :", [j for j in pred[i] if j!=-1] )
             # progress report
             progress_loss = curr_loss/curr_samples
-            progress_ler = curr_ler*100.0/((bt+1)*args.batch_size)
+            progress_ler = np.mean(curr_ler)*100.0
             #print('\rprogress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
             print('progress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
                 training_generator.__len__(), progress_loss, progress_ler),file=sys.stderr)
         #        end='')
         print('\n',end='',file=sys.stderr)
         curr_loss /= curr_samples
-        curr_ler = curr_ler*100.0/(training_generator.__len__()*args.batch_size)
+        curr_ler = np.mean(curr_ler)*100.0
         curr_val_loss = 0.0
-        curr_val_ler = 0.0
+        curr_val_ler = []
         curr_val_samples = 0
         curr_val_labels = 0
 
@@ -164,12 +164,12 @@ def main():
             samples = data[0].shape[0]
             curr_val_loss += loss[0] * samples
             curr_val_samples += samples
-            curr_val_ler += np.sum(np.array(ler))
+            curr_val_ler.append(ler)
 
         print('Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler),file=sys.stderr)
 
         curr_val_loss /= curr_val_samples
-        curr_val_ler = curr_val_ler*100.0/(valid_generator.__len__()*args.batch_size)
+        curr_val_ler = np.mean(curr_val_ler)*100.0
         if prev_val_ler < curr_val_ler:
             patience += 1
             if patience >= max_patience:
