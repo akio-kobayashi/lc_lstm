@@ -11,7 +11,7 @@ import tensorflow as tf
 
 class DataGenerator(Sequence):
 
-    def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024, shuffle=False):
+    def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024, shuffle=True):
 
         self.file=file
         self.batch_size=batch_size
