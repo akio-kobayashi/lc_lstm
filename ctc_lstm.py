@@ -37,7 +37,10 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
     for n in range (depth):
-        outputs=Bidirectional(GRU(units, recurrent_initializer='glorot_uniform', return_sequences=True))(outputs)
+        outputs=Bidirectional(GRU(units,
+        kernel_initializer='glorot_uniform',
+        recurrent_activation='sigmoid',
+        return_sequences=True))(outputs)
         #outputs=Bidirectional(RNN(tf.compat.v1.keras.experimental.PeepholeLSTMCell(
         #                units, kernel_initializer='glorot_uniform',
         #                unit_forget_bias=True),
@@ -49,10 +52,10 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
 #                                      recurrent_constraint=max_norm(2),
 
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
-    #outputs = Activation('softmax', name='softmax')(outputs)
+    outputs = Activation('softmax', name='softmax')(outputs)
 
     model=CTCModel.CTCModel([inputs], [outputs], greedy=False)
-    model.compile(keras.optimizers.SGD(lr=init_lr, clipnorm=50.))
+    model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.))
 
     return model
 
