@@ -6,8 +6,9 @@ export CUDA_VISIBLE_DEVICES=$device
 cd ~/lc_lstm
 
 # librispeech
-train=./train.h5
-valid=./dev.h5
+train=./train_clean_100.h5
+valid=./dev_clean.h5
+test=./test_clean.h5
 #keys=./train.sorted
 n_labels=32
 
