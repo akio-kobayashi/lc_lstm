@@ -143,9 +143,9 @@ def main():
                 progress_loss = curr_loss/curr_samples
                 progress_ler = np.mean(curr_ler)*100.0
                 msg='progress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,training_generator.__len__(), progress_loss, progress_ler)
-                print(msg,file=sys.stderr)
+                print(msg,file=sys.stderr,flush=True)
                 logs.write(msg+'\n')
-            print('\n',end='',file=sys.stderr)
+            print('\n',end='',file=sys.stderr,flush=True)
             curr_loss /= curr_samples
             curr_ler = np.mean(curr_ler)*100.0
             curr_val_loss = 0.0
@@ -167,7 +167,7 @@ def main():
 
             msg='Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler)
             logs.write(msg+'\n')
-            print(msg,file=sys.stderr)
+            print(msg,file=sys.stderr, flush=True)
 
             curr_val_loss /= curr_val_samples
             curr_val_ler = np.mean(curr_val_ler)*100.0
@@ -181,7 +181,7 @@ def main():
                     else:
                         msg="lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr)
                         logs.write(msg+'\n')
-                        print(msg, file=sys.stderr)
+                        print(msg, file=sys.stderr,flush=True)
                         K.set_value(model.model_train.optimizer.lr,curr_lr)
                     patience=0
             else:
@@ -190,7 +190,7 @@ def main():
             #print('Epoch %d (valid) ler=%.4f' % (ep+1, curr_val_ler), file=sys.stderr)
             msg='Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler)
             logs.write(msg+'\n')
-            print(msg, file=sys.stderr)
+            print(msg, file=sys.stderr,flush=True)
 
             # save best model in .h5
             if min_val_ler > curr_val_ler:
