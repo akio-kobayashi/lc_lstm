@@ -96,8 +96,13 @@ def main():
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
+    curr_lr = args.learn_rate
+    if os.path.isfile(args.log_dir+'/learn_rate'):
+        with(open(args.log_dir+'/learn_rate', r)) as f:
+            curr_lr=f.readline().strip()
+
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
-        args.feat_dim, args.learn_rate, args.direction)
+        args.feat_dim, curr_lr, args.direction)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels)
@@ -118,10 +123,23 @@ def main():
     patience = 0
     max_patience=5
     min_val_ler = 1.0e10
+    curr_lr=args.learn_rate
+    ep=0
+    max_early_stop=5
+    early_stop=0
 
-
+    if os.path.isfile(args.log_dir+'/epochs'):
+        with(open(args.log_dir+'/epochs', r)) as f:
+            ep=f.readline().strip()
+    if os.path.isfile(args.log_dir+'/prev_val_ler'):
+        with(open(args.log_dir+'/prev_val_ler', r)) as f:
+            prev_val_ler=f.readline().strip()
+    if os.path.isfile(args.log_dir+'/prev_val_ler'):
+        with(open(args.log_dir+'/min_val_ler', r)) as f:
+            min_val_ler=f.readline().strip()
     with open(args.log_dir+'/logs', 'w') as logs:
-        for ep in range(args.epochs):
+        #for ep in range(args.epochs):
+        while ep < args.epochs:
             curr_loss = 0.0
             curr_samples=0
             #curr_labels=0
@@ -185,6 +203,7 @@ def main():
                     curr_lr = prev_lr * args.factor
                     if curr_lr < args.min_lr:
                         curr_lr = args.min_lr
+                        early_stop+=1
                     else:
                         msg="lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr)
                         logs.write(msg+'\n')
@@ -209,7 +228,22 @@ def main():
                 model.save_weights(path)
 
             prev_val_ler = curr_val_ler
+            ep += 1
 
+            # keep stats
+            with open(args.log_dir+'/epochs', 'w') as f:
+                f.print(ep)
+            with open(args.log_dir+'/learn_rate', 'w') as f:
+                f.print(curr_lr)
+            with open(args.log_dir+'/prev_val_ler', 'w') as f:
+                f.print(prev_val_ler)
+            with open(args.log_dir+'/min_val_ler', 'w') as f:
+                f.print(min_val_ler)
+            if early_stop == max_early_stop:
+                break
+
+    print("Training End.")
+    
     # evaluation
     '''
     if args.eval is not None:
