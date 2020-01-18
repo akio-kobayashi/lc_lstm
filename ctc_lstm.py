@@ -124,8 +124,8 @@ def main():
         for ep in range(args.epochs):
             curr_loss = 0.0
             curr_samples=0
-            curr_labels=0
-            curr_ler=[]
+            #curr_labels=0
+            #curr_ler=[]
             for bt in range(training_generator.__len__()):
                 data = training_generator.__getitem__(bt)
                 # data = [input_sequences, label_sequences, inputs_lengths, labels_length]
@@ -136,13 +136,14 @@ def main():
                 samples = data[0].shape[0]
                 curr_loss += loss * samples
                 curr_samples += samples
-                loss, ler, _ = model.evaluate(data)
-                curr_ler.append(ler)
+                #loss, ler, _ = model.evaluate(data)
+                #curr_ler.append(ler)
 
                 # progress report
                 progress_loss = curr_loss/curr_samples
-                progress_ler = np.mean(curr_ler)*100.0
-                msg='progress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,training_generator.__len__(), progress_loss, progress_ler)
+                #progress_ler = np.mean(curr_ler)*100.0
+                #msg='progress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,training_generator.__len__(), progress_loss, progress_ler)
+                msg='progress: (%d/%d) loss=%.4f' % (bt+1,training_generator.__len__(), progress_loss)
                 #print(msg,file=sys.stderr,flush=True)
                 print(msg)
                 logs.write(msg+'\n')
@@ -150,7 +151,7 @@ def main():
             #print('\n',end='',file=sys.stderr,flush=True)
             print('')
             curr_loss /= curr_samples
-            curr_ler = np.mean(curr_ler)*100.0
+            #curr_ler = np.mean(curr_ler)*100.0
             curr_val_loss = 0.0
             curr_val_ler = []
             curr_val_samples = 0
@@ -168,7 +169,8 @@ def main():
                 curr_val_samples += samples
                 curr_val_ler.append(ler)
 
-            msg='Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler)
+            #msg='Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler)
+            msg='Epoch %d (train) loss=%.4f' % (ep+1, curr_loss)
             logs.write(msg+'\n')
             #print(msg,file=sys.stderr, flush=True)
             print(msg)
@@ -199,7 +201,7 @@ def main():
             #print(msg, file=sys.stderr,flush=True)
             print(msg)
             logs.flush()
-            
+
             # save best model in .h5
             if min_val_ler > curr_val_ler:
                 min_val_ler = curr_val_ler
