@@ -1,14 +1,15 @@
 #!/bin/sh
 
-device=0
-#export CUDA_VISIBLE_DEVICES=$device
-cd /home/akio/lc_lstm
+device=$1
+export CUDA_VISIBLE_DEVICES=$device
+#cd /home/akio/lc_lstm
+cd ~/lc_lstm
 
 # librispeech
 train=./train.h5
 valid=./dev.h5
 #keys=./train.sorted
-n_labels=49
+n_labels=32
 
 # features
 feat_dim=40
@@ -17,7 +18,7 @@ lstm_depth=3
 
 #training
 #direction=bi
-batch_size=32
+batch_size=64
 epochs=50
 learn_rate=1.0e-3
 factor=0.9
