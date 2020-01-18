@@ -17,7 +17,7 @@ lstm_depth=3
 
 #training
 #direction=bi
-batch_size=128
+batch_size=64
 epochs=50
 learn_rate=1.0e-3
 factor=0.9
