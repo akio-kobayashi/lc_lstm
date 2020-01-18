@@ -32,14 +32,16 @@ K.set_session(sess)
 
 max_label_len=1024
 
-def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
+def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction):
 
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
     for n in range (depth):
-        outputs=Bidirectional(CuDNNGRU(units,
-        kernel_initializer='glorot_uniform',
-        return_sequences=True))(outputs)
+        if direction == 'bi':
+            outputs=Bidirectional(CuDNNGRU(units,
+                return_sequences=True))(outputs)
+        else:
+            outputs=CuDNNGRU(units,return_sequences=True)(outputs)
 #        recurrent_activation='sigmoid',
         #outputs=Bidirectional(RNN(tf.compat.v1.keras.experimental.PeepholeLSTMCell(
         #                units, kernel_initializer='glorot_uniform',
@@ -90,11 +92,12 @@ def main():
                         help='number of LSTM layers')
     parser.add_argument('--factor', type=float, default=0.5,help='lerarning rate decaying factor')
     parser.add_argument('--min-lr', type=float, default=1.0e-6, help='minimum learning rate')
-
+    parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
-    model = build_model(inputs, args.units, args.lstm_depth, args.n_labels, args.feat_dim, args.learn_rate)
+    model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
+        args.feat_dim, args.learn_rate, args.direction)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels)
@@ -117,86 +120,85 @@ def main():
     min_val_ler = 1.0e10
 
 
-    for ep in range(args.epochs):
-        curr_loss = 0.0
-        curr_samples=0
-        curr_labels=0
-        curr_ler=[]
-        #print('progress:')
-        for bt in range(training_generator.__len__()):
-        #for bt in range(10):
-            data = training_generator.__getitem__(bt)
-            # data = [input_sequences, label_sequences, inputs_lengths, labels_length]
-            # y (true labels) is set to None, because not used in tensorflow CTC training.
-            # 'train_on_batch' will return CTC-loss value
-            loss = model.train_on_batch(x=data,y=data[1])
-            # for micro-mean
-            samples = data[0].shape[0]
-            curr_loss += loss * samples
-            curr_samples += samples
-            loss, ler, _ = model.evaluate(data)
-            curr_ler.append(ler)
+    with open(args.log_dir+'/logs', 'w') as logs:
+        for ep in range(args.epochs):
+            curr_loss = 0.0
+            curr_samples=0
+            curr_labels=0
+            curr_ler=[]
+            for bt in range(training_generator.__len__()):
+                data = training_generator.__getitem__(bt)
+                # data = [input_sequences, label_sequences, inputs_lengths, labels_length]
+                # y (true labels) is set to None, because not used in tensorflow CTC training.
+                # 'train_on_batch' will return CTC-loss value
+                loss = model.train_on_batch(x=data,y=data[1])
+                # for micro-mean
+                samples = data[0].shape[0]
+                curr_loss += loss * samples
+                curr_samples += samples
+                loss, ler, _ = model.evaluate(data)
+                curr_ler.append(ler)
 
-            #pred = model.predict([data[0], data[3]], batch_size=args.batch_size, max_value=args.n_labels)
-            #for i in range(10):  # print the 10 first predictions
-                #print("Prediction :", [j for j in pred[i]] )
-                #print("Prediction :", [j for j in pred[i] if j!=-1] )
-            # progress report
-            progress_loss = curr_loss/curr_samples
-            progress_ler = np.mean(curr_ler)*100.0
-            #print('\rprogress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
-            print('progress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,
-                training_generator.__len__(), progress_loss, progress_ler),file=sys.stderr)
-        #        end='')
-        print('\n',end='',file=sys.stderr)
-        curr_loss /= curr_samples
-        curr_ler = np.mean(curr_ler)*100.0
-        curr_val_loss = 0.0
-        curr_val_ler = []
-        curr_val_samples = 0
-        curr_val_labels = 0
+                # progress report
+                progress_loss = curr_loss/curr_samples
+                progress_ler = np.mean(curr_ler)*100.0
+                msg='progress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,training_generator.__len__(), progress_loss, progress_ler)
+                print(msg,file=sys.stderr)
+                logs.writeline(msg)
+            print('\n',end='',file=sys.stderr)
+            curr_loss /= curr_samples
+            curr_ler = np.mean(curr_ler)*100.0
+            curr_val_loss = 0.0
+            curr_val_ler = []
+            curr_val_samples = 0
+            curr_val_labels = 0
 
-        for bt in range(valid_generator.__len__()):
-        #for bt in range(2):
-            data = valid_generator.__getitem__(bt)
-            # eval_on_batch will return sequence error rate (ser) and label error rate (ler)
-            # the function returns ['loss', 'ler', 'ser']
-            # 'ler' should not be normalized by true lengths
-            loss, ler, ser = model.evaluate(data)
-            # for micro-mean
-            samples = data[0].shape[0]
-            curr_val_loss += loss[0] * samples
-            curr_val_samples += samples
-            curr_val_ler.append(ler)
+            for bt in range(valid_generator.__len__()):
+                data = valid_generator.__getitem__(bt)
+                # eval_on_batch will return sequence error rate (ser) and label error rate (ler)
+                # the function returns ['loss', 'ler', 'ser']
+                # 'ler' should not be normalized by true lengths
+                loss, ler, ser = model.evaluate(data)
+                # for micro-mean
+                samples = data[0].shape[0]
+                curr_val_loss += loss[0] * samples
+                curr_val_samples += samples
+                curr_val_ler.append(ler)
 
-        print('Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler),file=sys.stderr)
+            msg='Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler)
+            logs.writeline(msg)
+            print(msg,file=sys.stderr)
 
-        curr_val_loss /= curr_val_samples
-        curr_val_ler = np.mean(curr_val_ler)*100.0
-        if prev_val_ler < curr_val_ler:
-            patience += 1
-            if patience >= max_patience:
-                prev_lr = K.get_value(model.model_train.optimizer.lr)
-                curr_lr = prev_lr * args.factor
-                if curr_lr < args.min_lr:
-                    curr_lr = args.min_lr
-                else:
-                    print("lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr), file=sys.stderr)
-                    K.set_value(model.model_train.optimizer.lr,curr_lr)
+            curr_val_loss /= curr_val_samples
+            curr_val_ler = np.mean(curr_val_ler)*100.0
+            if prev_val_ler < curr_val_ler:
+                patience += 1
+                if patience >= max_patience:
+                    prev_lr = K.get_value(model.model_train.optimizer.lr)
+                    curr_lr = prev_lr * args.factor
+                    if curr_lr < args.min_lr:
+                        curr_lr = args.min_lr
+                    else:
+                        msg="lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr)
+                        logs.writeline(msg)
+                        print(msg, file=sys.stderr)
+                        K.set_value(model.model_train.optimizer.lr,curr_lr)
+                    patience=0
+            else:
                 patience=0
-        else:
-            patience=0
 
-        #print('Epoch %d (valid) ler=%.4f' % (ep+1, curr_val_ler), file=sys.stderr)
-        print('Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler), file=sys.stderr)
+            #print('Epoch %d (valid) ler=%.4f' % (ep+1, curr_val_ler), file=sys.stderr)
+            msg='Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler)
+            logs.writeline(msg)
+            print(msg, file=sys.stderr)
 
-        # save best model in .h5
-        if min_val_ler > curr_val_ler:
-            min_val_ler = curr_val_ler
-            path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
-            model.save_weights(path)
+            # save best model in .h5
+            if min_val_ler > curr_val_ler:
+                min_val_ler = curr_val_ler
+                path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
+                model.save_weights(path)
 
-        prev_val_ler = curr_val_ler
+            prev_val_ler = curr_val_ler
 
     # evaluation
     '''
