@@ -66,7 +66,7 @@ def named_logs(model, logs):
   for l in zip(model.metrics_names, logs):
     result[l[0]] = l[1]
   return result
-  
+
 def main():
 
     #print (keras.__version__)
@@ -124,6 +124,7 @@ def main():
     #                           save_best_only=True,
     #                           save_weights_only=True, verbose=1)
     #tensorboard = TensorBoard(log_dir=args.log_dir)
+    '''
     tensorboard = keras.callbacks.TensorBoard(
             log_dir=args.log_dir+'tf_logs',
             histogram_freq=0,
@@ -132,7 +133,7 @@ def main():
             write_grads=True
             )
     tensorboard.set_model(model)
-
+    '''
     prev_val_ler = 1.0e10
     patience = 0
     max_patience=5
@@ -180,7 +181,7 @@ def main():
                 print(msg)
                 logs.write(msg+'\n')
 
-                tensorboard.on_epoch_end(bt, named_logs(model, loss))
+                #tensorboard.on_epoch_end(bt, named_logs(model, loss))
 
             logs.flush()
             #print('\n',end='',file=sys.stderr,flush=True)
@@ -260,7 +261,7 @@ def main():
                 break
 
     print("Training End.")
-    tensorboard.on_train_end(None)
+    #tensorboard.on_train_end(None)
 
     # evaluation
     '''
