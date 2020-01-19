@@ -232,18 +232,18 @@ def main():
 
             # keep stats
             with open(args.log_dir+'/epochs', 'w') as f:
-                f.print(ep)
+                f.write(ep)
             with open(args.log_dir+'/learn_rate', 'w') as f:
-                f.print(curr_lr)
+                f.write(curr_lr)
             with open(args.log_dir+'/prev_val_ler', 'w') as f:
-                f.print(prev_val_ler)
+                f.write(prev_val_ler)
             with open(args.log_dir+'/min_val_ler', 'w') as f:
-                f.print(min_val_ler)
-            if early_stop == max_early_stop:
+                f.write(min_val_ler)
+            if early_stop > max_early_stop:
                 break
 
     print("Training End.")
-    
+
     # evaluation
     '''
     if args.eval is not None:
