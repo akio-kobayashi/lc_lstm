@@ -61,6 +61,12 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction):
 
     return model
 
+def named_logs(model, logs):
+  result = {}
+  for l in zip(model.metrics_names, logs):
+    result[l[0]] = l[1]
+  return result
+  
 def main():
 
     #print (keras.__version__)
