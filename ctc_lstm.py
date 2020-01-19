@@ -121,7 +121,7 @@ def main():
     tensorboard = keras.callbacks.TensorBoard(
             log_dir=args.log_dir+'tf_logs',
             histogram_freq=0,
-            batch_size=batch_size,
+            batch_size=args.batch_size,
             write_graph=True,
             write_grads=True
             )
@@ -255,7 +255,7 @@ def main():
 
     print("Training End.")
     tensorboard.on_train_end(None)
-    
+
     # evaluation
     '''
     if args.eval is not None:
