@@ -118,6 +118,14 @@ def main():
     #                           save_best_only=True,
     #                           save_weights_only=True, verbose=1)
     #tensorboard = TensorBoard(log_dir=args.log_dir)
+    tensorboard = keras.callbacks.TensorBoard(
+            log_dir=args.log_dir+'tf_logs',
+            histogram_freq=0,
+            batch_size=batch_size,
+            write_graph=True,
+            write_grads=True
+            )
+    tensorboard.set_model(model)
 
     prev_val_ler = 1.0e10
     patience = 0
@@ -165,6 +173,9 @@ def main():
                 #print(msg,file=sys.stderr,flush=True)
                 print(msg)
                 logs.write(msg+'\n')
+
+                tensorboard.on_epoch_end(bt, named_logs(model, loss))
+
             logs.flush()
             #print('\n',end='',file=sys.stderr,flush=True)
             print('')
@@ -243,7 +254,8 @@ def main():
                 break
 
     print("Training End.")
-
+    tensorboard.on_train_end(None)
+    
     # evaluation
     '''
     if args.eval is not None:
