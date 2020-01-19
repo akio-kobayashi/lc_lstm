@@ -143,6 +143,7 @@ def main():
     max_early_stop=5
     early_stop=0
 
+    '''
     if os.path.isfile(args.log_dir+'/epochs'):
         with(open(args.log_dir+'/epochs', r)) as f:
             ep=f.readline()
@@ -152,6 +153,7 @@ def main():
     if os.path.isfile(args.log_dir+'/prev_val_ler'):
         with(open(args.log_dir+'/min_val_ler', r)) as f:
             min_val_ler=f.readline()
+    '''
     with open(args.log_dir+'/logs', 'w') as logs:
         #for ep in range(args.epochs):
         while ep < args.epochs:
@@ -249,14 +251,16 @@ def main():
             ep += 1
 
             # keep stats
+            '''
             with open(args.log_dir+'/epochs', 'w') as f:
-                f.write(ep)
+                f.write(str(ep))
             with open(args.log_dir+'/learn_rate', 'w') as f:
-                f.write(curr_lr)
+                f.write(str(curr_lr))
             with open(args.log_dir+'/prev_val_ler', 'w') as f:
-                f.write(prev_val_ler)
+                f.write(str(prev_val_ler))
             with open(args.log_dir+'/min_val_ler', 'w') as f:
-                f.write(min_val_ler)
+                f.write(str(min_val_ler))
+            '''
             if early_stop > max_early_stop:
                 break
 
