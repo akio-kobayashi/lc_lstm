@@ -1,15 +1,16 @@
 import numpy as np
+import dynamic_programming
 
 def dynamic_programming(scores, labels, n_inputs, n_labels):
     '''
     params:
-        scores: 2-d np.array with shape=(frames, n_labels), log-scores
+        scores: 2-d np.array with shape=(frames, n_labels+1), log-scores
         labels: 1-d np.array w/o blanks
     return: 1-d np.array
     '''
     seqlen = 2*labels.shape[0]+1
 
-    labels_blanks = np.full(n_labels)
+    labels_blanks = np.full(n_labels) # filled with blanks
     for n in range(labels.shape[0]):
         labels_blanks[2*n+1] = labels[n]
 
@@ -49,4 +50,4 @@ def dynamic_programming(scores, labels, n_inputs, n_labels):
         fpt -= 1
     results = results[::-1]
 
-    return results
+    return np.array(results)

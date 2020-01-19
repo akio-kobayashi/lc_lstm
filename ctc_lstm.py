@@ -103,10 +103,11 @@ def main():
 
     inputs = Input(shape=(None, args.feat_dim))
     curr_lr = args.learn_rate
+    '''
     if os.path.isfile(args.log_dir+'/learn_rate'):
         with(open(args.log_dir+'/learn_rate', r)) as f:
             curr_lr=f.readline()
-
+    '''
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
         args.feat_dim, curr_lr, args.direction)
 
