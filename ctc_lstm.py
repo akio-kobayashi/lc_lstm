@@ -143,9 +143,9 @@ def main():
     max_early_stop=5
     early_stop=0
 
-    #if os.path.isfile(args.log_dir+'/epochs'):
-    #    with(open(args.log_dir+'/epochs', r)) as f:
-    #        ep=f.readline()
+    if os.path.isfile(args.log_dir+'/epochs'):
+        with(open(args.log_dir+'/epochs', r)) as f:
+            ep=f.readline()
     if os.path.isfile(args.log_dir+'/prev_val_ler'):
         with(open(args.log_dir+'/prev_val_ler', r)) as f:
             prev_val_ler=f.readline()
