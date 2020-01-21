@@ -1,7 +1,7 @@
 #!/bin/sh
 
-device=0
-#export CUDA_VISIBLE_DEVICES=$device
+device=1
+export CUDA_VISIBLE_DEVICES=$device
 cd /home/akio/lc_lstm
 
 # librispeech
@@ -28,7 +28,7 @@ do
   do
     for learn_rate in 1.0e-4 4.0e-5 1.0e-5;
     do
-      if [ $device == 1 ];then
+      if [ $device == 0 ];then
         snapdir=./model_d${lstm_depth}_d${units}_l${learn_rate}_uni
         logdir=./logs_d${lstm_depth}_d${units}_l${learn_rate}_uni
         mkdir -p $snapdir

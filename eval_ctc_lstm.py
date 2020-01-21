@@ -13,11 +13,13 @@ import keras.utils
 import keras.backend as K
 import numpy as np
 import random
+import h5py
 #from tf.keras.experimental import PeepholeLSTMCell
 #from tf.keras.experimental import PeeholeLSTMCell
 #import functools
 #import CTCModel
 import generator
+import dynamic_programming
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -56,9 +58,9 @@ def build_model(inputs, units, depth, n_labels, feat_dim, direction, use_softmax
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     if use_softmax is True:
         outputs = Activation('softmax', name='softmax')(outputs)
-
+    model=Model(inputs, outputs)
 #    model=CTCModel.CTCModel([inputs], [outputs], greedy=False)
-    model.compile()
+    #model.compile(optimizer=keras.optimizers.Adam())
 
     return model
 
@@ -98,44 +100,50 @@ def main():
 
     inputs = Input(shape=(None, args.feat_dim))
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
-        args.feat_dim, args.direction, args.use_softmax)
+        args.feat_dim, args.direction, args.softmax)
     model.load_weights(args.weights, by_name=True)
 
     prior = np.zeros((1, args.n_labels+1))
     if args.prior is not None:
-        with h5py.File(arg.prior, 'r') as f:
-            prior=f['prior'][()]
-        prior=np.log(prior) # prior must be > 0
-    prior=np.expand_dims(1, 0, prior)
+        with h5py.File(args.prior, 'r') as f:
+            prior=f['counts'][()]
+        # reshape because prior is a column vector
+        prior=prior.reshape((1, prior.shape[0]))
+        prior=np.log(prior) # prior has been normalized and must be > 0
+    prior=np.expand_dims(prior, axis=0) # for broadcasting
     prior *= args.prior_scale;
 
-    generator = generator.DataGenerator(args.data, None,
+    test_generator = generator.DataGenerator(args.data, None,
                             args.batch_size, args.feat_dim, args.n_labels)
 
     path=os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
     with h5py.File(path, 'w') as f:
-        for bt in range(generator.__len__()):
-            data, keys = training_generator.__getitem__(bt, return_keys=True)
+        for bt in range(test_generator.__len__()):
+            data, keys = test_generator.__getitem__(bt, return_keys=True)
             # data = [input_sequences, label_sequences, inputs_lengths, labels_length], keys
             # return softmax outputs
             predict = model.predict_on_batch(x=data[0])
             # shift for blank
             predict = np.roll(predict, 1, axis=2)
-            if use_softmax is True:
+            if args.softmax is True:
                 predict = np.log(predict)
             predict += prior
 
-            for i, key in enumearte(keys):
-                pr = np.squeeze(predict[i, :, :])
-                f.create_dataset(key+'/likelihood', pr)
+            for i, key in enumerate(keys):
+                pr = predict.reshape((predict.shape[1], predict.shape[2]))
+                f.create_group(key)
+                f.create_dataset(key+'/likelihood', data=pr)
 
                 if args.align is True:
-                    lb = np.squeeze(data[1][i])
-                    inlen=np.squeeze(data[2][i])
-                    lblen=np.squeeze(data[3][i])
-
-                    align = dynamic_programming(pr, lb, inlen, lblen)
-                    f.create_dataset(key+'/align', align)
+                    #print(data[1][i].shape)
+                    lb = data[1][i].reshape((data[1][i].shape[0],))
+                    #print(data[2][i].shape)
+                    #inlen=data[2][i].reshape((data[2][i].shape[0],))
+                    #lblen=data[3][i].reshape((data[3][i].shape[0],))
+                    #if lblen.shape[0] == 0:
+                    align = dynamic_programming.dynamic_programming(pr, lb, data[2][i], data[3][i])
+                    align = align.reshape((1,align.shape[0]))
+                    f.create_dataset(key+'/align', data=align)
 
 if __name__ == "__main__":
     main()
