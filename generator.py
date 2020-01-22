@@ -19,19 +19,32 @@ class DataGenerator(Sequence):
         self.n_labels=n_labels
         self.shuffle=shuffle
         self.keys=[]
+        # input-length-ordered keys
+        self.sorted_keys=[]
 
         self.h5fd = h5py.File(self.file, 'r')
         self.n_samples = len(self.h5fd.keys())
         if key_file is not None:
             with open(key_file, 'r') as f:
                 for line in f:
-                    self.keys.append(line.strip())
+                    self.sorted_keys.append(line.strip())
         else:
             for key in self.h5fd.keys():
                 self.keys.append(key)
 
+        if len(self.sorted_keys) > 0:
+            assert(len(self.keys) == len(self.sorted_keys))
+
         if self.shuffle:
-            random.shuffle(self.keys)
+            self.keys=[]
+            start=0
+            while True:
+                if start > len(self.sorted_keys):
+                    break
+                end = min(start+256, len(self.sorted_keys))
+                self.keys.expand(random.shuffle(self.sorted_keys[start:end]))
+                start+=256
+            #random.shuffle(self.keys)
 
     def __len__(self):
         return int(np.ceil(self.n_samples)/self.batch_size)
@@ -53,7 +66,15 @@ class DataGenerator(Sequence):
 
     def on_epoch_end(self):
         if self.shuffle == True:
-            random.shuffle(self.keys)
+            self.keys=[]
+            start=0
+            while True:
+                if start > len(self.sorted_keys):
+                    break
+                end = min(start+256, len(self.sorted_keys))
+                self.keys.expand(random.shuffle(self.sorted_keys[start:end]))
+                start+=256
+            #random.shuffle(self.keys)
 
     def __data_generation(self, list_keys_temp):
 

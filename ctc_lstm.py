@@ -72,7 +72,7 @@ def main():
     #print (keras.__version__)
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, required=True, help='training data')
-    parser.add_argument('--key-file', type=str, help='keys')
+    parser.add_argument('--key-file', type=str, required=True, help='keys')
     parser.add_argument('--valid', type=str, required=True, help='validation data')
     parser.add_argument('--eval', type=str, help='evaluation data')
     parser.add_argument('--feat-dim', default=40, type=int, help='feats dim')
@@ -112,9 +112,9 @@ def main():
         args.feat_dim, curr_lr, args.direction)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
-                        args.batch_size, args.feat_dim, args.n_labels)
+                        args.batch_size, args.feat_dim, args.n_labels, shuffle=True)
     valid_generator = generator.DataGenerator(args.valid, None,
-                        args.batch_size, args.feat_dim, args.n_labels)
+                        args.batch_size, args.feat_dim, args.n_labels, shuffle=False)
 
     # callbacks
     #reduce_lr = ReduceLROnPlateau(monitor='val_ler',
@@ -249,6 +249,7 @@ def main():
                 model.save_weights(path)
 
             prev_val_ler = curr_val_ler
+            training_generator.on_epoch_end()
             ep += 1
 
             # keep stats
