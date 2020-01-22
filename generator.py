@@ -9,6 +9,8 @@ import keras.utils
 from keras.preprocessing import sequence
 import tensorflow as tf
 
+SORT_BLOCK_SIZE=256
+
 class DataGenerator(Sequence):
 
     def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024, shuffle=True):
@@ -19,6 +21,7 @@ class DataGenerator(Sequence):
         self.n_labels=n_labels
         self.shuffle=shuffle
         self.keys=[]
+        self.starts=[]
         # input-length-ordered keys
         self.sorted_keys=[]
 
@@ -36,12 +39,17 @@ class DataGenerator(Sequence):
             assert(len(self.keys) == len(self.sorted_keys))
 
         if self.shuffle:
-            self.keys=[]
             start=0
             while True:
                 if start > len(self.sorted_keys):
                     break
-                end = min(start+256, len(self.sorted_keys))
+                self.starts.append(start)
+
+            self.keys=[]
+            start=0
+            for n in range(len(self.starts)):
+                start = self.starts[n]
+                end = min(start+SORT_BLOCK_SIZE, len(self.sorted_keys))
                 self.keys.expand(random.shuffle(self.sorted_keys[start:end]))
                 start+=256
             #random.shuffle(self.keys)
@@ -66,12 +74,13 @@ class DataGenerator(Sequence):
 
     def on_epoch_end(self):
         if self.shuffle == True:
+            # shuffling start pointers
+            random.shuffle(self.starts)
             self.keys=[]
             start=0
-            while True:
-                if start > len(self.sorted_keys):
-                    break
-                end = min(start+256, len(self.sorted_keys))
+            for n in range(len(self.starts)):
+                start = self.starts[n]
+                end = min(start+SORT_BLOCK_SIZE, len(self.sorted_keys))
                 self.keys.expand(random.shuffle(self.sorted_keys[start:end]))
                 start+=256
             #random.shuffle(self.keys)
