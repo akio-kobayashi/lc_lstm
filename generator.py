@@ -31,9 +31,8 @@ class DataGenerator(Sequence):
             with open(key_file, 'r') as f:
                 for line in f:
                     self.sorted_keys.append(line.strip())
-        else:
-            for key in self.h5fd.keys():
-                self.keys.append(key)
+        for key in self.h5fd.keys():
+            self.keys.append(key)
 
         if len(self.sorted_keys) > 0:
             assert(len(self.keys) == len(self.sorted_keys))
