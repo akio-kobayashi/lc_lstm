@@ -9,7 +9,7 @@ cd ~/lc_lstm
 train=./train_clean_100.h5
 valid=./dev_clean.h5
 test=./test_clean.h5
-#keys=./train.sorted
+keys=./train_clean_100.sorted
 n_labels=32
 
 # features
@@ -27,9 +27,9 @@ factor=0.9
 
 for lstm_depth in 3 4 5;
 do
-  for units in 320;
+  for units in 160;
   do
-    for learn_rate in 1.0e-4 4.0e-5 1.0e-5;
+    for learn_rate in 1.0e-4 4.0e-4 4.0e-5;
     do
       if [ $device == 1 ];then
         snapdir=./model_d${lstm_depth}_d${units}_l${learn_rate}_uni
