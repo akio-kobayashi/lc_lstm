@@ -36,7 +36,7 @@ do
         logdir=./logs_d${lstm_depth}_d${units}_l${learn_rate}_uni
         mkdir -p $snapdir
         mkdir -p $logdir
-        python ctc_lstm.py --data $train --valid $valid --direction uni \
+        python ctc_lstm.py --data $train --valid $valid --direction uni --key-file $keys\
         --feat-dim $feat_dim --n-labels $n_labels --batch-size $batch_size --epochs $epochs \
         --snapshot $snapdir  --learn-rate $learn_rate --log-dir $logdir \
         --units $units --lstm-depth $lstm_depth --factor $factor
@@ -45,7 +45,7 @@ do
         logdir=./logs_d${lstm_depth}_d${units}_l${learn_rate}_bi
         mkdir -p $snapdir
         mkdir -p $logdir
-        python ctc_lstm.py --data $train --valid $valid --direction bi \
+        python ctc_lstm.py --data $train --valid $valid --direction bi --key-file $keys \
         --feat-dim $feat_dim --n-labels $n_labels --batch-size $batch_size --epochs $epochs \
         --snapshot $snapdir  --learn-rate $learn_rate --log-dir $logdir \
         --units $units --lstm-depth $lstm_depth --factor $factor
