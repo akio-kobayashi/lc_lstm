@@ -14,13 +14,14 @@ n_labels=32
 
 # features
 feat_dim=40
-units=320
+#units=320
+units=160
 lstm_depth=3
 
 #training
 #direction=bi
 batch_size=64
-epochs=50
+epochs=100
 learn_rate=1.0e-3
 factor=0.9
 
