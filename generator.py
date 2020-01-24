@@ -43,6 +43,7 @@ class DataGenerator(Sequence):
                 if start > len(self.sorted_keys):
                     break
                 self.starts.append(start)
+                start+=SORT_BLOCK_SIZE
 
             self.keys=[]
             start=0
@@ -50,7 +51,7 @@ class DataGenerator(Sequence):
                 start = self.starts[n]
                 end = min(start+SORT_BLOCK_SIZE, len(self.sorted_keys))
                 self.keys.expand(random.shuffle(self.sorted_keys[start:end]))
-                start+=256
+                start+=SORT_BLOCK_SIZE
             #random.shuffle(self.keys)
 
     def __len__(self):
