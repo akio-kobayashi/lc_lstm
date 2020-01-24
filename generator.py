@@ -55,6 +55,9 @@ class DataGenerator(Sequence):
                 self.keys.extend(lst)
                 start+=SORT_BLOCK_SIZE
             #random.shuffle(self.keys)
+        else:
+            if len(self.sorted_keys) > 0:
+                self.keys = self.sorted_keys
 
     def __len__(self):
         return int(np.ceil(self.n_samples)/self.batch_size)
