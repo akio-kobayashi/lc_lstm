@@ -50,7 +50,7 @@ class DataGenerator(Sequence):
             for n in range(len(self.starts)):
                 start = self.starts[n]
                 end = min(start+SORT_BLOCK_SIZE, len(self.sorted_keys))
-                self.keys.expand(random.shuffle(self.sorted_keys[start:end]))
+                self.keys.extend(random.shuffle(self.sorted_keys[start:end]))
                 start+=SORT_BLOCK_SIZE
             #random.shuffle(self.keys)
 
@@ -81,8 +81,8 @@ class DataGenerator(Sequence):
             for n in range(len(self.starts)):
                 start = self.starts[n]
                 end = min(start+SORT_BLOCK_SIZE, len(self.sorted_keys))
-                self.keys.expand(random.shuffle(self.sorted_keys[start:end]))
-                start+=256
+                self.keys.extend(random.shuffle(self.sorted_keys[start:end]))
+                start+=SORT_BLOCK_SIZE
             #random.shuffle(self.keys)
 
     def __data_generation(self, list_keys_temp):
