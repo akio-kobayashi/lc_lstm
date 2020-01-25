@@ -13,6 +13,7 @@ import keras.utils
 import keras.backend as K
 import numpy as np
 import random
+import time
 #from tf.keras.experimental import PeepholeLSTMCell
 #from tf.keras.experimental import PeeholeLSTMCell
 #import functools
@@ -160,6 +161,7 @@ def main():
     with open(args.log_dir+'/logs', 'w') as logs:
         #for ep in range(args.epochs):
         while ep < args.epochs:
+            start_time=time.time()
             curr_loss = 0.0
             curr_samples=0
             #curr_labels=0
@@ -271,6 +273,11 @@ def main():
             prev_val_ler = curr_val_ler
             training_generator.on_epoch_end()
             ep += 1
+
+            elapsed_time = time.time() - start_time
+            msg="time: %.4f at epoch %d" % (elapsed_time, ep)
+            logs.write(msg+'\n')
+            print(msg)
 
             # keep stats
             '''
