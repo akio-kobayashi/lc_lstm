@@ -42,13 +42,9 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
     for n in range (depth):
         if direction == 'bi':
             outputs=Bidirectional(CuDNNGRU(units,
-                dropout=dropout,
-                unit_forget_bias=True,
                 return_sequences=True))(outputs)
         else:
-            outputs=CuDNNGRU(units,return_sequences=True,
-                dropout=dropout,
-                unit_forget_bias=True)(outputs)
+            outputs=CuDNNGRU(units,return_sequences=True)(outputs)
         if layer_norm is True:
             outputs=LayerNormalization()(outputs)
 #        recurrent_activation='sigmoid',
