@@ -34,7 +34,8 @@ K.set_session(sess)
 
 max_label_len=1024
 
-def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction, dropout=0.0):
+def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
+                dropout=0.0, layer_norm):
 
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
@@ -48,7 +49,8 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction, dr
             outputs=CuDNNGRU(units,return_sequences=True,
                 dropout=dropout,
                 unit_forget_bias=True)(outputs)
-        outputs=LayerNormalization()(outputs)
+        if layer_norm is True:
+            outputs=LayerNormalization()(outputs)
 #        recurrent_activation='sigmoid',
         #outputs=Bidirectional(RNN(tf.compat.v1.keras.experimental.PeepholeLSTMCell(
         #                units, kernel_initializer='glorot_uniform',
@@ -107,6 +109,8 @@ def main():
     parser.add_argument('--factor', type=float, default=0.5,help='lerarning rate decaying factor')
     parser.add_argument('--min-lr', type=float, default=1.0e-6, help='minimum learning rate')
     parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
+    parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
+    parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
@@ -117,7 +121,7 @@ def main():
             curr_lr=f.readline()
     '''
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
-        args.feat_dim, curr_lr, args.direction)
+        args.feat_dim, curr_lr, args.direction, args.dropout, args.layer_norm)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels, shuffle=True)
@@ -275,7 +279,7 @@ def main():
 
             if early_stop > max_early_stop:
                 break
-            
+
             prev_val_ler = curr_val_ler
             training_generator.on_epoch_end()
             ep += 1
