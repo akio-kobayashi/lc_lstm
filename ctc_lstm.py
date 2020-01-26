@@ -13,6 +13,7 @@ import keras.utils
 import keras.backend as K
 import numpy as np
 import random
+import time
 #from tf.keras.experimental import PeepholeLSTMCell
 #from tf.keras.experimental import PeeholeLSTMCell
 #import functools
@@ -80,6 +81,7 @@ def main():
     parser.add_argument('--data', type=str, required=True, help='training data')
     parser.add_argument('--key-file', type=str, required=True, help='keys')
     parser.add_argument('--valid', type=str, required=True, help='validation data')
+    parser.add_argument('--valid-key-file', type=str, default=None, help='validataion keys')
     parser.add_argument('--eval', type=str, help='evaluation data')
     parser.add_argument('--feat-dim', default=40, type=int, help='feats dim')
     '''
@@ -119,7 +121,7 @@ def main():
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels, shuffle=True)
-    valid_generator = generator.DataGenerator(args.valid, None,
+    valid_generator = generator.DataGenerator(args.valid, args.valid_key_file,
                         args.batch_size, args.feat_dim, args.n_labels, shuffle=False)
 
     # callbacks
@@ -147,6 +149,7 @@ def main():
     min_val_ler = 1.0e10
     curr_lr=args.learn_rate
     ep=0
+    prev_save_ep=0
     max_early_stop=5
     early_stop=0
 
@@ -164,6 +167,7 @@ def main():
     with open(args.log_dir+'/logs', 'w') as logs:
         #for ep in range(args.epochs):
         while ep < args.epochs:
+            start_time=time.time()
             curr_loss = 0.0
             curr_samples=0
             #curr_labels=0
@@ -184,7 +188,8 @@ def main():
                 # progress report
                 progress_loss = curr_loss/curr_samples
                 #progress_ler = np.mean(curr_ler)*100.0
-                #msg='progress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,training_generator.__len__(), progress_loss, progress_ler)
+                #msg='progress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,training_generator.__len__(),
+                #progress_loss, progress_ler)
                 msg='progress: (%d/%d) loss=%.4f' % (bt+1,training_generator.__len__(), progress_loss)
                 #print(msg,file=sys.stderr,flush=True)
                 print(msg)
@@ -223,6 +228,7 @@ def main():
 
             curr_val_loss /= curr_val_samples
             curr_val_ler = np.mean(curr_val_ler)*100.0
+            '''
             if prev_val_ler < curr_val_ler:
                 patience += 1
                 if patience >= max_patience:
@@ -240,7 +246,7 @@ def main():
                     patience=0
             else:
                 patience=0
-
+            '''
             #print('Epoch %d (valid) ler=%.4f' % (ep+1, curr_val_ler), file=sys.stderr)
             msg='Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler)
             logs.write(msg+'\n')
@@ -253,10 +259,31 @@ def main():
                 min_val_ler = curr_val_ler
                 path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
                 model.save_weights(path)
+                prev_save_ep = ep
+            else:
+                if ep - prev_save_ep > max_patience:
+                    prev_lr = K.get_value(model.model_train.optimizer.lr)
+                    curr_lr = prev_lr * args.factor
+                    if curr_lr < args.min_lr:
+                        curr_lr = args.min_lr
+                        early_stop+=1
+                    else:
+                        msg="lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr)
+                        logs.write(msg+'\n')
+                        print(msg)
+                        K.set_value(model.model_train.optimizer.lr,curr_lr)
 
+            if early_stop > max_early_stop:
+                break
+            
             prev_val_ler = curr_val_ler
             training_generator.on_epoch_end()
             ep += 1
+
+            elapsed_time = time.time() - start_time
+            msg="time: %.4f at epoch %d" % (elapsed_time, ep)
+            logs.write(msg+'\n')
+            print(msg)
 
             # keep stats
             '''
@@ -269,8 +296,6 @@ def main():
             with open(args.log_dir+'/min_val_ler', 'w') as f:
                 f.write(str(min_val_ler))
             '''
-            if early_stop > max_early_stop:
-                break
 
     print("Training End.")
     #tensorboard.on_train_end(None)
