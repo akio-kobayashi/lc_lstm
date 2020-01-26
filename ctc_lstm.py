@@ -18,6 +18,7 @@ import random
 #import functools
 import CTCModel
 import generator
+import layer_normalization
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -32,16 +33,21 @@ K.set_session(sess)
 
 max_label_len=1024
 
-def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction):
+def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction, dropout=0.0):
 
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
     for n in range (depth):
         if direction == 'bi':
             outputs=Bidirectional(CuDNNGRU(units,
+                dropout=dropout,
+                unit_forget_bias=True,
                 return_sequences=True))(outputs)
         else:
-            outputs=CuDNNGRU(units,return_sequences=True)(outputs)
+            outputs=CuDNNGRU(units,return_sequences=True,
+                dropout=dropout,
+                unit_forget_bias=True)(outputs)
+        outputs=LayerNormalization()(outputs)
 #        recurrent_activation='sigmoid',
         #outputs=Bidirectional(RNN(tf.compat.v1.keras.experimental.PeepholeLSTMCell(
         #                units, kernel_initializer='glorot_uniform',
