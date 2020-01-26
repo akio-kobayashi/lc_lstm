@@ -1,5 +1,5 @@
-from .backend import keras
-from .backend import backend as K
+from backends import keras
+from backends import backend as K
 
 
 class LayerNormalization(keras.layers.Layer):
