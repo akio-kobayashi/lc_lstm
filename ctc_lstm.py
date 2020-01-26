@@ -46,7 +46,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
         else:
             outputs=CuDNNGRU(units,return_sequences=True)(outputs)
         if layer_norm is True:
-            outputs=LayerNormalization()(outputs)
+            outputs=layer_normalization.LayerNormalization()(outputs)
 #        recurrent_activation='sigmoid',
         #outputs=Bidirectional(RNN(tf.compat.v1.keras.experimental.PeepholeLSTMCell(
         #                units, kernel_initializer='glorot_uniform',
