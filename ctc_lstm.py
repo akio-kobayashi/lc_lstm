@@ -35,7 +35,7 @@ K.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
-                dropout=0.0, layer_norm):
+                dropout, layer_norm=):
 
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
