@@ -124,6 +124,7 @@ def main():
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
     parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
     parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
+    parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
@@ -162,7 +163,7 @@ def main():
     '''
     prev_val_ler = 1.0e10
     patience = 0
-    max_patience=5
+    max_patience=args.max_patient
     min_val_ler = 1.0e10
     curr_lr=args.learn_rate
     ep=0
