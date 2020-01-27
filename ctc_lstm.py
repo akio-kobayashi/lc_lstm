@@ -259,6 +259,10 @@ def main():
                 min_val_ler = curr_val_ler
                 path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
                 model.save_weights(path)
+                msg="save the model epoch %d" % (ep+1)
+                logs.write(msg+'\n')
+                print(msg)
+                logs.flush()
                 prev_save_ep = ep
             else:
                 if ep - prev_save_ep > max_patience:
