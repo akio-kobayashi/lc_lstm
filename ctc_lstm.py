@@ -124,6 +124,7 @@ def main():
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
     parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
     parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
+    parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     args = parser.parse_args()
 
@@ -135,7 +136,7 @@ def main():
             curr_lr=f.readline()
     '''
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
-        args.feat_dim, curr_lr, args.direction, args.dropout, args.layer_norm, args.vgg)
+                        args.feat_dim, curr_lr, args.direction, args.dropout, args.layer_norm, args.vgg, args.filters)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels, shuffle=True)
