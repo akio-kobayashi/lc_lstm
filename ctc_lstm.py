@@ -6,8 +6,9 @@ import time
 import tensorflow as tf
 #import tensorflow.keras
 from keras.models import Model
-from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, RNN,GRU, CuDNNGRU
+from keras.layers import Dense, Input, BatchNormalization, Softmax, LSTM, Activation, RNN, GRU, CuDNNGRU
 from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
+from keras.layers import Conv2D, Reshape
 from keras.constraints import max_norm
 import keras.utils
 import keras.backend as K
@@ -35,10 +36,35 @@ K.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
-                dropout, layer_norm):
+                dropout, layer_norm, use_vgg, init_filters):
 
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
+
+    if use_vgg is True:
+        # add channel dim
+        outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
+
+        filters=self.init_filters
+        outputs=Conv2D(filters=filters,
+            kernel_size=3, padding='same',
+            strides=1,
+            data_format='channels_last',
+            kernel_initializer='glorot_uniform')(outputs)
+        outputs=BatchNormalization(axis=-1)(outputs)
+        outputs=Activation('relu')(outputs)
+
+        filters *= 2
+        outputs=Conv2D(filters=filters,
+            kernel_size=3, padding='same',
+            strides=1,
+            data_format='channels_last',
+            kernel_initializer='glorot_uniform')(outputs)
+        outputs=BatchNormalization(axis=-1)(outputs)
+        outputs=Activation('relu')(outputs)
+
+        outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
+
     for n in range (depth):
         if direction == 'bi':
             outputs=Bidirectional(CuDNNGRU(units,
@@ -47,16 +73,6 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
             outputs=CuDNNGRU(units,return_sequences=True)(outputs)
         if layer_norm is True:
             outputs=layer_normalization.LayerNormalization()(outputs)
-#        recurrent_activation='sigmoid',
-        #outputs=Bidirectional(RNN(tf.compat.v1.keras.experimental.PeepholeLSTMCell(
-        #                units, kernel_initializer='glorot_uniform',
-        #                unit_forget_bias=True),
-        #                return_sequences=True,
-        #                ))(outputs)
-#                                      dropout=0.1,
-#                                      recurrent_dropout=0.1,
-#                                      kernel_constraint=max_norm(2),
-#                                      recurrent_constraint=max_norm(2),
 
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
@@ -107,6 +123,7 @@ def main():
     parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
     parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
+    parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
@@ -117,7 +134,7 @@ def main():
             curr_lr=f.readline()
     '''
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
-        args.feat_dim, curr_lr, args.direction, args.dropout, args.layer_norm)
+        args.feat_dim, curr_lr, args.direction, args.dropout, args.layer_norm, args.vgg)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels, shuffle=True)
