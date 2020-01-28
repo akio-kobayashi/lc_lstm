@@ -45,7 +45,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
         # add channel dim
         outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
 
-        filters=self.init_filters
+        filters=init_filters
         outputs=Conv2D(filters=filters,
             kernel_size=3, padding='same',
             strides=1,
@@ -77,8 +77,9 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
 
-    model=CTCModel.CTCModel([inputs], [outputs], greedy=False)
-    model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.))
+    model=CTCModel.CTCModel([inputs], [outputs], greedy=True)
+    #model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.))
+    model.compile(keras.optimizers.Adadelta())
 
     return model
 
@@ -291,7 +292,7 @@ def main():
                         curr_lr = args.min_lr
                         early_stop+=1
                     else:
-                        msg="lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr)
+                        msg="learning rate chaged %.4f to %.4f at epoch %d" % (prev_lr, curr_lr, ep+1)
                         logs.write(msg+'\n')
                         print(msg)
                         K.set_value(model.model_train.optimizer.lr,curr_lr)
