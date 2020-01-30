@@ -143,65 +143,86 @@ def main():
             curr_loss = 0.0
             curr_samples=0
             curr_labels=0
-            curr_acc=0.0
+            curr_acc=[]
             for bt in range(training_generator.__len__()):
                 data = training_generator.__getitem__(bt)
                 # data = [input_sequences, label_sequences, inputs_lengths]
                 loss,acc = model.train_on_batch(x=data[0],y=data[1])
-                # for macro-mean
+
                 samples = data[0].shape[0]
                 curr_loss += loss * samples
                 curr_samples += samples
+                curr_acc.append(acc)
 
                 # progress report
                 progress_loss = curr_loss/curr_samples
-                progress_acc = curr_accp
+                progress_acc = np.mean(curr_acc)
                 msg='progress: (%d/%d) loss=%.4f acc=%.4f' % (bt+1,training_generator.__len__(),
                             progress_loss, progress_acc)
                 print(msg)
                 logs.write(msg+'\n')
+            logs.flush()
 
+            curr_val_loss = 0.0
+            curr_val_samples = 0
+            curr_val_acc = []
 
-        curr_val_loss = 0.0
-        curr_val_acc = 0.0
-        curr_val_samples = 0
+            ep_loss = curr_loss/curr_samples
+            ep_acc = np.mean(curr_acc)
+            msg='Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, ep_loss, ep_acc)
+            print(msg)
+            logs.write(msg+'\n')
 
-        for bt in range(valid_generator.__len__()):
-            data = valid_generator.__getitem__(bt)
-            loss, acc = model.test_on_batch(x=data[0], y=data[1])
-            # for micro-mean
-            samples = data[0].shape[0]
-            curr_val_loss += loss * samples
-            curr_val_acc += np.sum(np.array(acc))*samples
-            curr_val_samples += samples
+            for bt in range(valid_generator.__len__()):
+                data = valid_generator.__getitem__(bt)
+                loss, acc = model.test_on_batch(x=data[0], y=data[1])
 
-        print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, curr_acc))
+                samples = data[0].shape[0]
+                curr_val_loss += loss * samples
+                curr_val_acc.append(acc)
+                curr_val_samples += samples
 
-        curr_val_loss /= curr_val_samples
-        curr_val_acc = curr_val_acc*100.0/curr_val_samples
-        if prev_val_acc > curr_val_acc:
-            patience += 1
-            if patience >= max_patience:
-                prev_lr = K.get_value(model.optimizer.lr)
-                curr_lr = prev_lr * args.factor
-                if curr_lr < args.min_lr:
-                    curr_lr = args.min_lr
-                else:
-                    print("lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr))
-                    K.set_value(model.optimizer.lr,curr_lr)
-                patience=0
-        else:
-            patience=0
+            ep_val_loss = curr_val_loss/curr_val_samples
+            ep_val_acc = np.mean(curr_val_acc)
 
-        print('Epoch %d (valid) loss=%.4f acc=%.4f' % (ep+1, curr_val_loss, curr_val_acc))
+            msg='Epoch %d (valid) loss=%.4f acc=%.4f' % (ep+1, ep_val_loss, ep_val_acc)
+            print(msg)
+            logs.write(msg+'\n')
 
-        # save best model in .h5
-        if max_val_acc < curr_val_acc:
-            max_val_acc = curr_val_acc
-            path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
-            model.save_weights(path)
+            if min_val_ler > curr_val_ler:
+                min_val_ler = curr_val_ler
+                path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
+                model.save_weights(path)
+                msg="save the model epoch %d" % (ep+1)
+                logs.write(msg+'\n')
+                print(msg)
+                logs.flush()
+                prev_save_ep = ep
+            else:
+                if ep - prev_save_ep > max_patience:
+                    prev_lr = K.get_value(model.model_train.optimizer.lr)
+                    curr_lr = prev_lr * args.factor
+                    if curr_lr < args.min_lr:
+                        curr_lr = args.min_lr
+                        early_stop+=1
+                    else:
+                        msg="learning rate chaged %.4f to %.4f at epoch %d" % (prev_lr, curr_lr, ep+1)
+                        logs.write(msg+'\n')
+                        print(msg)
+                        K.set_value(model.model_train.optimizer.lr,curr_lr)
 
-        prev_val_acc = curr_val_acc
+            if early_stop > max_early_stop:
+                break
+
+            prev_val_ler = curr_val_ler
+            training_generator.on_epoch_end()
+            ep += 1
+
+            elapsed_time = time.time() - start_time
+            msg="time: %.4f at epoch %d" % (elapsed_time, ep)
+            logs.write(msg+'\n')
+            print(msg)
+
 
     # evaluation
     '''
