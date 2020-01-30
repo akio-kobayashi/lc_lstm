@@ -258,7 +258,7 @@ def main():
                         curr_lr = args.min_lr
                         early_stop+=1
                     else:
-                        msg="lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr)
+                        msg="learning rate chaged %.4f to %.4f" % (prev_lr, curr_lr)
                         logs.write(msg+'\n')
                         #print(msg, file=sys.stderr,flush=True)
                         print(msg)
