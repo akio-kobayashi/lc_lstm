@@ -36,7 +36,7 @@ K.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
-                dropout, layer_norm, use_vgg, init_filters):
+                dropout, layer_norm, use_vgg, init_filters, optim):
 
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
@@ -78,8 +78,10 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
     outputs = Activation('softmax', name='softmax')(outputs)
 
     model=CTCModel.CTCModel([inputs], [outputs], greedy=True)
-    #model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.))
-    model.compile(keras.optimizers.Adadelta())
+    if optim == 'adam':
+        model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.))
+    else:
+        model.compile(keras.optimizers.Adadelta())
 
     return model
 
@@ -127,6 +129,7 @@ def main():
     parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
+    parser.add_argument('--optim', type=str, default='adadelta', help='optimizer')
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
@@ -137,7 +140,8 @@ def main():
             curr_lr=f.readline()
     '''
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
-                        args.feat_dim, curr_lr, args.direction, args.dropout, args.layer_norm, args.vgg, args.filters)
+                        args.feat_dim, curr_lr, args.direction, args.dropout,
+                        args.layer_norm, args.vgg, args.filters, args.optim)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels, shuffle=True)
