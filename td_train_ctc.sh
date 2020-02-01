@@ -7,46 +7,40 @@ cd /home/akio/lc_lstm
 # librispeech
 train=./train.h5
 valid=./dev.h5
-#keys=./train.sorted
+key_file=./train.sorted
+valid_key_file=./dev.sorted
 n_labels=49
 
 # features
 feat_dim=40
-units=320
-lstm_depth=3
 
 #training
-#direction=bi
-batch_size=32
-epochs=50
-learn_rate=1.0e-3
-factor=0.9
+batch_size=16
+epochs=100
+factor=0.5
+optim=adadelta
 
-for lstm_depth in 3 4 5;
+for lstm_depth in 5;
 do
-  for units in 320;
+  for units in 160;
   do
-    for learn_rate in 1.0e-4 4.0e-5 1.0e-5;
-    do
-      if [ $device == 0 ];then
-        snapdir=./model_d${lstm_depth}_d${units}_l${learn_rate}_uni
-        logdir=./logs_d${lstm_depth}_d${units}_l${learn_rate}_uni
-        mkdir -p $snapdir
-        mkdir -p $logdir
-        python ctc_lstm.py --data $train --valid $valid --direction uni \
-        --feat-dim $feat_dim --n-labels $n_labels --batch-size $batch_size --epochs $epochs \
-        --snapshot $snapdir  --learn-rate $learn_rate --log-dir $logdir \
-        --units $units --lstm-depth $lstm_depth --factor $factor
-      else
-        snapdir=./model_d${lstm_depth}_d${units}_l${learn_rate}_bi
-        logdir=./logs_d${lstm_depth}_d${units}_l${learn_rate}_bi
-        mkdir -p $snapdir
-        mkdir -p $logdir
-        python ctc_lstm.py --data $train --valid $valid --direction bi \
-        --feat-dim $feat_dim --n-labels $n_labels --batch-size $batch_size --epochs $epochs \
-        --snapshot $snapdir  --learn-rate $learn_rate --log-dir $logdir \
-        --units $units --lstm-depth $lstm_depth --factor $factor
-      fi
-    done
+      for learn_rate in 2.0e-4;
+      do
+	  if [ $device == 0 ];then
+	      direction=uni
+	  else
+	      direction=bi
+	  fi
+          snapdir=./model_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_vgg_${optim}_${direction}
+	  logdir=./logs_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_vgg_${optim}_${direction}
+          mkdir -p $snapdir
+          mkdir -p $logdir
+	      
+          python ctc_lstm.py --data $train --valid $valid --key-file $key_file --valid-key-file $valid_key_file \
+		 --direction uni \
+		 --feat-dim $feat_dim --n-labels $n_labels --batch-size $batch_size --epochs $epochs \
+		 --snapshot $snapdir  --learn-rate $learn_rate --log-dir $logdir --max-patient 3\
+		 --units $units --lstm-depth $lstm_depth --factor $factor --vgg true --layer-norm true --optim ${optim}
+      done
   done
 done
