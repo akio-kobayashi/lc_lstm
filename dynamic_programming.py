@@ -24,7 +24,7 @@ def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=False):
     #print(bptr.shape)
     # init
     dpmat[0][0] = scores[0][blank]
-    if skip_state is False:
+    if skip_state is True:
         dpmat[0][1] = scores[0][labels_blanks[1]]
     #print('%f %f' % (dpmat[0][0], dpmat[0][1]))
     for f in range(n_inputs):
@@ -38,6 +38,9 @@ def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=False):
             max_state=-1
             p=prev_state
             while p <= curr_state:
+                if dpmat[f-1][p] < -1.0e9 :
+                    p+=1
+                    continue
                 score = dpmat[f-1][p] + scores[f][labels_blanks[curr_state]]
                 #print('%d %d %d %f' % (f, labels_blanks[p], labels_blanks[curr_state],
                 #scores[f][labels_blanks[curr_state]]))
@@ -52,7 +55,8 @@ def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=False):
 
     #print(dpmat)
     final_state = seqlen-1
-    if skip_state is False:
+    #print(labels_blanks[final_state,0])
+    if skip_state is True:
         if dpmat[n_inputs-1][final_state-1] < dpmat[n_inputs-1][final_state-2]:
             final_state = final_state-1
 
@@ -60,11 +64,13 @@ def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=False):
     state = final_state
     fpt=n_inputs-1
     while state >= 0:
+        #print(labels_blanks[state,0])
         results.append(labels_blanks[state,0])
         state=bptr[fpt][state]
         fpt -= 1
+    #print(results)
     results = results[::-1]
+    #print("%d %d" % (len(results), n_inputs))
     print(results)
-    
     # results shpae=(input_length, )
     return np.array(results)
