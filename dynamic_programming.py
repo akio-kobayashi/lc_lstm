@@ -1,7 +1,7 @@
 import numpy as np
 #import dynamic_programming
 
-def dynamic_programming(scores, labels, n_inputs, n_labels):
+def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=False):
     '''
     params:
         scores: 2-d np.array with shape=(frames, n_labels+1), log-scores
@@ -18,13 +18,14 @@ def dynamic_programming(scores, labels, n_inputs, n_labels):
     labels_blanks = np.full((seqlen, 1), blank) # filled with blanks
     for n in range(labels.shape[0]):
         labels_blanks[2*n+1] = labels[n]
-
+    #print(labels_blanks)
     dpmat = np.full((n_inputs, seqlen), -1.0e10)
     bptr  = np.full((n_inputs, seqlen), -1)
     #print(bptr.shape)
     # init
     dpmat[0][0] = scores[0][blank]
-    dpmat[0][1] = scores[0][labels_blanks[1]]
+    if skip_state is False:
+        dpmat[0][1] = scores[0][labels_blanks[1]]
     #print('%f %f' % (dpmat[0][0], dpmat[0][1]))
     for f in range(n_inputs):
         if f == 0: continue
@@ -38,7 +39,8 @@ def dynamic_programming(scores, labels, n_inputs, n_labels):
             p=prev_state
             while p <= curr_state:
                 score = dpmat[f-1][p] + scores[f][labels_blanks[curr_state]]
-                #print('%d %d %d %f' % (f, labels_blanks[p], labels_blanks[curr_state], scores[f][labels_blanks[curr_state]]))
+                #print('%d %d %d %f' % (f, labels_blanks[p], labels_blanks[curr_state],
+                #scores[f][labels_blanks[curr_state]]))
                 if max_score < score:
                     max_score = score
                     max_state = p
@@ -47,9 +49,12 @@ def dynamic_programming(scores, labels, n_inputs, n_labels):
             dpmat[f][curr_state] = max_score
             bptr[f][curr_state] = max_state
             #print('%d %d %f' % (labels_blanks[max_state], labels_blanks[curr_state], max_score))
+
+    #print(dpmat)
     final_state = seqlen-1
-    if dpmat[n_inputs-1][final_state-1] < dpmat[n_inputs-1][final_state-2]:
-        final_state = final_state-2
+    if skip_state is False:
+        if dpmat[n_inputs-1][final_state-1] < dpmat[n_inputs-1][final_state-2]:
+            final_state = final_state-1
 
     results=[]
     state = final_state

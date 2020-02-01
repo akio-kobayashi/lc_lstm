@@ -70,8 +70,10 @@ class DataGenerator(Sequence):
                                                       len(self.keys) ) )]
 
         # [input_sequences, label_sequences, inputs_lengths, labels_length]
+        #print(list_keys_temp)
         input_sequences, label_sequences, inputs_lengths, labels_lengths = self.__data_generation(list_keys_temp)
 
+        #print(inputs_lengths)
         if return_keys is False:
             return [input_sequences, label_sequences, inputs_lengths, labels_lengths]
         else:
