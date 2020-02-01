@@ -129,7 +129,7 @@ def main():
     parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
-    parser.add_argument('--optim', type=str, default='adadelta', help='optimizer')
+    parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta]')
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))

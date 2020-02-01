@@ -28,24 +28,58 @@ keras.backend.set_session(sess)
 
 max_label_len=1024
 
-def build_model(inputs, units, depth, n_labels, feat_dim, init_lr):
+def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
+                dropout, layer_norm, use_vgg, init_filters):
 
-    outputs = Masking(mask_value=0.0)(inputs)
+    #outputs = Masking(mask_value=0.0)(inputs)
+    outputs=inputs
+
+    if use_vgg is True:
+        # add channel dim
+        outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
+
+        filters=init_filters
+        outputs=Conv2D(filters=filters,
+            kernel_size=3, padding='same',
+            strides=1,
+            data_format='channels_last',
+            kernel_initializer='glorot_uniform')(outputs)
+        outputs=BatchNormalization(axis=-1)(outputs)
+        outputs=Activation('relu')(outputs)
+
+        filters *= 2
+        outputs=Conv2D(filters=filters,
+            kernel_size=3, padding='same',
+            strides=1,
+            data_format='channels_last',
+            kernel_initializer='glorot_uniform')(outputs)
+        outputs=BatchNormalization(axis=-1)(outputs)
+        outputs=Activation('relu')(outputs)
+
+        outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
+
     for n in range (depth):
-        outputs=Bidirectional(LSTM(units, kernel_initializer='glorot_uniform',
-                                       return_sequences=True,
-                                       unit_forget_bias=True,
-                                       name='lstm_'+str(n)))(outputs)
+        if direction == 'bi':
+            outputs=Bidirectional(CuDNNGRU(units,
+                return_sequences=True))(outputs)
+        else:
+            outputs=CuDNNGRU(units,return_sequences=True)(outputs)
+        if layer_norm is True:
+            outputs=layer_normalization.LayerNormalization()(outputs)
 
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
 
     model=Model(inputs, outputs)
     # we can get accuracy from data along with batch/temporal axes.
-    model.compile(keras.optimizers.Adam(lr=init_lr),
-        loss=['categorical_cross_entropy'],
-        metrics=['categorical_accuracy'])
-
+    if optim == 'adam':
+        model.compile(keras.optimizers.Adam(lr=init_lr),
+            loss=['acategorical_cross_entropy'],
+            metrics=['categorical_accuracy'])
+    else:
+        model.compile(keras.optimizers.Adadelta(),
+            loss=['acategorical_cross_entropy'],
+            metrics=['categorical_accuracy'])
     return model
 
 def main():
@@ -78,7 +112,12 @@ def main():
                         help='number of LSTM layers')
     parser.add_argument('--factor', type=float, default=0.5,help='lerarning rate decaying factor')
     parser.add_argument('--min-lr', type=float, default=1.0e-6, help='minimum learning rate')
-
+    parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
+    parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
+    parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
+    parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
+    parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
+    parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
@@ -89,85 +128,101 @@ def main():
     valid_generator = generator.CEDataGenerator(args.valid, None,
                         args.batch_size, args.feat_dim, args.n_labels)
 
-    # callbacks
-    #reduce_lr = ReduceLROnPlateau(monitor='val_ler',
-    #                              factor=0.5, patience=5,
-    #                              min_lr=0.000001, verbose=1)
-    #cp_path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
-    #model_cp = ModelCheckpoint(cp_path, monitor='val_categorical_accuracy',
-    #                           save_best_only=True,
-    #                           save_weights_only=True, verbose=1)
-    #tensorboard = TensorBoard(log_dir=args.log_dir)
-
-    prev_val_acc = 0.0
+    prev_val_acc = -1.0e10
     patience = 0
-    max_val_acc = 0.0
+    max_patience=args.max_patient
+    max_val_acc = -1.0e10
+    curr_lr=args.learn_rate
+    ep=0
+    prev_save_ep=0
+    max_early_stop=5
+    early_stop=0
 
-    for ep in range(args.epochs):
-        curr_loss = 0.0
-        curr_samples=0
-        curr_labels=0
-        curr_acc=0.0
-        print('progress:')
-        for bt in range(training_generator.__len__()):
-            data = training_generator.__getitem__(bt)
-            # data = [input_sequences, label_sequences, inputs_lengths]
-            loss,acc = model.train_on_batch(x=data[0],y=data[1])
-            # for micro-mean
-            samples = data[0].shape[0]
-            curr_loss += loss * samples
-            curr_acc += np.sum(np.array(acc))*samples
-            curr_samples += samples
+    with open(args.log_dir+'/logs', 'w') as logs:
+        while ep < args.epochs:
+            curr_loss = 0.0
+            curr_samples=0
+            curr_labels=0
+            curr_acc=[]
+            for bt in range(training_generator.__len__()):
+                data = training_generator.__getitem__(bt)
+                # data = [input_sequences, label_sequences, inputs_lengths]
+                loss,acc = model.train_on_batch(x=data[0],y=data[1])
 
-            # progress report
-            progress_loss = curr_loss/curr_samples
-            progress_acc = curr_acc*100.0/curr_samples
-            print('\rprogress: (%d/%d) loss=%.4f acc=%.4f' % (bt+1,
-                training_generator.__len__(), progress_loss, progress_acc),
-                end='')
-        print('\n',end='')
-        curr_loss /= curr_samples
-        curr_acc = curr_acc*100.0/curr_samples
-        curr_val_loss = 0.0
-        curr_val_acc = 0.0
-        curr_val_samples = 0
+                samples = data[0].shape[0]
+                curr_loss += loss * samples
+                curr_samples += samples
+                curr_acc.append(acc)
 
-        for bt in range(valid_generator.__len__()):
-            data = valid_generator.__getitem__(bt)
-            loss, acc = model.test_on_batch(x=data[0], y=data[1])
-            # for micro-mean
-            samples = data[0].shape[0]
-            curr_val_loss += loss * samples
-            curr_val_acc += np.sum(np.array(acc))*samples
-            curr_val_samples += samples
+                # progress report
+                progress_loss = curr_loss/curr_samples
+                progress_acc = np.mean(curr_acc)
+                msg='progress: (%d/%d) loss=%.4f acc=%.4f' % (bt+1,training_generator.__len__(),
+                            progress_loss, progress_acc)
+                print(msg)
+                logs.write(msg+'\n')
+            logs.flush()
 
-        print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, curr_acc))
+            curr_val_loss = 0.0
+            curr_val_samples = 0
+            curr_val_acc = []
 
-        curr_val_loss /= curr_val_samples
-        curr_val_acc = curr_val_acc*100.0/curr_val_samples
-        if prev_val_acc > curr_val_acc:
-            patience += 1
-            if patience >= max_patience:
-                prev_lr = K.get_value(model.optimizer.lr)
-                curr_lr = prev_lr * args.factor
-                if curr_lr < args.min_lr:
-                    curr_lr = args.min_lr
-                else:
-                    print("lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr))
-                    K.set_value(model.optimizer.lr,curr_lr)
-                patience=0
-        else:
-            patience=0
+            ep_loss = curr_loss/curr_samples
+            ep_acc = np.mean(curr_acc)
+            msg='Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, ep_loss, ep_acc)
+            print(msg)
+            logs.write(msg+'\n')
 
-        print('Epoch %d (valid) loss=%.4f acc=%.4f' % (ep+1, curr_val_loss, curr_val_acc))
+            for bt in range(valid_generator.__len__()):
+                data = valid_generator.__getitem__(bt)
+                loss, acc = model.test_on_batch(x=data[0], y=data[1])
 
-        # save best model in .h5
-        if max_val_acc < curr_val_acc:
-            max_val_acc = curr_val_acc
-            path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
-            model.save_weights(path)
+                samples = data[0].shape[0]
+                curr_val_loss += loss * samples
+                curr_val_acc.append(acc)
+                curr_val_samples += samples
 
-        prev_val_acc = curr_val_acc
+            ep_val_loss = curr_val_loss/curr_val_samples
+            ep_val_acc = np.mean(curr_val_acc)
+
+            msg='Epoch %d (valid) loss=%.4f acc=%.4f' % (ep+1, ep_val_loss, ep_val_acc)
+            print(msg)
+            logs.write(msg+'\n')
+
+            if min_val_ler > curr_val_ler:
+                min_val_ler = curr_val_ler
+                path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
+                model.save_weights(path)
+                msg="save the model epoch %d" % (ep+1)
+                logs.write(msg+'\n')
+                print(msg)
+                logs.flush()
+                prev_save_ep = ep
+            else:
+                if ep - prev_save_ep > max_patience:
+                    prev_lr = K.get_value(model.model_train.optimizer.lr)
+                    curr_lr = prev_lr * args.factor
+                    if curr_lr < args.min_lr:
+                        curr_lr = args.min_lr
+                        early_stop+=1
+                    else:
+                        msg="learning rate chaged %.4f to %.4f at epoch %d" % (prev_lr, curr_lr, ep+1)
+                        logs.write(msg+'\n')
+                        print(msg)
+                        K.set_value(model.model_train.optimizer.lr,curr_lr)
+
+            if early_stop > max_early_stop:
+                break
+
+            prev_val_ler = curr_val_ler
+            training_generator.on_epoch_end()
+            ep += 1
+
+            elapsed_time = time.time() - start_time
+            msg="time: %.4f at epoch %d" % (elapsed_time, ep)
+            logs.write(msg+'\n')
+            print(msg)
+
 
     # evaluation
     '''

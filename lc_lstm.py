@@ -36,34 +36,65 @@ def set_states(model, states):
     for (d,_), s in zip(model.state_updates, states):
         K.set_value(d, s)
 
-def build_model(inputs, masks, units, depth, n_labels, feat_dim, init_lr):
+def build_model(inputs, masks, units, depth, n_labels, feat_dim, init_lr, use_vgg, optim):
 
     outputs = Masking(mask_value=0.0)(inputs)
+
+    if use_vgg is True:
+        # add channel dim
+        outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
+
+        filters=init_filters
+        outputs=Conv2D(filters=filters,
+            kernel_size=3, padding='same',
+            strides=1,
+            data_format='channels_last',
+            kernel_initializer='glorot_uniform')(outputs)
+        outputs=BatchNormalization(axis=-1)(outputs)
+        outputs=Activation('relu')(outputs)
+
+        filters *= 2
+        outputs=Conv2D(filters=filters,
+            kernel_size=3, padding='same',
+            strides=1,
+            data_format='channels_last',
+            kernel_initializer='glorot_uniform')(outputs)
+        outputs=BatchNormalization(axis=-1)(outputs)
+        outputs=Activation('relu')(outputs)
+
+        outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
+
     for n in range (depth):
         # forward, keep current states
-        x=LSTM(units, kernel_initializer='glorot_uniform',
+        # statefule
+        x=GRU(units, kernel_initializer='glorot_uniform',
                                        return_sequences=True,
-                                       unit_forget_bias=True,
                                        stateful=True,
                                        unroll=True,
-                                       name='lstm_fw_'+str(n))(outputs)
+                                       name='gru_fw_'+str(n))(outputs)
         # backward, not keep current states
-        y=LSTM(units, kernel_initializer='glorot_uniform',
+        # do not preserve state values for backward pass
+        y=GRU(units, kernel_initializer='glorot_uniform',
                                        return_sequences=True,
-                                       unit_forget_bias=True,
                                        stateful=False,
                                        unroll=True,
                                        go_backwards=True,
                                        name='lstm_bw_'+str(n))(outputs)
         outputs = Concatenate([x, y], axis=-1, name='concate_'+str(n))
+        if layer_norm is True:
+            outputs=layer_normalization.LayerNormalization()(outputs)
 
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
     outputs = tf.muitiply(outputs, masks)
 
     model = Model([inputs, masks], outputs)
-    model.compile(keras.optimizers.Adam(lr=init_lr), loss='categorical_cross_entropy',
-                metrics='categorical_accuracy')
+    if optim == 'adam':
+        model.compile(keras.optimizers.Adam(lr=init_lr), loss='categorical_cross_entropy',
+                    metrics='categorical_accuracy')
+    else:
+        model.compile(kernel.optimizers.Adadelta(), loss='categorical_cross_entropy',
+                    matrics='categorical_accuracy')
 
     return model
 
