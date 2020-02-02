@@ -137,14 +137,7 @@ def main():
     valid_generator = FixedDataGenerator(
         args.valid, args.batch_size, args.feat_dim, args.n_labels,
         args.process_frames, args.extra_frames)
-    # callbacks
-    #reduce_lr = ReduceLROnPlateau(monitor='val_ler',
-    #                              factor=0.5, patience=5,
-    #                              min_lr=0.000001, verbose=1)
-    #cp_path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
-    #model_cp = ModelCheckpoint(cp_path, monitor='val_categorical_accuracy',
-    #                           save_best_only=True,
-    #                           save_weights_only=True, verbose=1)
+
     tensorboard = TensorBoard(log_dir=args.log_dir)
 
     prev_val_acc = -1.0e10
