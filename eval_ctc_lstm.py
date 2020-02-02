@@ -129,7 +129,7 @@ def main():
     prior *= args.prior_scale;
 
     test_generator = generator.DataGenerator(args.data, args.key_file,
-                            args.batch_size, args.feat_dim, args.n_labels)
+                                             args.batch_size, args.feat_dim, args.n_labels, False)
 
     path=os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
     with h5py.File(path, 'w') as f:
@@ -160,6 +160,7 @@ def main():
                     #if lblen.shape[0] == 0:
                     print(key)
                     #print(data[3][i])
+                    #print(len(lb))
                     print(lb)
                     align = dynamic_programming.dynamic_programming(pr, lb, data[2][i], data[3][i])
                     align = align.reshape((1,align.shape[0]))
