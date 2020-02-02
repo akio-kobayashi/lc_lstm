@@ -1,7 +1,7 @@
 import numpy as np
 #import dynamic_programming
 
-def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=False):
+def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=True):
     '''
     params:
         scores: 2-d np.array with shape=(frames, n_labels+1), log-scores
@@ -17,7 +17,7 @@ def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=False):
     #print(labels.shape)
     labels_blanks = np.full((seqlen, 1), blank) # filled with blanks
     for n in range(labels.shape[0]):
-        labels_blanks[2*n+1] = labels[n]
+        labels_blanks[2*n+1] = labels[n]+1
     #print(labels_blanks)
     dpmat = np.full((n_inputs, seqlen), -1.0e10)
     bptr  = np.full((n_inputs, seqlen), -1)
@@ -71,6 +71,9 @@ def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=False):
     #print(results)
     results = results[::-1]
     #print("%d %d" % (len(results), n_inputs))
+    for n in range(len(results)):
+        
+        results[n] -= 1
     print(results)
     # results shpae=(input_length, )
     return np.array(results)
