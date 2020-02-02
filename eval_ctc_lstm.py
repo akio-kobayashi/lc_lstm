@@ -139,7 +139,7 @@ def main():
             # return softmax outputs
             predict = model.predict_on_batch(x=data[0])
             # shift for blank
-            predict = np.roll(predict, 1, axis=2)
+            #predict = np.roll(predict, 1, axis=2)
             if args.softmax is True:
                 predict = np.log(predict)
             predict -= prior # P(x|y) = P(y|x)/P(y)
@@ -162,7 +162,10 @@ def main():
                     #print(data[3][i])
                     #print(len(lb))
                     print(lb)
-                    align = dynamic_programming.dynamic_programming(pr, lb, data[2][i], data[3][i])
+                    align = dynamic_programming.dynamic_programming(pr, lb,
+                                                                    data[2][i], data[3][i],
+                                                                    blank=args.n_labels,
+                                                                    skip_state=False)
                     align = align.reshape((1,align.shape[0]))
                     f.create_dataset(key+'/align', data=align)
 

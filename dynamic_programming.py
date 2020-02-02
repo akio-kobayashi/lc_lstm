@@ -1,7 +1,7 @@
 import numpy as np
 #import dynamic_programming
 
-def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=True):
+def dynamic_programming(scores, labels, n_inputs, n_labels, blank=0, skip_state=False):
     '''
     params:
         scores: 2-d np.array with shape=(frames, n_labels+1), log-scores
@@ -10,21 +10,21 @@ def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=True):
     '''
 
     #print(labels.shape)
-    blank=0
+    #blank=0
     #print(np.argmax(scores, axis=-1))
     seqlen = 2*labels.shape[0]+1
 
     #print(labels.shape)
     labels_blanks = np.full((seqlen, 1), blank) # filled with blanks
     for n in range(labels.shape[0]):
-        labels_blanks[2*n+1] = labels[n]+1
+        labels_blanks[2*n+1] = labels[n]
     #print(labels_blanks)
     dpmat = np.full((n_inputs, seqlen), -1.0e10)
     bptr  = np.full((n_inputs, seqlen), -1)
     #print(bptr.shape)
     # init
     dpmat[0][0] = scores[0][blank]
-    if skip_state is False:
+    if skip_state is True:
         dpmat[0][1] = scores[0][labels_blanks[1]]
     #print('%f %f' % (dpmat[0][0], dpmat[0][1]))
     for f in range(n_inputs):
@@ -56,7 +56,7 @@ def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=True):
     #print(dpmat)
     final_state = seqlen-1
     #print(labels_blanks[final_state,0])
-    if skip_state is False:
+    if skip_state is True:
         if dpmat[n_inputs-1][final_state-1] < dpmat[n_inputs-1][final_state-2]:
             final_state = final_state-1
 
@@ -71,9 +71,6 @@ def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=True):
     #print(results)
     results = results[::-1]
     #print("%d %d" % (len(results), n_inputs))
-    for n in range(len(results)):
-        
-        results[n] -= 1
     print(results)
     # results shpae=(input_length, )
     return np.array(results)
