@@ -45,12 +45,12 @@ class CEDataGenerator(Sequence):
 
         # [input_sequences, label_sequences, inputs_lengths]
         # len(input_sequences) == len(label_sequences) = input_length
-        input_sequences, label_sequences, inputs_lengths = self.__data_generation(list_keys_temp)
+        input_sequences, label_sequences, masks, inputs_lengths = self.__data_generation(list_keys_temp)
 
         if return_keys is False:
-            return [input_sequences, label_sequences, inputs_lengths]
+            return [input_sequences, label_sequences, masks, inputs_lengths]
         else:
-            return [input_sequences, label_sequences, inputs_lengths], list_keys_temp
+            return [input_sequences, label_sequences, masks,inputs_lengths], list_keys_temp
 
     def on_epoch_end(self):
         if self.shuffle == True:
@@ -70,16 +70,25 @@ class CEDataGenerator(Sequence):
 
             # label is a list of integers starting from 0
             label = self.h5fd[key+'/labels'][()]
+            if len(label) > max_output_len:
+                max_output_len = len(label)
             labels.append(np.array(label))
 
             assert(mat.shape[0] == len(label))
 
         input_sequences = np.zeros((self.batch_size, max_input_len, self.feat_dim))
+        label_sequences = np.zeros((self.batch_size, max_output_len, self.feat_dim))
+        masks = np.zeros((self.batch_size, max_out_len, 1))
+
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
             input_sequences[i, 0:mat.shape[0], :] = np.expand_dims(mat, axis=0)
+            # lseq = (time, category)
+            lseq = keras.utils.to_categorical(labels[i], num_classes=self.n_labels+1)
+            label_sequences[i, 0:len(labels[i]),:] = np.expand_dims(lseq, axis=0)
+            mask = np.ones((1, len(labels[i], 1)))
+            masks[i, 0:len(labels[i], :)] = mask
 
-        label_sequences=sequence.pad_sequences(labels, maxlen=max_output_len, padding='post', value=0)
         inputs_lengths=np.array(in_seq)
 
-        return input_sequences, label_sequences, inputs_lengths
+        return input_sequences, label_sequences, masks, inputs_lengths

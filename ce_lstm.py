@@ -28,11 +28,10 @@ keras.backend.set_session(sess)
 
 max_label_len=1024
 
-def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
+def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr, direction,
                 dropout, layer_norm, use_vgg, init_filters):
 
-    #outputs = Masking(mask_value=0.0)(inputs)
-    outputs=inputs
+    outputs = Masking(mask_value=0.0)(inputs)
 
     if use_vgg is True:
         # add channel dim
@@ -58,6 +57,8 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
 
         outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
 
+    outputs=Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
+
     for n in range (depth):
         if direction == 'bi':
             outputs=Bidirectional(CuDNNGRU(units,
@@ -67,10 +68,12 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
         if layer_norm is True:
             outputs=layer_normalization.LayerNormalization()(outputs)
 
+    outputs=Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
+    outputs = Masking(mask_value=0.0)(outputs)
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
 
-    model=Model(inputs, outputs)
+    model=Model([inputs, mask], outputs)
     # we can get accuracy from data along with batch/temporal axes.
     if optim == 'adam':
         model.compile(keras.optimizers.Adam(lr=init_lr),
@@ -88,7 +91,6 @@ def main():
     parser.add_argument('--data', type=str, required=True, help='training data')
     parser.add_argument('--key-file', type=str, help='keys')
     parser.add_argument('--valid', type=str, required=True, help='validation data')
-    parser.add_argument('--eval', type=str, help='evaluation data')
     parser.add_argument('--feat-dim', default=40, type=int, help='feats dim')
     '''
     n_labels = 32 librispeech
@@ -147,7 +149,7 @@ def main():
             for bt in range(training_generator.__len__()):
                 data = training_generator.__getitem__(bt)
                 # data = [input_sequences, label_sequences, inputs_lengths]
-                loss,acc = model.train_on_batch(x=data[0],y=data[1])
+                loss,acc = model.train_on_batch(x=[data[0],data[3]],y=data[1])
 
                 samples = data[0].shape[0]
                 curr_loss += loss * samples
@@ -175,7 +177,7 @@ def main():
 
             for bt in range(valid_generator.__len__()):
                 data = valid_generator.__getitem__(bt)
-                loss, acc = model.test_on_batch(x=data[0], y=data[1])
+                loss, acc = model.test_on_batch(x=[data[0],data[3]], y=data[1])
 
                 samples = data[0].shape[0]
                 curr_val_loss += loss * samples

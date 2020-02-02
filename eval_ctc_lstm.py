@@ -57,7 +57,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim,
         outputs=Activation('relu')(outputs)
 
         outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
- 
+
     for n in range (depth):
         if direction == 'bi':
             outputs=Bidirectional(CuDNNGRU(units,
@@ -142,7 +142,7 @@ def main():
             predict = np.roll(predict, 1, axis=2)
             if args.softmax is True:
                 predict = np.log(predict)
-            predict += prior
+            predict -= prior # P(x|y) = P(y|x)/P(y)
 
             #print(predict.shape)
             for i, key in enumerate(keys):

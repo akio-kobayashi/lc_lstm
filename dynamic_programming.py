@@ -24,7 +24,7 @@ def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=False):
     #print(bptr.shape)
     # init
     dpmat[0][0] = scores[0][blank]
-    if skip_state is True:
+    if skip_state is False:
         dpmat[0][1] = scores[0][labels_blanks[1]]
     #print('%f %f' % (dpmat[0][0], dpmat[0][1]))
     for f in range(n_inputs):
@@ -56,7 +56,7 @@ def dynamic_programming(scores, labels, n_inputs, n_labels, skip_state=False):
     #print(dpmat)
     final_state = seqlen-1
     #print(labels_blanks[final_state,0])
-    if skip_state is True:
+    if skip_state is False:
         if dpmat[n_inputs-1][final_state-1] < dpmat[n_inputs-1][final_state-2]:
             final_state = final_state-1
 
