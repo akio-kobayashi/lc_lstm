@@ -85,7 +85,7 @@ def main():
     #print (keras.__version__)
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, required=True, help='data')
-    parser.add_argument('--key-file', type=str, required=True, help='keys')
+    parser.add_argument('--key-file', type=str, help='keys')
     parser.add_argument('--feat-dim', default=40, type=int, help='feats dim')
     '''
     n_labels = 32 librispeech
