@@ -71,6 +71,6 @@ def dynamic_programming(scores, labels, n_inputs, n_labels, blank=0, skip_state=
     #print(results)
     results = results[::-1]
     #print("%d %d" % (len(results), n_inputs))
-    print(results)
+    #print(results)
     # results shpae=(input_length, )
     return np.array(results)
