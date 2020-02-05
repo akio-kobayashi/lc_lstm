@@ -31,32 +31,33 @@ K.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, units, depth, n_labels, feat_dim,
-                direction, use_softmax, layer_norm, use_vgg, init_filters):
+                direction, layer_norm, use_vgg, init_filters):
 
     outputs = Masking(mask_value=0.0)(inputs)
-    if use_vgg is True:
-        # add channel dim
-        outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
 
-        filters=init_filters
-        outputs=Conv2D(filters=filters,
-            kernel_size=3, padding='same',
-            strides=1,
-            data_format='channels_last',
-            kernel_initializer='glorot_uniform')(outputs)
-        #outputs=BatchNormalization(axis=-1)(outputs)
-        outputs=Activation('relu')(outputs)
+    #if use_vgg is True:
+    # add channel dim
+    outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
 
-        filters *= 2
-        outputs=Conv2D(filters=filters,
-            kernel_size=3, padding='same',
-            strides=1,
-            data_format='channels_last',
-            kernel_initializer='glorot_uniform')(outputs)
-        #outputs=BatchNormalization(axis=-1, training=False)(outputs)
-        outputs=Activation('relu')(outputs)
+    filters=init_filters
+    outputs=Conv2D(filters=filters,
+                   kernel_size=3, padding='same',
+                   strides=1,
+                   data_format='channels_last',
+                   kernel_initializer='glorot_uniform')(outputs)
+    #outputs=BatchNormalization(axis=-1)(outputs)
+    outputs=Activation('relu')(outputs)
 
-        outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
+    filters *= 2
+    outputs=Conv2D(filters=filters,
+                   kernel_size=3, padding='same',
+                   strides=1,
+                   data_format='channels_last',
+                   kernel_initializer='glorot_uniform')(outputs)
+    #outputs=BatchNormalization(axis=-1, training=False)(outputs)
+    outputs=Activation('relu')(outputs)
+
+    outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
 
     for n in range (depth):
         if direction == 'bi':
@@ -64,12 +65,12 @@ def build_model(inputs, units, depth, n_labels, feat_dim,
                 return_sequences=True))(outputs)
         else:
             outputs=CuDNNGRU(units,return_sequences=True)(outputs)
+        '''
         if layer_norm is True:
             outputs=layer_normalization.LayerNormalization(training=False)(outputs)
-
+        '''
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
-    if use_softmax is True:
-        outputs = Activation('softmax', name='softmax')(outputs)
+    outputs = Activation('softmax', name='softmax')(outputs)
     model=Model(inputs, outputs)
 
     return model
@@ -114,7 +115,7 @@ def main():
 
     inputs = Input(shape=(None, args.feat_dim))
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
-                        args.feat_dim, args.direction, args.softmax,
+                        args.feat_dim, args.direction,
                         args.layer_norm, args.vgg, args.filters)
     model.load_weights(args.weights, by_name=True)
 
@@ -123,8 +124,9 @@ def main():
         with h5py.File(args.prior, 'r') as f:
             prior=f['counts'][()]
         # reshape because prior is a column vector
+        psum = float(np.sum(prior))
         prior=prior.reshape((1, prior.shape[0]))
-        prior=np.log(prior) # prior has been normalized and must be > 0
+        prior=np.log(prior/psum) # prior has been normalized and must be > 0
     prior=np.expand_dims(prior, axis=0) # for broadcasting
     prior *= args.prior_scale;
 

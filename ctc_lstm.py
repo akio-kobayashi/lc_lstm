@@ -40,35 +40,35 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
 
-    if use_vgg is True:
-        # add channel dim
-        outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
+    #if use_vgg is True:
+    # add channel dim
+    outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
 
-        filters=init_filters
-        outputs=Conv2D(filters=filters,
-            kernel_size=3, padding='same',
-            strides=1,
-            data_format='channels_last',
-            kernel_initializer='glorot_uniform')(outputs)
-        '''
+    filters=init_filters
+    outputs=Conv2D(filters=filters,
+                   kernel_size=3, padding='same',
+                   strides=1,
+                   data_format='channels_last',
+                   kernel_initializer='glorot_uniform')(outputs)
+    '''
         if norm is True:
             outputs=BatchNormalization(axis=-1)(outputs)
-        '''
-        outputs=Activation('relu')(outputs)
+    '''
+    outputs=Activation('relu')(outputs)
 
-        filters *= 2
-        outputs=Conv2D(filters=filters,
-            kernel_size=3, padding='same',
-            strides=1,
-            data_format='channels_last',
-            kernel_initializer='glorot_uniform')(outputs)
-        '''
+    filters *= 2
+    outputs=Conv2D(filters=filters,
+                   kernel_size=3, padding='same',
+                   strides=1,
+                   data_format='channels_last',
+                   kernel_initializer='glorot_uniform')(outputs)
+    '''
         if norm is True:
             outputs=BatchNormalization(axis=-1)(outputs)
-        '''
-        outputs=Activation('relu')(outputs)
+    '''
+    outputs=Activation('relu')(outputs)
 
-        outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
+    outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
 
     for n in range (depth):
         if direction == 'bi':
