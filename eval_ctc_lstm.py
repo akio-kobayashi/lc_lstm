@@ -85,7 +85,7 @@ def main():
     #print (keras.__version__)
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, required=True, help='data')
-    parser.add_argument('--key-file', type=str, required=True, help='keys')
+    parser.add_argument('--key-file', type=str, help='keys')
     parser.add_argument('--feat-dim', default=40, type=int, help='feats dim')
     '''
     n_labels = 32 librispeech
@@ -144,30 +144,31 @@ def main():
                 predict = np.log(predict)
             predict -= prior # P(x|y) = P(y|x)/P(y)
 
-            #print(predict.shape)
             for i, key in enumerate(keys):
+                # time x feats
                 pr = predict[i].reshape((predict.shape[1], predict.shape[2]))
+                # must be partiall
+                print(key)
+                print(pr.shape)
+                print(data[2][i])
+                pr = pr[:data[2][i], :]
+                print(pr.shape)
                 f.create_group(key)
                 f.create_dataset(key+'/likelihood', data=pr)
 
-                if args.align is True:
-                    #print(data[1][i].shape)
+                '''
+                #if args.align is True:
+                if False:
                     lb = data[1][i].reshape((data[1][i].shape[0],))
                     lb = lb[0:data[3][i]]
-                    #print(data[2][i].shape)
-                    #inlen=data[2][i].reshape((data[2][i].shape[0],))
-                    #lblen=data[3][i].reshape((data[3][i].shape[0],))
-                    #if lblen.shape[0] == 0:
                     print(key)
-                    #print(data[3][i])
-                    #print(len(lb))
-                    print(lb)
                     align = dynamic_programming.dynamic_programming(pr, lb,
                                                                     data[2][i], data[3][i],
                                                                     blank=args.n_labels,
                                                                     skip_state=False)
                     align = align.reshape((1,align.shape[0]))
                     f.create_dataset(key+'/align', data=align)
-
+                '''
+                
 if __name__ == "__main__":
     main()

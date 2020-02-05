@@ -36,7 +36,11 @@ K.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
+<<<<<<< HEAD
                 dropout, layer_norm, use_vgg, init_filters, optim, norm=False):
+=======
+                dropout, layer_norm, use_vgg, init_filters, optim, norm):
+>>>>>>> e74b5bd41eb38bf2190784c9045e8720703bf728
 
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
@@ -61,7 +65,8 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
             strides=1,
             data_format='channels_last',
             kernel_initializer='glorot_uniform')(outputs)
-        outputs=BatchNormalization(axis=-1)(outputs)
+        if norm is True:
+            outputs=BatchNormalization(axis=-1)(outputs)
         outputs=Activation('relu')(outputs)
 
         outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
@@ -132,6 +137,8 @@ def main():
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta]')
+    parser.add_argument('--norm', type=bool, default=False, help='batch normalization')
+    
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
