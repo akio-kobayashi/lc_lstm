@@ -36,7 +36,7 @@ K.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
-                dropout, layer_norm, use_vgg, init_filters, optim):
+                dropout, layer_norm, use_vgg, init_filters, optim, norm=False):
 
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
@@ -51,7 +51,8 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
             strides=1,
             data_format='channels_last',
             kernel_initializer='glorot_uniform')(outputs)
-        outputs=BatchNormalization(axis=-1)(outputs)
+        if norm is True:
+            outputs=BatchNormalization(axis=-1)(outputs)
         outputs=Activation('relu')(outputs)
 
         filters *= 2
@@ -126,6 +127,7 @@ def main():
     parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
     parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
+    parser.add_argument('--norm', type=bool, default=False, help='batch normalization')
     parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
@@ -141,7 +143,7 @@ def main():
     '''
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
                         args.feat_dim, curr_lr, args.direction, args.dropout,
-                        args.layer_norm, args.vgg, args.filters, args.optim)
+                        args.layer_norm, args.vgg, args.filters, args.optim, args.norm)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels, shuffle=True)
