@@ -145,7 +145,7 @@ def main():
     '''
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
                         args.feat_dim, curr_lr, args.direction, args.dropout,
-                        args.layer_norm, args.vgg, args.filters, args.optim)
+                        args.layer_norm, args.vgg, args.filters, args.optim, args.norm)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels, shuffle=True)
