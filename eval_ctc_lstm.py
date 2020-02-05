@@ -20,6 +20,7 @@ import layer_normalization
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
 random.seed(1024)
+np.set_printoptions(threshold=np.inf)
 
 config = tf.compat.v1.ConfigProto(
     gpu_options=tf.compat.v1.GPUOptions(allow_growth = True),
@@ -31,7 +32,7 @@ K.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, units, depth, n_labels, feat_dim,
-                direction, layer_norm, use_vgg, init_filters):
+                direction, init_filters):
 
     outputs = Masking(mask_value=0.0)(inputs)
 
@@ -45,7 +46,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim,
                    strides=1,
                    data_format='channels_last',
                    kernel_initializer='glorot_uniform')(outputs)
-    #outputs=BatchNormalization(axis=-1)(outputs)
+    outputs=BatchNormalization(axis=-1)(outputs)
     outputs=Activation('relu')(outputs)
 
     filters *= 2
@@ -54,7 +55,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim,
                    strides=1,
                    data_format='channels_last',
                    kernel_initializer='glorot_uniform')(outputs)
-    #outputs=BatchNormalization(axis=-1, training=False)(outputs)
+    outputs=BatchNormalization(axis=-1)(outputs)
     outputs=Activation('relu')(outputs)
 
     outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
@@ -65,10 +66,8 @@ def build_model(inputs, units, depth, n_labels, feat_dim,
                 return_sequences=True))(outputs)
         else:
             outputs=CuDNNGRU(units,return_sequences=True)(outputs)
-        '''
-        if layer_norm is True:
-            outputs=layer_normalization.LayerNormalization(training=False)(outputs)
-        '''
+        outputs=layer_normalization.LayerNormalization()(outputs)
+
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
     model=Model(inputs, outputs)
@@ -106,17 +105,17 @@ def main():
     parser.add_argument('--lstm-depth', type=int ,default=2,
                         help='number of LSTM/GRU layers')
     parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
-    parser.add_argument('--softmax', type=bool, default=True, help='use softmax layer')
-    parser.add_argument('--align', type=bool, default=False, help='store alignment')
-    parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
-    parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
+    #parser.add_argument('--softmax', type=bool, default=True, help='use softmax layer')
+    #parser.add_argument('--align', type=bool, default=False, help='store alignment')
+    #parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
+    #parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
                         args.feat_dim, args.direction,
-                        args.layer_norm, args.vgg, args.filters)
+                        args.filters)
     model.load_weights(args.weights, by_name=True)
 
     prior = np.zeros((1, args.n_labels+1))
@@ -124,14 +123,16 @@ def main():
         with h5py.File(args.prior, 'r') as f:
             prior=f['counts'][()]
         # reshape because prior is a column vector
-        psum = float(np.sum(prior))
         prior=prior.reshape((1, prior.shape[0]))
-        prior=np.log(prior/psum) # prior has been normalized and must be > 0
+        prior=np.log(prior) # prior has been normalized and must be > 0
     prior=np.expand_dims(prior, axis=0) # for broadcasting
     prior *= args.prior_scale;
+    prior = np.roll(prior, -1)
+    #print(prior)
+    #exit(1)
 
     test_generator = generator.DataGenerator(args.data, args.key_file,
-                                             args.batch_size, args.feat_dim, args.n_labels, False)
+                                             1, args.feat_dim, args.n_labels, False)
 
     path=os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
     with h5py.File(path, 'w') as f:
@@ -140,21 +141,14 @@ def main():
             # data = [input_sequences, label_sequences, inputs_lengths, labels_length], keys
             # return softmax outputs
             predict = model.predict_on_batch(x=data[0])
-            # shift for blank
-            #predict = np.roll(predict, 1, axis=2)
-            if args.softmax is True:
-                predict = np.log(predict)
+            predict = np.log(predict)
             predict -= prior # P(x|y) = P(y|x)/P(y)
 
             for i, key in enumerate(keys):
                 # time x feats
                 pr = predict[i].reshape((predict.shape[1], predict.shape[2]))
                 # must be partiall
-                print(key)
-                print(pr.shape)
-                print(data[2][i])
                 pr = pr[:data[2][i], :]
-                print(pr.shape)
                 f.create_group(key)
                 f.create_dataset(key+'/likelihood', data=pr)
 

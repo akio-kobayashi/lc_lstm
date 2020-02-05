@@ -36,12 +36,10 @@ K.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
-                dropout, layer_norm, use_vgg, init_filters, optim, norm):
+                dropout, init_filters, optim):
     #outputs = Masking(mask_value=0.0)(inputs)
     outputs=inputs
 
-    #if use_vgg is True:
-    # add channel dim
     outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
 
     filters=init_filters
@@ -132,9 +130,9 @@ def main():
     parser.add_argument('--min-lr', type=float, default=1.0e-6, help='minimum learning rate')
     parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
-    parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
-    parser.add_argument('--norm', type=bool, default=False, help='batch normalization')
-    parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
+    #parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
+    #parser.add_argument('--norm', type=bool, default=False, help='batch normalization')
+    #parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta]')
@@ -150,22 +148,12 @@ def main():
     '''
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
                         args.feat_dim, curr_lr, args.direction, args.dropout,
-                        args.layer_norm, args.vgg, args.filters, args.optim, args.norm)
+                        args.filters, args.optim)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels, shuffle=True)
     valid_generator = generator.DataGenerator(args.valid, args.valid_key_file,
                         args.batch_size, args.feat_dim, args.n_labels, shuffle=False)
-
-    # callbacks
-    #reduce_lr = ReduceLROnPlateau(monitor='val_ler',
-    #                              factor=0.5, patience=5,
-    #                              min_lr=0.000001, verbose=1)
-    #cp_path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
-    #model_cp = ModelCheckpoint(cp_path, monitor='val_categorical_accuracy',
-    #                           save_best_only=True,
-    #                           save_weights_only=True, verbose=1)
-    #tensorboard = TensorBoard(log_dir=args.log_dir)
     '''
     tensorboard = keras.callbacks.TensorBoard(
             log_dir=args.log_dir+'tf_logs',
@@ -203,8 +191,6 @@ def main():
             start_time=time.time()
             curr_loss = 0.0
             curr_samples=0
-            #curr_labels=0
-            #curr_ler=[]
             for bt in range(training_generator.__len__()):
                 data = training_generator.__getitem__(bt)
                 # data = [input_sequences, label_sequences, inputs_lengths, labels_length]
