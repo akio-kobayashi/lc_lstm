@@ -138,7 +138,6 @@ def main():
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta]')
-    parser.add_argument('--norm', type=bool, default=False, help='batch normalization')
     
     args = parser.parse_args()
 
