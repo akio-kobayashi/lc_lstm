@@ -48,10 +48,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
                    strides=1,
                    data_format='channels_last',
                    kernel_initializer='glorot_uniform')(outputs)
-    '''
-        if norm is True:
-            outputs=BatchNormalization(axis=-1)(outputs)
-    '''
+    outputs=BatchNormalization(axis=-1)(outputs)
     outputs=Activation('relu')(outputs)
 
     filters *= 2
@@ -60,10 +57,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
                    strides=1,
                    data_format='channels_last',
                    kernel_initializer='glorot_uniform')(outputs)
-    '''
-        if norm is True:
-            outputs=BatchNormalization(axis=-1)(outputs)
-    '''
+    outputs=BatchNormalization(axis=-1)(outputs)
     outputs=Activation('relu')(outputs)
 
     outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
@@ -74,10 +68,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
                 return_sequences=True))(outputs)
         else:
             outputs=CuDNNGRU(units,return_sequences=True)(outputs)
-        '''
-        if layer_norm is True:
-            outputs=layer_normalization.LayerNormalization()(outputs)
-        '''
+        outputs=layer_normalization.LayerNormalization()(outputs)
         
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
