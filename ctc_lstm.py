@@ -21,6 +21,7 @@ import time
 import CTCModel
 import generator
 import layer_normalization
+import AdaBound
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -76,6 +77,8 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
     model=CTCModel.CTCModel([inputs], [outputs], greedy=True)
     if optim == 'adam':
         model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.))
+    elif optim == 'adab':
+        model.compile(AdaBound(lr=init_lr))
     else:
         model.compile(keras.optimizers.Adadelta())
 
@@ -121,12 +124,9 @@ def main():
     parser.add_argument('--min-lr', type=float, default=1.0e-6, help='minimum learning rate')
     parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
-    #parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
-    #parser.add_argument('--norm', type=bool, default=False, help='batch normalization')
-    #parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
-    parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta]')
+    parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta|adab]')
     
     args = parser.parse_args()
 
