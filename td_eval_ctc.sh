@@ -16,8 +16,7 @@ prior=./td_label_counts.h5
 feat_dim=40
 units=160
 lstm_depth=4
-#training
-direction=bi
+direction=uni
 batch_size=16
 learn_rate=2.0e-4
 factor=0.5

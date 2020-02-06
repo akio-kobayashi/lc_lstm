@@ -21,6 +21,7 @@ import time
 import CTCModel
 import generator
 import layer_normalization
+import bipolar
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -121,12 +122,10 @@ def main():
     parser.add_argument('--min-lr', type=float, default=1.0e-6, help='minimum learning rate')
     parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
-    #parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
-    #parser.add_argument('--norm', type=bool, default=False, help='batch normalization')
-    #parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta]')
+    parser.add_argument('--bipolar', action='store_true')
     
     args = parser.parse_args()
 
@@ -137,9 +136,14 @@ def main():
         with(open(args.log_dir+'/learn_rate', r)) as f:
             curr_lr=f.readline()
     '''
-    model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
-                        args.feat_dim, curr_lr, args.direction, args.dropout,
-                        args.filters, args.optim)
+    if args.bipolar:
+        model = bipolar.build_bipolar_model(inputs, args.units, args.lstm_depth, args.n_labels,
+                                            args.feat_dim, curr_lr, args.direction, args.dropout,
+                                            args.filters, args.optim)
+    else:
+        model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
+                            args.feat_dim, curr_lr, args.direction, args.dropout,
+                            args.filters, args.optim)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels, shuffle=True)
