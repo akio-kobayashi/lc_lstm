@@ -23,7 +23,7 @@ epochs=100
 factor=0.5
 dropout=0.0
 
-optim=adam
+optim=adab
 for lstm_depth in 5;
 do
   for units in 160;

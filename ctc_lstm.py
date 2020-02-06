@@ -78,7 +78,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
     if optim == 'adam':
         model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.))
     elif optim == 'adab':
-        model.compile(AdaBound(lr=init_lr))
+        model.compile(AdaBound.AdaBoundOptimizer(learning_rate=init_lr))
     else:
         model.compile(keras.optimizers.Adadelta())
 
