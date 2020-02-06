@@ -28,7 +28,7 @@ for lstm_depth in 5;
 do
   for units in 160;
   do
-      for learn_rate in 4.0e-4
+      for learn_rate in 1.0e-3
       do
           snapdir=./model_d${lstm_depth}_d${units}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg_${optim}_${direction}
 	  logdir=./logs_d${lstm_depth}_d${units}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg_${optim}_${direction}
