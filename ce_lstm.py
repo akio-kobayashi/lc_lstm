@@ -29,33 +29,32 @@ keras.backend.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr, direction,
-                dropout, layer_norm, use_vgg, init_filters):
+                dropout, init_filters):
 
     outputs = Masking(mask_value=0.0)(inputs)
 
-    if use_vgg is True:
-        # add channel dim
-        outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
+    # add channel dim
+    outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
 
-        filters=init_filters
-        outputs=Conv2D(filters=filters,
-            kernel_size=3, padding='same',
-            strides=1,
-            data_format='channels_last',
-            kernel_initializer='glorot_uniform')(outputs)
-        outputs=BatchNormalization(axis=-1)(outputs)
-        outputs=Activation('relu')(outputs)
+    filters=init_filters
+    outputs=Conv2D(filters=filters,
+        kernel_size=3, padding='same',
+        strides=1,
+        data_format='channels_last',
+        kernel_initializer='glorot_uniform')(outputs)
+    outputs=BatchNormalization(axis=-1)(outputs)
+    outputs=Activation('relu')(outputs)
 
-        filters *= 2
-        outputs=Conv2D(filters=filters,
-            kernel_size=3, padding='same',
-            strides=1,
-            data_format='channels_last',
-            kernel_initializer='glorot_uniform')(outputs)
-        outputs=BatchNormalization(axis=-1)(outputs)
-        outputs=Activation('relu')(outputs)
+    filters *= 2
+    outputs=Conv2D(filters=filters,
+        kernel_size=3, padding='same',
+        strides=1,
+        data_format='channels_last',
+        kernel_initializer='glorot_uniform')(outputs)
+    outputs=BatchNormalization(axis=-1)(outputs)
+    outputs=Activation('relu')(outputs)
 
-        outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
+    outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
 
     outputs=Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
 
@@ -65,8 +64,7 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr, directi
                 return_sequences=True))(outputs)
         else:
             outputs=CuDNNGRU(units,return_sequences=True)(outputs)
-        if layer_norm is True:
-            outputs=layer_normalization.LayerNormalization()(outputs)
+        outputs=layer_normalization.LayerNormalization()(outputs)
 
     outputs=Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
     outputs = Masking(mask_value=0.0)(outputs)
@@ -76,7 +74,7 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr, directi
     model=Model([inputs, mask], outputs)
     # we can get accuracy from data along with batch/temporal axes.
     if optim == 'adam':
-        model.compile(keras.optimizers.Adam(lr=init_lr),
+        model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.),
             loss=['acategorical_cross_entropy'],
             metrics=['categorical_accuracy'])
     else:
@@ -116,8 +114,6 @@ def main():
     parser.add_argument('--min-lr', type=float, default=1.0e-6, help='minimum learning rate')
     parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
-    parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
-    parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     args = parser.parse_args()
@@ -225,27 +221,6 @@ def main():
             logs.write(msg+'\n')
             print(msg)
 
-
-    # evaluation
-    '''
-    if args.eval is not None:
-
-        eval_in = Input(shape=(None, args.feat_dim))
-        eval_model = build_model(eval_in, args.units, args.n_labels, args.feat_dim, args.learn_rate)
-        path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
-        eval_model.load_weights(path, by_name=True)
-
-        eval_generator = CEDataGenerator(args.eval, None, 1,
-                            args.feat_dim, args.n_labels)
-        path=os.path.join(args.snapshot,args.eval_out+'.h5')
-
-        with h5py.File(path, 'w') as f:
-            for smp in range(eval_generator.__len()__):
-                data, keys = eval_generator.__getitem__(smp, return_keys=True)
-                predict = eval_model.predict_on_batch(x=data[0])
-                rolled=np.roll(predict, 1, axis=2) # shift for <blk>
-                f.create_dataset(keys[0], data=rolled)
-    '''
 
 if __name__ == "__main__":
     main()

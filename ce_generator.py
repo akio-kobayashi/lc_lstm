@@ -9,6 +9,8 @@ import keras.utils
 from keras.preprocessing import sequence
 import tensorflow as tf
 
+SORT_BLOCK_SIZE=256
+
 class CEDataGenerator(Sequence):
 
     def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024, shuffle=False):
@@ -19,19 +21,42 @@ class CEDataGenerator(Sequence):
         self.n_labels=n_labels
         self.shuffle=shuffle
         self.keys=[]
+        self.starts=[]
+        # input-length-ordered keys
+        self.sorted_keys=[]
 
         self.h5fd = h5py.File(self.file, 'r')
         self.n_samples = len(self.h5fd.keys())
         if key_file is not None:
             with open(key_file, 'r') as f:
                 for line in f:
-                    self.keys.append(line.strip())
-        else:
-            for key in self.h5fd.keys():
-                self.keys.append(key)
+                    self.sorted_keys.append(line.strip())
+        for key in self.h5fd.keys():
+            self.keys.append(key)
+
+        if len(self.sorted_keys) > 0:
+            assert(len(self.keys) == len(self.sorted_keys))
 
         if self.shuffle:
-            random.shuffle(self.keys)
+            start=0
+            while True:
+                if start > len(self.sorted_keys):
+                    break
+                self.starts.append(start)
+                start+=SORT_BLOCK_SIZE
+
+            self.keys=[]
+            start=0
+            for n in range(len(self.starts)):
+                start = self.starts[n]
+                end = min(start+SORT_BLOCK_SIZE, len(self.sorted_keys))
+                lst=self.sorted_keys[start:end]
+                random.shuffle(lst)
+                self.keys.extend(lst)
+                start+=SORT_BLOCK_SIZE
+        else:
+            if len(self.sorted_keys) > 0:
+                self.keys = self.sorted_keys
 
     def __len__(self):
         return int(np.ceil(self.n_samples)/self.batch_size)
@@ -54,7 +79,17 @@ class CEDataGenerator(Sequence):
 
     def on_epoch_end(self):
         if self.shuffle == True:
-            random.shuffle(self.keys)
+            # shuffling start pointers
+            random.shuffle(self.starts)
+            self.keys=[]
+            start=0
+            for n in range(len(self.starts)):
+                start = self.starts[n]
+                end = min(start+SORT_BLOCK_SIZE, len(self.sorted_keys))
+                lst=self.sorted_keys[start:end]
+                random.shuffle(lst)
+                self.keys.extend(lst)
+                start+=SORT_BLOCK_SIZE
 
     def __data_generation(self, list_keys_temp):
 
@@ -72,13 +107,14 @@ class CEDataGenerator(Sequence):
             label = self.h5fd[key+'/labels'][()]
             if len(label) > max_output_len:
                 max_output_len = len(label)
-            labels.append(np.array(label))
+            #labels.append(np.array(label))
+            labels.append(label)
 
             assert(mat.shape[0] == len(label))
 
         input_sequences = np.zeros((self.batch_size, max_input_len, self.feat_dim))
         label_sequences = np.zeros((self.batch_size, max_output_len, self.feat_dim))
-        masks = np.zeros((self.batch_size, max_out_len, 1))
+        masks = np.zeros((self.batch_size, max_output_len, 1))
 
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
