@@ -30,8 +30,8 @@ do
   do
       for learn_rate in 4.0e-4;
       do
-          snapdir=./model_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_BNtrue_vgg_bipolar_${optim}_${direction}
-	  logdir=./logs_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_BNtrue_vgg_bipolar_${optim}_${direction}
+          snapdir=./model_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_BNtrue_vgg_bipolar_3_${optim}_${direction}
+	  logdir=./logs_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_BNtrue_vgg_bipolar_3_${optim}_${direction}
           mkdir -p $snapdir
           mkdir -p $logdir
 	      

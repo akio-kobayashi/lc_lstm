@@ -28,31 +28,49 @@ def build_bipolar_model(inputs, units, depth, n_labels, feat_dim, init_lr, direc
         data_format='channels_last',
         kernel_initializer='glorot_uniform')(outputs)
     outputs=BatchNormalization(axis=-1)(outputs)
-    #extra_outputs = -1*outputs
-    extra_outputs = Lambda(lambda x: -1*x)(outputs)
-    extra_outputs = Activation('relu')(extra_outputs)
-    outputs=Activation('relu')(outputs)
 
-    outputs=Conv2D(filters=filters,
-        kernel_size=3, padding='same',
-        strides=1,
-        data_format='channels_last',
-        kernel_initializer='glorot_uniform')(outputs)
-    outputs=BatchNormalization(axis=-1)(outputs)
-    outputs=Activation('relu')(outputs)
-    outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
+    neg_outputs1=Lambda(lambda x: -1*x)(outputs)
+    neg_outputs1=Activation('relu')(neg_outputs1)
+    pos_outputs1=Activation('relu')(outputs)
 
-    extra_outputs=Conv2D(filters=filters,
-            kernel_size=3, padding='same',
-            strides=1,
-            data_format='channels_last',
-            kernel_initializer='glorot_uniform')(extra_outputs)
-    extra_outputs=BatchNormalization(axis=-1)(extra_outputs)
-    extra_outputs=Activation('relu')(extra_outputs)
-    extra_outputs = Reshape(target_shape=(-1, feat_dim*filters))(extra_outputs)
+    #filters*=2
+    pos_outputs1=Conv2D(filters=filters,
+                        kernel_size=3, padding='same',
+                        strides=1,
+                        data_format='channels_last',
+                        kernel_initializer='glorot_uniform')(pos_outputs1)
+    pos_outputs1=BatchNormalization(axis=-1)(pos_outputs1)
+    neg_outputs2=Lambda(lambda x: -1*x)(pos_outputs1)
+    neg_outputs2=Activation('relu')(neg_outputs2)
+    pos_outputs2=Activation('relu')(pos_outputs1)
+    #pos_outputs2=Reshape(target_shape=(-1, feat_dim*filters))(outputs)
 
-    #outputs = Concatenate(axis=-1)([outputs, extra_outputs])
-    outputs = Lambda(lambda x: tf.concat([x[0], x[1]], axis=-1))([outputs, extra_outputs])
+    neg_outputs1=Conv2D(filters=filters,
+                        kernel_size=3, padding='same',
+                        strides=1,
+                        data_format='channels_last',
+                        kernel_initializer='glorot_uniform')(neg_outputs1)
+    neg_outputs1=BatchNormalization(axis=-1)(neg_outputs1)
+    neg_outputs3=Lambda(lambda x: -1*x)(neg_outputs1)
+    neg_outputs3=Activation('relu')(neg_outputs3)
+    pos_outputs3=Activation('relu')(neg_outputs1)
+    #neg_outputs1=Reshape(target_shape=(-1, feat_dim*filters))(neg_outputs1)
+
+    # pos_outputs2, neg_outputs2, pos_outputs3, neg_outputs3
+    out_list=[]
+    for out in [pos_outputs2, neg_outputs2, pos_outputs3, neg_outputs3]:
+        out=Conv2D(filters=filters,
+                   kernel_size=3, padding='same',
+                   strides=1,
+                   data_format='channels_last',
+                   kernel_initializer='glorot_uniform')(out)
+        out=BatchNormalization(axis=-1)(out)
+        out=Activation('relu')(out)
+        out_list.append(out)
+    outputs = Lambda(lambda x: tf.concat(x, axis=-1))(out_list)
+    # 40 x 16 * 4 = 2560
+    outputs = Reshape(target_shape=(-1, feat_dim * filters * 4))(outputs)
+    #outputs = Lambda(lambda x: tf.concat([x[0], x[1]], axis=-1))([outputs, extra_outputs])
     
     for n in range (depth):
         if direction == 'bi':
