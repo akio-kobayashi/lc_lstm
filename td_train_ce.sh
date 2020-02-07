@@ -31,8 +31,8 @@ do
 	       else
 	          direction=bi
 	       fi
-         snapdir=./ce_model_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_vgg_${optim}_${direction}
-         logdir=./ce_logs_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_vgg_${optim}_${direction}
+         snapdir=./model_ce_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_vgg_${optim}_${direction}
+         logdir=./logs_ce_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_vgg_${optim}_${direction}
          mkdir -p $snapdir
          mkdir -p $logdir
 
