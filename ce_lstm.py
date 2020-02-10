@@ -4,16 +4,17 @@ import sys
 import subprocess
 import time
 from keras.models import Model
-from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation
-from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
+from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, CuDNNGRU, GRU, Reshape
+from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, Conv2D
 import keras.utils
-import keras.backend
+import keras.backend as K
 import numpy as np
 import random
 import tensorflow as tf
 #import functools
 #import CTCModel
 import ce_generator
+import layer_normalization
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -29,10 +30,10 @@ keras.backend.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr, direction,
-                dropout, init_filters):
+                dropout, init_filters, optim):
 
     outputs = Masking(mask_value=0.0)(inputs)
-
+    #outputs=inputs
     # add channel dim
     outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
 
@@ -61,7 +62,9 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr, directi
     for n in range (depth):
         if direction == 'bi':
             outputs=Bidirectional(CuDNNGRU(units,
-                return_sequences=True))(outputs)
+                                           return_sequences=True))(outputs)
+            #outputs=Bidirectional(GRU(units,
+            #                          return_sequences=True))(outputs)
         else:
             outputs=CuDNNGRU(units,return_sequences=True)(outputs)
         outputs=layer_normalization.LayerNormalization()(outputs)
@@ -75,11 +78,11 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr, directi
     # we can get accuracy from data along with batch/temporal axes.
     if optim == 'adam':
         model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.),
-            loss=['acategorical_cross_entropy'],
+            loss=['categorical_crossentropy'],
             metrics=['categorical_accuracy'])
     else:
         model.compile(keras.optimizers.Adadelta(),
-            loss=['acategorical_cross_entropy'],
+            loss=['categorical_crossentropy'],
             metrics=['categorical_accuracy'])
     return model
 
@@ -88,6 +91,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, required=True, help='training data')
     parser.add_argument('--key-file', type=str, help='keys')
+    parser.add_argument('--valid-key-file', type=str, help='valid keys')
     parser.add_argument('--valid', type=str, required=True, help='validation data')
     parser.add_argument('--feat-dim', default=40, type=int, help='feats dim')
     '''
@@ -116,15 +120,19 @@ def main():
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
+    parser.add_argument('--optim', type=str, default='adam', help='[adam|adadelta]')
+   
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
-    model = build_model(inputs, args.units, args.lstm_depth, args.n_labels, args.feat_dim, args.learn_rate)
+    mask = Input(shape=(None, 1))
+    model = build_model(inputs, mask, args.units, args.lstm_depth, args.n_labels, args.feat_dim, args.learn_rate,
+                        args.direction, args.dropout, args.filters, args.optim)
 
-    training_generator = generator.CEDataGenerator(args.data, args.key_file,
-                        args.batch_size, args.feat_dim, args.n_labels)
-    valid_generator = generator.CEDataGenerator(args.valid, None,
-                        args.batch_size, args.feat_dim, args.n_labels)
+    training_generator = ce_generator.CEDataGenerator(args.data, args.key_file,
+                                                      args.batch_size, args.feat_dim, args.n_labels, shuffle=True)
+    valid_generator = ce_generator.CEDataGenerator(args.valid, args.valid_key_file,
+                                                   args.batch_size, args.feat_dim, args.n_labels, shuffle=False)
 
     prev_val_acc = -1.0e10
     patience = 0
@@ -138,14 +146,22 @@ def main():
 
     with open(args.log_dir+'/logs', 'w') as logs:
         while ep < args.epochs:
+            start_time = time.time()
+            
             curr_loss = 0.0
             curr_samples=0
             curr_labels=0
             curr_acc=[]
             for bt in range(training_generator.__len__()):
                 data = training_generator.__getitem__(bt)
-                # data = [input_sequences, label_sequences, inputs_lengths]
-                loss,acc = model.train_on_batch(x=[data[0],data[3]],y=data[1])
+                # data = [input_sequences, label_sequences, masks, inputs_lengths]
+                #print("lengths: %d" % len(data[3]))
+                if len(data[3]) == 0:
+                    continue
+                #print(data[0].shape)
+                #print(data[1].shape)
+                #print(data[2].shape)
+                loss,acc = model.train_on_batch(x=[data[0],data[2]],y=data[1])
 
                 samples = data[0].shape[0]
                 curr_loss += loss * samples
@@ -173,7 +189,9 @@ def main():
 
             for bt in range(valid_generator.__len__()):
                 data = valid_generator.__getitem__(bt)
-                loss, acc = model.test_on_batch(x=[data[0],data[3]], y=data[1])
+                if len(data[3]) == 0:
+                    continue
+                loss, acc = model.test_on_batch(x=[data[0],data[2]], y=data[1])
 
                 samples = data[0].shape[0]
                 curr_val_loss += loss * samples
@@ -187,8 +205,8 @@ def main():
             print(msg)
             logs.write(msg+'\n')
 
-            if min_val_ler > curr_val_ler:
-                min_val_ler = curr_val_ler
+            if max_val_acc < ep_val_acc:
+                max_val_acc = ep_val_acc
                 path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
                 model.save_weights(path)
                 msg="save the model epoch %d" % (ep+1)
@@ -212,7 +230,7 @@ def main():
             if early_stop > max_early_stop:
                 break
 
-            prev_val_ler = curr_val_ler
+            prev_val_acc = ep_val_acc
             training_generator.on_epoch_end()
             ep += 1
 

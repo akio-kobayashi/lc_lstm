@@ -34,8 +34,10 @@ class CEDataGenerator(Sequence):
         for key in self.h5fd.keys():
             self.keys.append(key)
 
-        if len(self.sorted_keys) > 0:
-            assert(len(self.keys) == len(self.sorted_keys))
+        #if len(self.sorted_keys) > 0:
+        #    print(len(self.keys))
+        #    print(len(self.sorted_keys))
+        #    assert(len(self.keys) == len(self.sorted_keys))
 
         if self.shuffle:
             start=0
@@ -54,6 +56,7 @@ class CEDataGenerator(Sequence):
                 random.shuffle(lst)
                 self.keys.extend(lst)
                 start+=SORT_BLOCK_SIZE
+            self.on_epoch_end()
         else:
             if len(self.sorted_keys) > 0:
                 self.keys = self.sorted_keys
@@ -97,33 +100,41 @@ class CEDataGenerator(Sequence):
         max_output_len=0
         labels=[]
         in_seq=[]
+        #mats=[]
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
+            label = self.h5fd[key+'/labels'][()]
+
             if mat.shape[0] > max_input_len:
               max_input_len = mat.shape[0]
             in_seq.append(mat.shape[0])
 
             # label is a list of integers starting from 0
-            label = self.h5fd[key+'/labels'][()]
             if len(label) > max_output_len:
                 max_output_len = len(label)
-            #labels.append(np.array(label))
             labels.append(label)
-
-            assert(mat.shape[0] == len(label))
-
+            #mats.append(mat)
+            
         input_sequences = np.zeros((self.batch_size, max_input_len, self.feat_dim))
-        label_sequences = np.zeros((self.batch_size, max_output_len, self.feat_dim))
+        label_sequences = np.zeros((self.batch_size, max_output_len, self.n_labels+1))
         masks = np.zeros((self.batch_size, max_output_len, 1))
-
+        #print("%d %d" % (max_input_len, max_output_len))
+        #print("%d %d" % (len(mats), len(labels)))
+        '''
+        if max_input_len == 0 or max_output_len == 0:
+            for i in range(len(mats)):
+                print(mats[i].shape)
+                print(labels[i].shape)
+        '''
         for i, key in enumerate(list_keys_temp):
+            #mat = mats[i]
             mat = self.h5fd[key+'/data'][()]
             input_sequences[i, 0:mat.shape[0], :] = np.expand_dims(mat, axis=0)
             # lseq = (time, category)
             lseq = keras.utils.to_categorical(labels[i], num_classes=self.n_labels+1)
             label_sequences[i, 0:len(labels[i]),:] = np.expand_dims(lseq, axis=0)
-            mask = np.ones((1, len(labels[i], 1)))
-            masks[i, 0:len(labels[i], :)] = mask
+            mask = np.ones((1, len(labels[i]), 1))
+            masks[i, 0:len(labels[i]), :] = mask
 
         inputs_lengths=np.array(in_seq)
 
