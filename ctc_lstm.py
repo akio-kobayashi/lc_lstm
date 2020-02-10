@@ -6,7 +6,7 @@ import time
 import tensorflow as tf
 #import tensorflow.keras
 from keras.models import Model
-from keras.layers import Dense, Input, BatchNormalization, Softmax, LSTM, Activation, RNN, GRU, CuDNNGRU
+from keras.layers import Dense, Input, BatchNormalization, Softmax, LSTM, Activation, RNN, GRU, CuDNNGRU, CuDNNLSTM
 from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
 from keras.layers import Conv2D, Reshape
 from keras.constraints import max_norm
@@ -35,7 +35,7 @@ config = tf.compat.v1.ConfigProto(
 sess = tf.compat.v1.Session(config=config)
 K.set_session(sess)
 
-max_label_len=1024
+lstm=True
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
                 dropout, init_filters, optim):
@@ -66,22 +66,31 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
 
     for n in range (depth):
         if direction == 'bi':
-            outputs=Bidirectional(CuDNNGRU(units,
-                return_sequences=True))(outputs)
+            if lstm == True:
+                outputs=Bidirectional(CuDNNLSTM(units,
+                    return_sequences=True))(outputs)
+            else:
+                outputs=Bidirectional(CuDNNGRU(units,
+                    return_sequences=True))(outputs)
         else:
-            outputs=CuDNNGRU(units,return_sequences=True)(outputs)
+            if lstm == True:
+                outputs = CuDNNLSTM(units, return_sequences=True)(outputs)
+            else:
+                outputs=CuDNNGRU(units,return_sequences=True)(outputs)
         outputs=layer_normalization.LayerNormalization()(outputs)
-        
+
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
 
     model=CTCModel.CTCModel([inputs], [outputs], greedy=True)
     if optim == 'adam':
         model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.))
-    elif optim == 'adab':
-        model.compile(AdaBound.AdaBoundOptimizer(learning_rate=init_lr))
+    elif optim == 'sgd':
+        model.compile(keras.optimizers.SGD(lr=init_lr, momentum=0.9, clipnorm=50.))
+    #elif optim == 'adab':
+    #    model.compile(AdaBound.AdaBoundOptimizer(learning_rate=init_lr))
     else:
-        model.compile(keras.optimizers.Adadelta())
+        model.compile(keras.optimizers.Adadelta(lr=init_lr, clipnorm=50.))
 
     return model
 
@@ -129,7 +138,7 @@ def main():
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta]')
     parser.add_argument('--bipolar', action='store_true')
-    
+
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
