@@ -21,11 +21,8 @@ import time
 import CTCModel
 import generator
 import layer_normalization
-<<<<<<< HEAD
 import bipolar
-=======
-import AdaBound
->>>>>>> c58de743d55278e38d160f02a4b21f5550dc6db8
+#import AdaBound
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -130,12 +127,8 @@ def main():
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
-<<<<<<< HEAD
     parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta]')
     parser.add_argument('--bipolar', action='store_true')
-=======
-    parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta|adab]')
->>>>>>> c58de743d55278e38d160f02a4b21f5550dc6db8
     
     args = parser.parse_args()
 
