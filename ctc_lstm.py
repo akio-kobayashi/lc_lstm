@@ -243,7 +243,7 @@ def main():
                 samples = data[0].shape[0]
                 curr_val_loss += loss[0] * samples
                 curr_val_samples += samples
-                curr_val_ler.append(ler)
+                curr_val_ler.append(ler*samples)
 
             #msg='Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler)
             msg='Epoch %d (train) loss=%.4f' % (ep+1, curr_loss)
@@ -253,7 +253,8 @@ def main():
             logs.flush()
 
             curr_val_loss /= curr_val_samples
-            curr_val_ler = np.mean(curr_val_ler)*100.0
+            #curr_val_ler = np.mean(curr_val_ler)*100.0
+            curr_val_ler = np.sum(curr_val_ler)/curr_val_samples*100.0
             '''
             if prev_val_ler < curr_val_ler:
                 patience += 1
