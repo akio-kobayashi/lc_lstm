@@ -5,7 +5,7 @@ import subprocess
 import time
 from keras.models import Model
 from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, CuDNNGRU, GRU, Reshape
-from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, Conv2D
+from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, Conv2D, MaxPooling2D
 import keras.utils
 import keras.backend as K
 import numpy as np
@@ -14,7 +14,7 @@ import tensorflow as tf
 import ce_generator
 import layer_normalization
 
-def VGG2L(inputs, filters, feat_dim)
+def VGG2L(inputs, filters, feat_dim):
 
     outputs=Lambda(lambda x: tf.expand_dims(x, -1))(inputs)
     # first convs
@@ -33,7 +33,7 @@ def VGG2L(inputs, filters, feat_dim)
                    kernel_initializer='glorot_uniform')(outputs)
     outputs=BatchNormalization(axis=-1)(outputs)
     outputs=Activation('relu')(outputs)
-    outptus=MaxPooling2D(pool_size=2, strides=1, padding='same')(outputs)
+    outputs=MaxPooling2D(pool_size=2, strides=1, padding='same')(outputs)
 
     filters *= 2 # 128
     outputs=Conv2D(filters=filters,
@@ -51,7 +51,7 @@ def VGG2L(inputs, filters, feat_dim)
                    kernel_initializer='glorot_uniform')(outputs)
     outputs=BatchNormalization(axis=-1)(outputs)
     outputs=Activation('relu')(outputs)
-    outptus=MaxPooling2D(pool_size=2, strides=1, padding='same')(outputs)
+    outputs=MaxPooling2D(pool_size=2, strides=1, padding='same')(outputs)
 
     outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
 

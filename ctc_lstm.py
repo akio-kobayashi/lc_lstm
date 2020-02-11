@@ -22,6 +22,7 @@ import CTCModel
 import generator
 import layer_normalization
 import bipolar
+import vgg2l
 #import AdaBound
 
 os.environ['PYTHONHASHSEED']='0'
