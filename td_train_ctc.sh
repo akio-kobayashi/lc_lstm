@@ -24,7 +24,7 @@ optim=adadelta
 #optim=adam
 dropout=0.0
 
-for lstm_depth in 5;
+for lstm_depth in 4;
 do
   for units in 160;
   do
