@@ -13,6 +13,7 @@ import random
 import tensorflow as tf
 #import functools
 #import CTCModel
+import vgg2l
 import ce_generator
 import layer_normalization
 
@@ -30,49 +31,30 @@ keras.backend.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr, direction,
-                dropout, init_filters, optim):
-
-    outputs = Masking(mask_value=0.0)(inputs)
-    #outputs=inputs
-    # add channel dim
-    outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
+                dropout, init_filters, optim, lstm=False):
 
     filters=init_filters
-    outputs=Conv2D(filters=filters,
-        kernel_size=3, padding='same',
-        strides=1,
-        data_format='channels_last',
-        kernel_initializer='glorot_uniform')(outputs)
-    outputs=BatchNormalization(axis=-1)(outputs)
-    outputs=Activation('relu')(outputs)
+    outputs = Masking(mask_value=0.0)(inputs)
 
-    filters *= 2
-    outputs=Conv2D(filters=filters,
-        kernel_size=3, padding='same',
-        strides=1,
-        data_format='channels_last',
-        kernel_initializer='glorot_uniform')(outputs)
-    outputs=BatchNormalization(axis=-1)(outputs)
-    outputs=Activation('relu')(outputs)
-
-    outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
-
-    outputs=Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
+    outputs=vgg2l.VGG2L(outputs, filters, feat_dim)
 
     for n in range (depth):
         if direction == 'bi':
-            outputs=Bidirectional(CuDNNGRU(units,
-                                           return_sequences=True))(outputs)
-            #outputs=Bidirectional(GRU(units,
-            #                          return_sequences=True))(outputs)
+            if lstm == True:
+                outputs=Bidirectional(CuDNNLSTM(units,
+                    return_sequences=True))(outputs)
+            else:
+                outputs=Bidirectional(CuDNNGRU(units,
+                    return_sequences=True))(outputs)
         else:
-            outputs=CuDNNGRU(units,return_sequences=True)(outputs)
+            if lstm == True:
+                outputs = CuDNNLSTM(units, return_sequences=True)(outputs)
+            else:
+                outputs=CuDNNGRU(units,return_sequences=True)(outputs)
         outputs=layer_normalization.LayerNormalization()(outputs)
 
-    outputs=Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
-    outputs = Masking(mask_value=0.0)(outputs)
-    outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
-    outputs = Activation('softmax', name='softmax')(outputs)
+    outputs = TimeDistributed(Dense(n_labels+1))(outputs)
+    outputs = Activation('softmax')(outputs)
 
     model=Model([inputs, mask], outputs)
     # we can get accuracy from data along with batch/temporal axes.
@@ -121,7 +103,7 @@ def main():
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     parser.add_argument('--optim', type=str, default='adam', help='[adam|adadelta]')
-   
+
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
@@ -147,7 +129,7 @@ def main():
     with open(args.log_dir+'/logs', 'w') as logs:
         while ep < args.epochs:
             start_time = time.time()
-            
+
             curr_loss = 0.0
             curr_samples=0
             curr_labels=0

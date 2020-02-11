@@ -11,9 +11,8 @@ import keras.backend
 import numpy as np
 import random
 import tensorflow as tf
-#import functools
-#import CTCModel
 import fixed_generator
+import vgg2l
 import utils
 
 os.environ['PYTHONHASHSEED']='0'
@@ -40,29 +39,7 @@ def build_model(inputs, masks, units, depth, n_labels, feat_dim, init_lr, use_vg
 
     outputs = Masking(mask_value=0.0)(inputs)
 
-    if use_vgg is True:
-        # add channel dim
-        outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
-
-        filters=init_filters
-        outputs=Conv2D(filters=filters,
-            kernel_size=3, padding='same',
-            strides=1,
-            data_format='channels_last',
-            kernel_initializer='glorot_uniform')(outputs)
-        outputs=BatchNormalization(axis=-1)(outputs)
-        outputs=Activation('relu')(outputs)
-
-        filters *= 2
-        outputs=Conv2D(filters=filters,
-            kernel_size=3, padding='same',
-            strides=1,
-            data_format='channels_last',
-            kernel_initializer='glorot_uniform')(outputs)
-        outputs=BatchNormalization(axis=-1)(outputs)
-        outputs=Activation('relu')(outputs)
-
-        outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
+    outputs = vgg2l.VGG2L(outputs, init_filters, feat_dim)
 
     for n in range (depth):
         # forward, keep current states
@@ -84,16 +61,16 @@ def build_model(inputs, masks, units, depth, n_labels, feat_dim, init_lr, use_vg
         if layer_norm is True:
             outputs=layer_normalization.LayerNormalization()(outputs)
 
-    outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
-    outputs = Activation('softmax', name='softmax')(outputs)
-    outputs = tf.muitiply(outputs, masks)
+    outputs = TimeDistributed(Dense(n_labels+1))(outputs)
+    outputs = Activation('softmax')(outputs)
+    outputs = Lambda(lambda x: tf.muitiply(x[0], x[1]))([outputs, masks])
 
     model = Model([inputs, masks], outputs)
     if optim == 'adam':
-        model.compile(keras.optimizers.Adam(lr=init_lr), loss='categorical_cross_entropy',
+        model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.), loss='categorical_cross_entropy',
                     metrics='categorical_accuracy')
     else:
-        model.compile(kernel.optimizers.Adadelta(), loss='categorical_cross_entropy',
+        model.compile(kernel.optimizers.Adadelta(lr=init_lr, clipnorm=50.), loss='categorical_cross_entropy',
                     matrics='categorical_accuracy')
 
     return model
@@ -147,7 +124,8 @@ def main():
     for ep in range(args.epochs):
         curr_loss = 0.0
         curr_samples=0
-        print('progress:')
+        curr_acc=[]
+
         for bt in range(training_generator.__len__()):
             # transposed---(blocks, batch, time, feats)
             x, mask, y = training_generator.__getitem__(bt)
@@ -161,8 +139,7 @@ def main():
                 # for micro-mean
                 samples = np.sum(mask_in)
                 curr_loss += loss * samples
-                curr_acc += acc * samples;
-                curr_samples += samples
+                curr_acc.append(acc)
 
                 set_states(model, states)
                 x_part = x_in[:, 0:args.process_frames,:]
@@ -171,13 +148,13 @@ def main():
 
             # progress report
             progress_loss = curr_loss/curr_samples
-            progress_acc = curr_acc/curr_samples
+            progress_acc = np.mean(curr_acc)*100.0
             print('\rprogress: (%d/%d) loss=%.4f acc=%.4f' % (bt+1,
                 training_generator.__len__(), progress_loss[0], progress_acc[0]),
                 end='')
         print('\n',end='')
         curr_loss /= curr_samples
-        curr_acc = curr_acc*100.0/curr_labels
+        curr_acc = np.mean(curr_acc)
 
         curr_val_loss = 0.0
         curr_val_acc = 0.0
@@ -196,18 +173,18 @@ def main():
                 # for micro-mean
                 samples = np.sum(mask_in)
                 curr_val_loss += loss * samples
-                curr_val_ler += acc * samples
-                curr_val_samples += samples
+                curr_val_acc.append(acc)
 
                 set_states(model, states)
                 x_part = x_in[:, 0:args.process_frames,:]
                 mask_part = mask_in[:, 0:args.process_frames,:]
                 model.predict_on_batch(x=[x_part, mask_part])
 
-        print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss[0], curr_acc[0]))
+        print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, curr_acc))
 
         curr_val_loss /= curr_val_samples
-        curr_val_ler = curr_val_ler*100.0/curr_val_samples
+        curr_val_acc = np.mean(curr_val_acc)*100.0
+
         if prev_val_acc > curr_val_acc:
             patience += 1
             if patience >= max_patience:
@@ -216,13 +193,13 @@ def main():
                 if curr_lr < args.min_lr:
                     curr_lr = args.min_lr
                 else:
-                    print("lerning rate chaged %.4f to %.4f" % (prev_lr[0], curr_lr[0]))
+                    print("lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr))
                     K.set_value(model.optimizer.lr,curr_lr)
                 patience=0
         else:
             patience=0
 
-        print('Epoch %d (valid) loss=%.4f acc=%.4f' % (ep+1, curr_val_loss[0], curr_val_acc[0]))
+        print('Epoch %d (valid) loss=%.4f acc=%.4f' % (ep+1, curr_val_loss, curr_val_acc))
 
         # save best model in .h5
         if min_val_acc < curr_val_acc:

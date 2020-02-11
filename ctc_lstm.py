@@ -38,51 +38,11 @@ K.set_session(sess)
 lstm=False
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
-                dropout, init_filters, optim):
-    #outputs = Masking(mask_value=0.0)(inputs)
-    outputs=inputs
+                dropout, init_filters, optim, lstm=False):
+    outputs = Masking(mask_value=0.0)(inputs)
+    #outputs=inputs
 
-    outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
-
-    filters=init_filters
-
-    # first convs
-    outputs=Conv2D(filters=filters,
-                   kernel_size=3, padding='same',
-                   strides=1,
-                   data_format='channels_last',
-                   kernel_initializer='glorot_uniform')(outputs)
-    outputs=BatchNormalization(axis=-1)(outputs)
-    outputs=Activation('relu')(outputs)
-
-    outputs=Conv2D(filters=filters,
-                   kernel_size=3, padding='same',
-                   strides=1,
-                   data_format='channels_last',
-                   kernel_initializer='glorot_uniform')(outputs)
-    outputs=BatchNormalization(axis=-1)(outputs)
-    outputs=Activation('relu')(outputs)
-    outptus=MaxPooling2D(pool_size=2, strides=1, padding='same')(outputs)
-    
-    filters *= 2 # 128
-    outputs=Conv2D(filters=filters,
-                   kernel_size=3, padding='same',
-                   strides=1,
-                   data_format='channels_last',
-                   kernel_initializer='glorot_uniform')(outputs)
-    outputs=BatchNormalization(axis=-1)(outputs)
-    outputs=Activation('relu')(outputs)
-
-    outputs=Conv2D(filters=filters,
-                   kernel_size=3, padding='same',
-                   strides=1,
-                   data_format='channels_last',
-                   kernel_initializer='glorot_uniform')(outputs)
-    outputs=BatchNormalization(axis=-1)(outputs)
-    outputs=Activation('relu')(outputs)
-    outptus=MaxPooling2D(pool_size=2, strides=1, padding='same')(outputs)
-
-    outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
+    outputs = vgg2l.VGG2L(outputs, init_filters, feat_dim)
 
     for n in range (depth):
         if direction == 'bi':
@@ -249,7 +209,6 @@ def main():
             curr_val_loss = 0.0
             curr_val_ler = []
             curr_val_samples = 0
-            curr_val_labels = 0
 
             for bt in range(valid_generator.__len__()):
                 data = valid_generator.__getitem__(bt)
@@ -261,9 +220,7 @@ def main():
                 samples = data[0].shape[0]
                 curr_val_loss += loss[0] * samples
                 curr_val_samples += samples
-                num_labels = np.sum(data[3])
-                curr_val_labels+=num_labels;
-                curr_val_ler.append(ler*num_labels)
+                curr_val_ler.append(ler)
 
             #msg='Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler)
             msg='Epoch %d (train) loss=%.4f' % (ep+1, curr_loss)
@@ -274,7 +231,7 @@ def main():
 
             curr_val_loss /= curr_val_samples
             #curr_val_ler = np.mean(curr_val_ler)*100.0
-            curr_val_ler = np.sum(curr_val_ler)/curr_val_labels*100.0
+            curr_val_ler = np.mean(curr_val_ler)*100.0
             '''
             if prev_val_ler < curr_val_ler:
                 patience += 1
