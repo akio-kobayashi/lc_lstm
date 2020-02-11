@@ -22,8 +22,8 @@ batch_size=64
 epochs=100
 factor=0.5
 dropout=0.0
+optim=adadelta
 
-optim=adab
 for lstm_depth in 5;
 do
   for units in 160;
@@ -35,7 +35,8 @@ do
 
           mkdir -p $snapdir
           mkdir -p $logdir
-          python ctc_lstm.py --data $train --valid $valid --direction uni --key-file $keys --valid-key-file $valid_keys \
+          python ctc_lstm.py --data $train --valid $valid --direction uni --key-file $keys \
+		 --valid-key-file $valid_keys \
 		 --feat-dim $feat_dim --n-labels $n_labels --batch-size $batch_size --epochs $epochs \
 		 --snapshot $snapdir  --learn-rate $learn_rate --log-dir $logdir \
 		 --units $units --lstm-depth $lstm_depth --factor $factor  --optim $optim
