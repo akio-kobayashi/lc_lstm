@@ -7,7 +7,7 @@ import tensorflow as tf
 #import tensorflow.keras
 from keras.models import Model
 from keras.layers import Dense, Input, BatchNormalization, Softmax, LSTM, Activation, RNN, GRU, CuDNNGRU, CuDNNLSTM
-from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
+from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking MaxPooling2D
 from keras.layers import Conv2D, Reshape
 from keras.constraints import max_norm
 import keras.utils
@@ -45,6 +45,8 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
     outputs=Lambda(lambda x: tf.expand_dims(x, -1))(outputs)
 
     filters=init_filters
+
+    # first convs
     outputs=Conv2D(filters=filters,
                    kernel_size=3, padding='same',
                    strides=1,
@@ -53,7 +55,6 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
     outputs=BatchNormalization(axis=-1)(outputs)
     outputs=Activation('relu')(outputs)
 
-    filters *= 2
     outputs=Conv2D(filters=filters,
                    kernel_size=3, padding='same',
                    strides=1,
@@ -61,6 +62,25 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
                    kernel_initializer='glorot_uniform')(outputs)
     outputs=BatchNormalization(axis=-1)(outputs)
     outputs=Activation('relu')(outputs)
+    outptus=MaxPooling2D(pool_size=2, strides=1, padding='same')(outputs)
+    
+    filters *= 2 # 128
+    outputs=Conv2D(filters=filters,
+                   kernel_size=3, padding='same',
+                   strides=1,
+                   data_format='channels_last',
+                   kernel_initializer='glorot_uniform')(outputs)
+    outputs=BatchNormalization(axis=-1)(outputs)
+    outputs=Activation('relu')(outputs)
+
+    outputs=Conv2D(filters=filters,
+                   kernel_size=3, padding='same',
+                   strides=1,
+                   data_format='channels_last',
+                   kernel_initializer='glorot_uniform')(outputs)
+    outputs=BatchNormalization(axis=-1)(outputs)
+    outputs=Activation('relu')(outputs)
+    outptus=MaxPooling2D(pool_size=2, strides=1, padding='same')(outputs)
 
     outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
 
@@ -79,8 +99,8 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
                 outputs=CuDNNGRU(units,return_sequences=True)(outputs)
         outputs=layer_normalization.LayerNormalization()(outputs)
 
-    outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
-    outputs = Activation('softmax', name='softmax')(outputs)
+    outputs = TimeDistributed(Dense(n_labels+1))(outputs)
+    outputs = Activation('softmax')(outputs)
 
     model=CTCModel.CTCModel([inputs], [outputs], greedy=True)
     if optim == 'adam':
@@ -134,7 +154,7 @@ def main():
     parser.add_argument('--min-lr', type=float, default=1.0e-6, help='minimum learning rate')
     parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
-    parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
+    parser.add_argument('--filters', type=int, default=64, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta]')
     parser.add_argument('--bipolar', action='store_true')
