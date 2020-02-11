@@ -67,9 +67,18 @@ def build_bipolar_model(inputs, units, depth, n_labels, feat_dim, init_lr, direc
         out=BatchNormalization(axis=-1)(out)
         out=Activation('relu')(out)
         out_list.append(out)
+    # 16*4=64 channels -> 16 channels
     outputs = Lambda(lambda x: tf.concat(x, axis=-1))(out_list)
+    outputs=Conv2D(filters=filters,
+                   kernel_size=3, padding='same',
+                   strides=1,
+                   data_format='channels_last',
+                   kernel_initializer='glorot_uniform')(outputs)
+    outputs=BatchNormalization(axis=-1)(outputs)
+    outputs=Activation('relu')(outputs)
+    
     # 40 x 16 * 4 = 2560
-    outputs = Reshape(target_shape=(-1, feat_dim * filters * 4))(outputs)
+    outputs = Reshape(target_shape=(-1, feat_dim * filters))(outputs)
     #outputs = Lambda(lambda x: tf.concat([x[0], x[1]], axis=-1))([outputs, extra_outputs])
     
     for n in range (depth):

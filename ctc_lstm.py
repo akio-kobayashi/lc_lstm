@@ -6,7 +6,7 @@ import time
 import tensorflow as tf
 #import tensorflow.keras
 from keras.models import Model
-from keras.layers import Dense, Input, BatchNormalization, Softmax, LSTM, Activation, RNN, GRU, CuDNNGRU
+from keras.layers import Dense, Input, BatchNormalization, Softmax, LSTM, Activation, RNN, GRU, CuDNNGRU, CuDNNLSTM
 from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
 from keras.layers import Conv2D, Reshape
 from keras.constraints import max_norm
@@ -21,11 +21,8 @@ import time
 import CTCModel
 import generator
 import layer_normalization
-<<<<<<< HEAD
 import bipolar
-=======
-import AdaBound
->>>>>>> c58de743d55278e38d160f02a4b21f5550dc6db8
+#import AdaBound
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -38,7 +35,7 @@ config = tf.compat.v1.ConfigProto(
 sess = tf.compat.v1.Session(config=config)
 K.set_session(sess)
 
-max_label_len=1024
+lstm=False
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
                 dropout, init_filters, optim):
@@ -69,22 +66,31 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
 
     for n in range (depth):
         if direction == 'bi':
-            outputs=Bidirectional(CuDNNGRU(units,
-                return_sequences=True))(outputs)
+            if lstm == True:
+                outputs=Bidirectional(CuDNNLSTM(units,
+                    return_sequences=True))(outputs)
+            else:
+                outputs=Bidirectional(CuDNNGRU(units,
+                    return_sequences=True))(outputs)
         else:
-            outputs=CuDNNGRU(units,return_sequences=True)(outputs)
+            if lstm == True:
+                outputs = CuDNNLSTM(units, return_sequences=True)(outputs)
+            else:
+                outputs=CuDNNGRU(units,return_sequences=True)(outputs)
         outputs=layer_normalization.LayerNormalization()(outputs)
-        
+
     outputs = TimeDistributed(Dense(n_labels+1, name="timedist_dense"))(outputs)
     outputs = Activation('softmax', name='softmax')(outputs)
 
     model=CTCModel.CTCModel([inputs], [outputs], greedy=True)
     if optim == 'adam':
         model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.))
-    elif optim == 'adab':
-        model.compile(AdaBound.AdaBoundOptimizer(learning_rate=init_lr))
+    elif optim == 'sgd':
+        model.compile(keras.optimizers.SGD(lr=init_lr, momentum=0.9, clipnorm=50.))
+    #elif optim == 'adab':
+    #    model.compile(AdaBound.AdaBoundOptimizer(learning_rate=init_lr))
     else:
-        model.compile(keras.optimizers.Adadelta())
+        model.compile(keras.optimizers.Adadelta(lr=init_lr, clipnorm=50.))
 
     return model
 
@@ -130,13 +136,9 @@ def main():
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
-<<<<<<< HEAD
     parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta]')
     parser.add_argument('--bipolar', action='store_true')
-=======
-    parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta|adab]')
->>>>>>> c58de743d55278e38d160f02a4b21f5550dc6db8
-    
+
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
@@ -241,7 +243,9 @@ def main():
                 samples = data[0].shape[0]
                 curr_val_loss += loss[0] * samples
                 curr_val_samples += samples
-                curr_val_ler.append(ler)
+                num_labels = np.sum(data[3])
+                curr_val_labels+=num_labels;
+                curr_val_ler.append(ler*num_labels)
 
             #msg='Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler)
             msg='Epoch %d (train) loss=%.4f' % (ep+1, curr_loss)
@@ -251,7 +255,8 @@ def main():
             logs.flush()
 
             curr_val_loss /= curr_val_samples
-            curr_val_ler = np.mean(curr_val_ler)*100.0
+            #curr_val_ler = np.mean(curr_val_ler)*100.0
+            curr_val_ler = np.sum(curr_val_ler)/curr_val_labels*100.0
             '''
             if prev_val_ler < curr_val_ler:
                 patience += 1

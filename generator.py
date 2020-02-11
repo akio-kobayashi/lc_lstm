@@ -91,7 +91,7 @@ class DataGenerator(Sequence):
                 lst=self.sorted_keys[start:end]
                 random.shuffle(lst)
                 self.keys.extend(lst)
-                start+=SORT_BLOCK_SIZE
+                #start+=SORT_BLOCK_SIZE
             #random.shuffle(self.keys)
 
     def __data_generation(self, list_keys_temp):
