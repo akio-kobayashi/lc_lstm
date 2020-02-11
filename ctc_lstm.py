@@ -7,7 +7,7 @@ import tensorflow as tf
 #import tensorflow.keras
 from keras.models import Model
 from keras.layers import Dense, Input, BatchNormalization, Softmax, LSTM, Activation, RNN, GRU, CuDNNGRU, CuDNNLSTM
-from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking MaxPooling2D
+from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, MaxPooling2D
 from keras.layers import Conv2D, Reshape
 from keras.constraints import max_norm
 import keras.utils
@@ -107,8 +107,6 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
         model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.))
     elif optim == 'sgd':
         model.compile(keras.optimizers.SGD(lr=init_lr, momentum=0.9, clipnorm=50.))
-    #elif optim == 'adab':
-    #    model.compile(AdaBound.AdaBoundOptimizer(learning_rate=init_lr))
     else:
         model.compile(keras.optimizers.Adadelta(lr=init_lr, clipnorm=50.))
 
