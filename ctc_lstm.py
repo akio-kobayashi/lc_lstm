@@ -36,7 +36,6 @@ config = tf.compat.v1.ConfigProto(
 sess = tf.compat.v1.Session(config=config)
 K.set_session(sess)
 
-lstm=False
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
                 dropout, init_filters, optim, lstm=False):
@@ -47,14 +46,14 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
 
     for n in range (depth):
         if direction == 'bi':
-            if lstm == True:
+            if lstm is True:
                 outputs=Bidirectional(CuDNNLSTM(units,
                     return_sequences=True))(outputs)
             else:
                 outputs=Bidirectional(CuDNNGRU(units,
                     return_sequences=True))(outputs)
         else:
-            if lstm == True:
+            if lstm is True:
                 outputs = CuDNNLSTM(units, return_sequences=True)(outputs)
             else:
                 outputs=CuDNNGRU(units,return_sequences=True)(outputs)
