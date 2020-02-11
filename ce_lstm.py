@@ -216,7 +216,7 @@ def main():
                 prev_save_ep = ep
             else:
                 if ep - prev_save_ep > max_patience:
-                    prev_lr = K.get_value(model.model_train.optimizer.lr)
+                    prev_lr = K.get_value(model.optimizer.lr)
                     curr_lr = prev_lr * args.factor
                     if curr_lr < args.min_lr:
                         curr_lr = args.min_lr
@@ -225,7 +225,7 @@ def main():
                         msg="learning rate chaged %.4f to %.4f at epoch %d" % (prev_lr, curr_lr, ep+1)
                         logs.write(msg+'\n')
                         print(msg)
-                        K.set_value(model.model_train.optimizer.lr,curr_lr)
+                        K.set_value(model.optimizer.lr,curr_lr)
 
             if early_stop > max_early_stop:
                 break
