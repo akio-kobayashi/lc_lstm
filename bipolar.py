@@ -44,10 +44,10 @@ def build_bipolar_model(inputs, units, depth, n_labels, feat_dim, init_lr, direc
     neg_outputs2=Activation('relu')(neg_outputs2)
     pos_outputs2=Activation('relu')(pos_outputs1)
 
-    pos_outputs1=MaxPooling2D(pool_size=2, strides=1, padding='same')(pos_outputs1)
-    pos_outputs2=MaxPooling2D(pool_size=2, strides=1, padding='same')(pos_outputs2)
-    neg_outputs1=MaxPooling2D(pool_size=2, strides=1, padding='same')(neg_outputs1)
-    neg_outputs2=MaxPooling2D(pool_size=2, strides=1, padding='same')(neg_outputs2)
+    #pos_outputs1=MaxPooling2D(pool_size=2, strides=1, padding='same')(pos_outputs1)
+    #pos_outputs2=MaxPooling2D(pool_size=2, strides=1, padding='same')(pos_outputs2)
+    #neg_outputs1=MaxPooling2D(pool_size=2, strides=1, padding='same')(neg_outputs1)
+    #neg_outputs2=MaxPooling2D(pool_size=2, strides=1, padding='same')(neg_outputs2)
 
     conv_list=[pos_outputs1, pos_outputs2, neg_outputs1, neg_outputs2]
     conv_2nd=[]
@@ -69,7 +69,7 @@ def build_bipolar_model(inputs, units, depth, n_labels, feat_dim, init_lr, direc
                     kernel_initializer='glorot_uniform')(conv)
         conv=BatchNormalization(axis=-1)(conv)
         conv=Activation('relu')(conv)
-        conv=MaxPooling2D(pool_size=2, strides=1, padding='same')(conv)
+        #conv=MaxPooling2D(pool_size=2, strides=1, padding='same')(conv)
         conv_2nd.append(conv)
 
     outputs = Lambda(lambda x: tf.concat(x, axis=-1))(conv_2nd)
