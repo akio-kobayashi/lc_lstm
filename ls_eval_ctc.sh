@@ -1,7 +1,10 @@
 #!/bin/sh
 
-export CUDA_VISIBLE_DEVICES=1
-cd /home/akio/lc_lstm
+device=$1
+direction=$2
+
+export CUDA_VISIBLE_DEVICES=$device
+cd /home/akiokobayashi0809/lc_lstm
 
 # librispeech
 train=./train_clean_100.h5
@@ -16,7 +19,6 @@ prior=./ls_label_counts.h5
 feat_dim=40
 units=160
 lstm_depth=5
-direction=bi
 batch_size=32
 learn_rate=4.0e-4
 factor=0.5
