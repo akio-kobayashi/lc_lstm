@@ -1,28 +1,39 @@
 #!/bin/sh
-
 device=$1
 export CUDA_VISIBLE_DEVICES=$device
 cd /home/akio/lc_lstm
 
 direction=$2
 
-# librispeech
-train=./train.h5
-valid=./dev.h5
-key_file=./train.sorted
-valid_key_file=./dev.sorted
+host=`hostname`
+if [ $host == "brandy" ];then
+    export CUDA_VISIBLE_DEVICES=$device
+    cd /home/akiokobayashi0809/lc_lstm
+    train=./train.h5
+    valid=./dev.h5
+    key_file=./train.sorted
+    valid_key_file=./dev.sorted
+else
+    root=/mnt/ssd1/eesen_20191228/eesen/asr_egs/tedlium/v1/data/
+    train=${root}/train/train.h5
+    valid=${root}/dev/dev.h5
+    key_file=${root}/train/train.sorted
+    valid_key_file=${root}/dev/dev.sorted
+fi
+
 n_labels=49
 
 # features
 feat_dim=40
 
 #training
-batch_size=16
+batch_size=32
 epochs=100
 factor=0.5
 optim=adadelta
 #optim=adam
 dropout=0.0
+filters=16
 
 for lstm_depth in 4;
 do
@@ -30,8 +41,8 @@ do
   do
       for learn_rate in 1.0e-3;
       do
-          snapdir=./model_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_BNtrue_vgg_${optim}_${direction}
-	  logdir=./logs_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_BNtrue_vgg_${optim}_${direction}
+          snapdir=./model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_BNtrue_vgg_${optim}_${direction}
+	  logdir=./logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_BNtrue_vgg_${optim}_${direction}
           mkdir -p $snapdir
           mkdir -p $logdir
 	      
@@ -40,7 +51,7 @@ do
 		 --feat-dim $feat_dim --n-labels $n_labels --batch-size $batch_size --epochs $epochs \
 		 --snapshot $snapdir  --learn-rate $learn_rate --log-dir $logdir --max-patient 3\
 		 --units $units --lstm-depth $lstm_depth --factor $factor \
-		 --optim ${optim}
+		 --optim ${optim} --filters ${filters}
       done
   done
 done
