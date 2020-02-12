@@ -33,7 +33,7 @@ def VGG2L(inputs, filters, feat_dim):
                    kernel_initializer='glorot_uniform')(outputs)
     outputs=BatchNormalization(axis=-1)(outputs)
     outputs=Activation('relu')(outputs)
-    outputs=MaxPooling2D(pool_size=2, strides=1, padding='same')(outputs)
+    #outputs=MaxPooling2D(pool_size=2, strides=1, padding='same')(outputs)
 
     filters *= 2 # 128
     outputs=Conv2D(filters=filters,
@@ -51,7 +51,7 @@ def VGG2L(inputs, filters, feat_dim):
                    kernel_initializer='glorot_uniform')(outputs)
     outputs=BatchNormalization(axis=-1)(outputs)
     outputs=Activation('relu')(outputs)
-    outputs=MaxPooling2D(pool_size=2, strides=1, padding='same')(outputs)
+    #outputs=MaxPooling2D(pool_size=2, strides=1, padding='same')(outputs)
 
     outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
 

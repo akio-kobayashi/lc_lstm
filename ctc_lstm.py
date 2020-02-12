@@ -39,10 +39,10 @@ K.set_session(sess)
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
                 dropout, init_filters, optim, lstm=False):
-    outputs = Masking(mask_value=0.0)(inputs)
+    #outputs = Masking(mask_value=0.0)(inputs)
     #outputs=inputs
 
-    outputs = vgg2l.VGG2L(outputs, init_filters, feat_dim)
+    outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
 
     for n in range (depth):
         if direction == 'bi':
@@ -64,11 +64,11 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
 
     model=CTCModel.CTCModel([inputs], [outputs], greedy=True)
     if optim == 'adam':
-        model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.))
+        model.compile(keras.optimizers.Adam(lr=init_lr))
     elif optim == 'sgd':
-        model.compile(keras.optimizers.SGD(lr=init_lr, momentum=0.9, clipnorm=50.))
+        model.compile(keras.optimizers.SGD(lr=init_lr,  momentum=0.9))
     else:
-        model.compile(keras.optimizers.Adadelta(lr=init_lr, clipnorm=50.))
+        model.compile(keras.optimizers.Adadelta(lr=init_lr))
 
     return model
 
