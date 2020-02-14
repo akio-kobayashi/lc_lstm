@@ -23,6 +23,7 @@ import generator
 import layer_normalization
 import bipolar
 import vgg2l
+import vgg1l
 #import AdaBound
 
 os.environ['PYTHONHASHSEED']='0'
@@ -38,12 +39,15 @@ K.set_session(sess)
 
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
-                dropout, init_filters, optim, lstm=False):
+                dropout, init_filters, optim, lstm=False, vgg1l=False):
     #outputs = Masking(mask_value=0.0)(inputs)
     #outputs=inputs
 
-    outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
-
+    if vgg1l is False:
+        outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
+    else:
+        outputs = vgg1l.VGG(inputs, init_filters, feat_dim)
+        
     for n in range (depth):
         if direction == 'bi':
             if lstm is True:
@@ -116,7 +120,7 @@ def main():
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta]')
     parser.add_argument('--bipolar', action='store_true')
-
+    parser.add_argument('--vgg', action='store_true')
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
@@ -133,7 +137,7 @@ def main():
     else:
         model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
                             args.feat_dim, curr_lr, args.direction, args.dropout,
-                            args.filters, args.optim)
+                            args.filters, args.optim, args.vgg)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels, shuffle=True)

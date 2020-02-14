@@ -18,13 +18,13 @@ feat_dim=40
 units=160
 
 #training
-batch_size=32
+batch_size=16
 epochs=50
 factor=0.5
 dropout=0.0
-filters=32
+filters=16
 
-for lstm_depth in 5;
+for lstm_depth in 4;
 do
   for units in 160;
   do
@@ -32,8 +32,8 @@ do
       do
 	  for optim in adadelta;
 	  do
-              snapdir=./model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg_${optim}_ep${epochs}_${direction}
-	      logdir=./logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg_${optim}_ep${epochs}_${direction}
+              snapdir=./js/model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg_${optim}_ep${epochs}_${direction}
+	      logdir=./js/logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg_${optim}_ep${epochs}_${direction}
 	      
               mkdir -p $snapdir
               mkdir -p $logdir
