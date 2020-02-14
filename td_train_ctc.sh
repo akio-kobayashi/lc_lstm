@@ -1,23 +1,40 @@
 #!/bin/sh
-
 device=$1
 export CUDA_VISIBLE_DEVICES=$device
 cd /home/akio/lc_lstm
 
 direction=$2
 
-# librispeech
-train=./train.h5
-valid=./dev.h5
-key_file=./train.sorted
-valid_key_file=./dev.sorted
+host=`hostname`
+if [ $host == "brandy" ];then
+    export CUDA_VISIBLE_DEVICES=$device
+    cd /home/akiokobayashi0809/lc_lstm
+    train=./train.h5
+    valid=./dev.h5
+    key_file=./train.sorted
+    valid_key_file=./dev.sorted
+elif [ $host == "asr03" ];then
+    export CUDA_VISIBLE_DEVICES=$device
+    cd /home/akio/lc_lstm
+    train=./train.h5
+    valid=./dev.h5
+    key_file=./train.sorted
+    valid_key_file=./dev.sorted
+else
+    root=/mnt/ssd1/eesen_20191228/eesen/asr_egs/tedlium/v1/data/
+    train=${root}/train/train.h5
+    valid=${root}/dev/dev.h5
+    key_file=${root}/train/train.sorted
+    valid_key_file=${root}/dev/dev.sorted
+fi
+
 n_labels=49
 
 # features
 feat_dim=40
 
 #training
-batch_size=16
+batch_size=32
 epochs=100
 factor=0.5
 optim=adadelta
