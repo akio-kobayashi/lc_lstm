@@ -51,7 +51,7 @@ class DataGenerator(Sequence):
                 start = self.starts[n]
                 end = min(start+SORT_BLOCK_SIZE, len(self.sorted_keys))
                 lst=self.sorted_keys[start:end]
-                #random.shuffle(lst)
+                random.shuffle(lst)
                 self.keys.extend(lst)
                 start+=SORT_BLOCK_SIZE
             #random.shuffle(self.keys)
