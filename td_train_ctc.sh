@@ -46,10 +46,10 @@ for lstm_depth in 4;
 do
   for units in 160;
   do
-      for learn_rate in 1.0e-3;
+      for learn_rate in 1.0;
       do
-          snapdir=./model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_BNtrue_vgg_${optim}_${direction}
-	  logdir=./logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_BNtrue_vgg_${optim}_${direction}
+          snapdir=./model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_BNtrue_vgg1_${optim}_${direction}
+	  logdir=./logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_BNtrue_vgg1_${optim}_${direction}
           mkdir -p $snapdir
           mkdir -p $logdir
 	      
@@ -58,7 +58,7 @@ do
 		 --feat-dim $feat_dim --n-labels $n_labels --batch-size $batch_size --epochs $epochs \
 		 --snapshot $snapdir  --learn-rate $learn_rate --log-dir $logdir --max-patient 3\
 		 --units $units --lstm-depth $lstm_depth --factor $factor \
-		 --optim ${optim} --filters ${filters}
+		 --optim ${optim} --filters ${filters} --vgg
       done
   done
 done

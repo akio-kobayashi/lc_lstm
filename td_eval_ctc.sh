@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=0
 cd /home/akio/lc_lstm
 
 # librispeech
@@ -18,10 +18,15 @@ units=160
 lstm_depth=4
 direction=uni
 batch_size=16
-learn_rate=2.0e-4
 factor=0.5
+filters=16
+learn_rate=1.0
+optim=adadelta
+dropout=0.0
 
-snapdir=./model_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D_f${factor}_P3_LNtrue_vgg_${direction}
+#   dir=./model_d4_d160_f16_l1.0_B16_D0.0_f0.5_P3_LNtrue_BNtrue_vgg_adadelta_bi
+snapdir=./model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_BNtrue_vgg_${optim}_${direction}
+echo $snapdir
 weights=${snapdir}/snapshot.h5
 
 if [ -e $weights ]; then
