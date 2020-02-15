@@ -35,15 +35,11 @@ feat_dim=40
 units=160
 
 #training
-<<<<<<< HEAD
-#batch_size=32
-=======
->>>>>>> 4171dc44914da994ec1c1fa175bec3abaf5f34d6
 batch_size=16
 epochs=50
 factor=0.5
 dropout=0.0
-filters=16
+filters=32
 
 for lstm_depth in 4;
 do
@@ -54,19 +50,19 @@ do
 	  for optim in adadelta;
 	  do
               snapdir=./js/model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg_${optim}_ep${epochs}_${direction}
-<<<<<<< HEAD
-	      logdir=./js/logs_d${lstm_depth}_d${units}_f_${filters}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg_${optim}_ep${epochs}_${direction}
-=======
 	      logdir=./js/logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg_${optim}_ep${epochs}_${direction}
->>>>>>> 4171dc44914da994ec1c1fa175bec3abaf5f34d6
 	      
               mkdir -p $snapdir
               mkdir -p $logdir
-              python ctc_lstm.py --data $train --valid $valid --direction uni --key-file $keys \
+              python ctc_lstm.py --data $train --valid $valid \
+		     --direction ${direction} --key-file $keys \
 		     --valid-key-file $valid_keys \
-		     --feat-dim $feat_dim --n-labels $n_labels --batch-size $batch_size --epochs $epochs \
-		     --snapshot $snapdir  --learn-rate $learn_rate --log-dir $logdir \
-		     --units $units --lstm-depth $lstm_depth --factor $factor  --optim $optim --filters $filters
+		     --feat-dim $feat_dim --n-labels $n_labels \
+		     --batch-size $batch_size --epochs $epochs \
+		     --snapshot $snapdir  --learn-rate $learn_rate \
+		     --log-dir $logdir \
+		     --units $units --lstm-depth $lstm_depth \
+		     --factor $factor  --optim $optim --filters $filters
 	  done
       done
   done
