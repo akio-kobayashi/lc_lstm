@@ -11,9 +11,9 @@ if [ $host == "brandy" ];then
     valid=./dev.h5
     key_file=./train.sorted
     valid_key_file=./dev.sorted
-else
+elif [ -e /mnt/ssd1/eesen_20191228/eesen/asr_egs/tedlium/v1/tensorflow/ ];then
     root=/mnt/ssd1/eesen_20191228/eesen/asr_egs/tedlium/v1/tensorflow/
-    path=model_d4_d160_l2.0e-4_B16_D_f0.5_P3_LNtrue_vgg_bi/
+    path=model_d4_d160_f16_l1.0_B16_D0.0_f0.5_P3_LNtrue_BNtrue_vgg_adadelta_bi
     train=${root}/${path}/ce_train.h5
     valid=${root}/${path}/ce_dev.h5
     key_file=${root}/${path}/ce_train.sorted.checked

@@ -35,11 +35,11 @@ K.set_session(sess)
 
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
-                dropout, init_filters, optim, lstm=False, vgg1l=False):
+                dropout, init_filters, optim, lstm=False, vgg=False):
     #outputs = Masking(mask_value=0.0)(inputs)
     #outputs=inputs
 
-    if vgg1l is False:
+    if vgg is False:
         outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
     else:
         outputs = vgg1l.VGG(inputs, init_filters, feat_dim)

@@ -5,7 +5,7 @@ import subprocess
 import time
 import tensorflow as tf
 from keras.models import Model
-from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, RNN,GRU, CuDNNGRU
+from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, RNN,GRU, CuDNNGRU, CuDNNLSTM
 from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, Conv2D, Reshape
 from keras.constraints import max_norm
 import keras.utils
@@ -34,9 +34,9 @@ K.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, units, depth, n_labels, feat_dim,
-                direction, init_filters, lstm=False, vgg1l=False):
+                direction, init_filters, lstm=False, vgg=False):
 
-    if vgg1l is False:
+    if vgg is False:
         outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
     else:
         outputs = vgg1l.VGG(inputs, init_filters, feat_dim)

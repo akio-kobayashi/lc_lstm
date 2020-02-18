@@ -5,15 +5,14 @@ import subprocess
 import time
 from keras.models import Model
 from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, CuDNNGRU, GRU, Reshape
-from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, Conv2D
+from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, Conv2D, CuDNNLSTM
 import keras.utils
 import keras.backend as K
 import numpy as np
 import random
 import tensorflow as tf
-#import functools
-#import CTCModel
 import vgg2l
+import vgg1l
 import ce_generator
 import layer_normalization
 
@@ -31,12 +30,15 @@ keras.backend.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr, direction,
-                dropout, init_filters, optim, lstm=False):
+                dropout, init_filters, optim, lstm=False, vgg=False):
 
     filters=init_filters
     outputs = Masking(mask_value=0.0)(inputs)
 
-    outputs=vgg2l.VGG2L(outputs, filters, feat_dim)
+    if vgg is False:
+        outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
+    else:
+        outputs = vgg1l.VGG(inputs, init_filters, feat_dim)
 
     for n in range (depth):
         if direction == 'bi':
@@ -103,13 +105,14 @@ def main():
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     parser.add_argument('--optim', type=str, default='adam', help='[adam|adadelta]')
-
+    parser.add_argument('--lstm', action='store_true')
+    parser.add_argument('--vgg', action='store_true')
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
     mask = Input(shape=(None, 1))
     model = build_model(inputs, mask, args.units, args.lstm_depth, args.n_labels, args.feat_dim, args.learn_rate,
-                        args.direction, args.dropout, args.filters, args.optim)
+                        args.direction, args.dropout, args.filters, args.optim, args.lstm, args.vgg)
 
     training_generator = ce_generator.CEDataGenerator(args.data, args.key_file,
                                                       args.batch_size, args.feat_dim, args.n_labels, shuffle=True)
@@ -140,9 +143,6 @@ def main():
                 #print("lengths: %d" % len(data[3]))
                 if len(data[3]) == 0:
                     continue
-                #print(data[0].shape)
-                #print(data[1].shape)
-                #print(data[2].shape)
                 loss,acc = model.train_on_batch(x=[data[0],data[2]],y=data[1])
 
                 samples = data[0].shape[0]
