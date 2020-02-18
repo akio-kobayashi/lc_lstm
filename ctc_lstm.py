@@ -4,7 +4,6 @@ import sys
 import subprocess
 import time
 import tensorflow as tf
-#import tensorflow.keras
 from keras.models import Model
 from keras.layers import Dense, Input, BatchNormalization, Softmax, LSTM, Activation, RNN, GRU, CuDNNGRU, CuDNNLSTM
 from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, MaxPooling2D
@@ -15,9 +14,6 @@ import keras.backend as K
 import numpy as np
 import random
 import time
-#from tf.keras.experimental import PeepholeLSTMCell
-#from tf.keras.experimental import PeeholeLSTMCell
-#import functools
 import CTCModel
 import generator
 import layer_normalization
@@ -66,6 +62,9 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
 
+    #dummy = Model(inputs, outputs)
+    #dummy.summary()
+    #exit
     model=CTCModel.CTCModel([inputs], [outputs], greedy=True)
     if optim == 'adam':
         model.compile(keras.optimizers.Adam(lr=init_lr))
@@ -121,6 +120,7 @@ def main():
     parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta]')
     parser.add_argument('--bipolar', action='store_true')
     parser.add_argument('--vgg', action='store_true')
+    parser.add_argument('--lstm', action='store_true')
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
@@ -137,7 +137,7 @@ def main():
     else:
         model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
                             args.feat_dim, curr_lr, args.direction, args.dropout,
-                            args.filters, args.optim, args.vgg)
+                            args.filters, args.optim, args.lstm, args.vgg)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
                         args.batch_size, args.feat_dim, args.n_labels, shuffle=True)

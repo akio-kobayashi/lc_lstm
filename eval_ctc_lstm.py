@@ -17,6 +17,7 @@ import generator
 import dynamic_programming
 import layer_normalization
 import vgg2l
+import vgg1l
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -33,23 +34,33 @@ K.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, units, depth, n_labels, feat_dim,
-                direction, init_filters):
+                direction, init_filters, lstm=False, vgg1l=False):
 
-    outputs = Masking(mask_value=0.0)(inputs)
-    outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
-    
+    if vgg1l is False:
+        outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
+    else:
+        outputs = vgg1l.VGG(inputs, init_filters, feat_dim)
+        
     for n in range (depth):
         if direction == 'bi':
-            outputs=Bidirectional(CuDNNGRU(units,
-                return_sequences=True))(outputs)
+            if lstm is True:
+                outputs=Bidirectional(CuDNNLSTM(units,
+                    return_sequences=True))(outputs)
+            else:
+                outputs=Bidirectional(CuDNNGRU(units,
+                    return_sequences=True))(outputs)
         else:
-            outputs=CuDNNGRU(units,return_sequences=True)(outputs)
+            if lstm is True:
+                outputs = CuDNNLSTM(units, return_sequences=True)(outputs)
+            else:
+                outputs=CuDNNGRU(units,return_sequences=True)(outputs)
         outputs=layer_normalization.LayerNormalization()(outputs)
 
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
     model=Model(inputs, outputs)
-
+    #model.summary()
+    
     return model
 
 def named_logs(model, logs):
@@ -83,17 +94,15 @@ def main():
     parser.add_argument('--lstm-depth', type=int ,default=2,
                         help='number of LSTM/GRU layers')
     parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
-    #parser.add_argument('--softmax', type=bool, default=True, help='use softmax layer')
-    #parser.add_argument('--align', type=bool, default=False, help='store alignment')
-    #parser.add_argument('--layer-norm', type=bool, default=False, help='layer normalization')
-    #parser.add_argument('--vgg', type=bool, default=False, help='use vgg-like layers')
+    parser.add_argument('--vgg', action='store_true', help='use vgg-like layers')
+    parser.add_argument('--lstm', action='store_true')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
                         args.feat_dim, args.direction,
-                        args.filters)
+                        args.filters, args.lstm, args.vgg)
     model.load_weights(args.weights, by_name=True)
 
     prior = np.zeros((1, args.n_labels+1))
@@ -106,8 +115,6 @@ def main():
     prior=np.expand_dims(prior, axis=0) # for broadcasting
     prior *= args.prior_scale;
     prior = np.roll(prior, -1)
-    #print(prior)
-    #exit(1)
 
     test_generator = generator.DataGenerator(args.data, args.key_file,
                                              1, args.feat_dim, args.n_labels, False)
