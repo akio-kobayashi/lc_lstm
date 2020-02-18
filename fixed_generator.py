@@ -46,9 +46,9 @@ class FixedDataGenerator(Sequence):
             =self.__data_generation(list_keys_temp)
 
         if return_keys is False:
-            return [x, mask], y
+            return [x, mask, y]
         else:
-            return [x, mask], y, list_keys_temp
+            return [x, mask, y], list_keys_temp
 
     def on_epoch_end(self):
         if self.shuffle == True:
@@ -60,7 +60,7 @@ class FixedDataGenerator(Sequence):
         max_num_frames=0
 
         for i, key in enumerate(list_keys_temp):
-            mat = self.h5fd[key+'data/'][()]
+            mat = self.h5fd[key+'/data'][()]
             [ex_blocks,ex_frames] = utils.expected_num_blocks(mat, self.procs, self.extras)
             if ex_blocks > max_num_blocks:
                 max_num_blocks = ex_blocks
