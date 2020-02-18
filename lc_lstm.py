@@ -13,6 +13,7 @@ import random
 import tensorflow as tf
 import fixed_generator
 import vgg2l
+import vgg1l
 import utils
 
 os.environ['PYTHONHASHSEED']='0'
@@ -35,12 +36,16 @@ def set_states(model, states):
     for (d,_), s in zip(model.state_updates, states):
         K.set_value(d, s)
 
-def build_model(inputs, masks, units, depth, n_labels, feat_dim, init_lr, use_vgg, optim):
+def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
+                dropout, init_filters, optim, lstm=False, vgg=False):
 
     outputs = Masking(mask_value=0.0)(inputs)
 
-    outputs = vgg2l.VGG2L(outputs, init_filters, feat_dim)
-
+    if vgg is False:
+        outputs = vgg2l.VGG2L(outputs, init_filters, feat_dim)
+    else:
+        outputs = vgg1l.VGG(outputs, init_filters, feat_dim)
+        
     for n in range (depth):
         # forward, keep current states
         # statefule
@@ -58,8 +63,7 @@ def build_model(inputs, masks, units, depth, n_labels, feat_dim, init_lr, use_vg
                                        go_backwards=True,
                                        name='lstm_bw_'+str(n))(outputs)
         outputs = Concatenate([x, y], axis=-1, name='concate_'+str(n))
-        if layer_norm is True:
-            outputs=layer_normalization.LayerNormalization()(outputs)
+        outputs=layer_normalization.LayerNormalization()(outputs)
 
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
@@ -102,10 +106,18 @@ def main():
     parser.add_argument('--min-lr', type=float, default=1.0e-6, help='minimum learning rate')
     parser.add_argument('--process-frames', type=int, default=10, help='process frames')
     parser.add_argument('--extra-frames', type=int, default=10, help='extra frames')
+    parser.add_argument('--dropout', type=float, default=0.0, help='dropout rate')
+    parser.add_argument('--filters', type=int, default=16, help='number of filters')
+    parser.add_argument('--optim', type=str, default='adadelta', help='optimizer')
+    parser.add_argument('--lstm', action='store_true')
+    parser.add_argument('--vgg', action='store_true')
     args = parser.parse_args()
 
     inputs = Input(batch_shape=(args.batch_size, None, args.feat_dim))
     masks = Input(batch_shape=(args.batch_size, None, args.feat_dim))
+    model = buil_model(inputs, masks, args.units, args.lstm_depth, args.n_labels, args.feat_dim,
+                       args.learn_rate, args.dropout, args.filters, args.optim, args.lstm, args.vgg):
+
     model = build_model(inputs, masks, args.units, args.lstm_depth, args.n_labels, args.feat_dim, args.learn_rate)
 
     training_generator = FixedDataGenerator(
@@ -148,7 +160,7 @@ def main():
 
             # progress report
             progress_loss = curr_loss/curr_samples
-            progress_acc = np.mean(curr_acc)*100.0
+            progress_acc = np.mean(curr_acc)
             print('\rprogress: (%d/%d) loss=%.4f acc=%.4f' % (bt+1,
                 training_generator.__len__(), progress_loss[0], progress_acc[0]),
                 end='')
@@ -183,7 +195,7 @@ def main():
         print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, curr_acc))
 
         curr_val_loss /= curr_val_samples
-        curr_val_acc = np.mean(curr_val_acc)*100.0
+        curr_val_acc = np.mean(curr_val_acc)
 
         if prev_val_acc > curr_val_acc:
             patience += 1
