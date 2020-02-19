@@ -38,7 +38,7 @@ do
       if [ ! -e $snapdir/snapshot.h5 ]; then
         mkdir -p $snapdir
         mkdir -p $logdir
-        python ctc_lstm.py --data $train --valid $valid --direction uni --key-file $keys --valid-key-file $valid_keys \
+        python ctc_lstm.py --data $train --valid $valid --direction $direction --key-file $keys --valid-key-file $valid_keys \
           --feat-dim $feat_dim --n-labels $n_labels --batch-size $batch_size --epochs $epochs \
           --snapshot $snapdir  --learn-rate $learn_rate --log-dir $logdir \
           --units $units --lstm-depth $lstm_depth --factor $factor --dropout $dropout \
