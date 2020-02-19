@@ -133,7 +133,8 @@ def main():
                     else:
                         processd_list[n] = np.vstack(processed_list[n], processed)
             for n, key in enumerate(keys):
-                f.create_dataset(key, processd_list[n])
+                f.create_group(key)
+                f.create_dataset(key+'/likelihood', data=processed_list[n])
 
 if __name__ == "__main__":
     main()
