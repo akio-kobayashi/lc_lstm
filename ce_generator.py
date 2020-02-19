@@ -34,11 +34,6 @@ class CEDataGenerator(Sequence):
         for key in self.h5fd.keys():
             self.keys.append(key)
 
-        #if len(self.sorted_keys) > 0:
-        #    print(len(self.keys))
-        #    print(len(self.sorted_keys))
-        #    assert(len(self.keys) == len(self.sorted_keys))
-
         if self.shuffle:
             start=0
             while True:
@@ -114,7 +109,7 @@ class CEDataGenerator(Sequence):
                 max_output_len = len(label)
             labels.append(label)
             #mats.append(mat)
-            
+
         input_sequences = np.zeros((self.batch_size, max_input_len, self.feat_dim))
         label_sequences = np.zeros((self.batch_size, max_output_len, self.n_labels+1))
         masks = np.zeros((self.batch_size, max_output_len, 1))

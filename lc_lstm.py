@@ -45,7 +45,7 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
         outputs = vgg2l.VGG2L(outputs, init_filters, feat_dim)
     else:
         outputs = vgg1l.VGG(outputs, init_filters, feat_dim)
-        
+
     for n in range (depth):
         # forward, keep current states
         # statefule
@@ -220,39 +220,6 @@ def main():
             model.save_weights(path)
 
         prev_val_acc = curr_val_acc
-
-    # evaluation
-    '''
-    if args.eval is not None:
-
-        eval_in = Input(batch_shape=(1, None, args.feat_dim))
-        eval_mask = Input(batch_shape=(1, None, args.feat_dim))
-        eval_model = build_model(eval_in, eval_mask, args.units, args.n_labels, args.feat_dim, args.learn_rate)
-        path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
-        eval_model.load_weights(path, by_name=True)
-
-        eval_generator = DataGenerator(
-            args.eval, 1, args.feat_dim, args.n_labels,
-            args.process_frames, args.extra_frames)
-        path=os.path.join(args.snapshot,args.eval_out+'.ark')
-
-        with h5py.File(path, 'w') as f:
-            for smp in range(eval_generator.__len()__):
-                x, mask, y, keys = eval_generator.__getitem__(smp)
-                model.reset_states()
-                for b in range(x.shape[0]):
-                    x_in = np.squeeze(x[b,:,:,:])
-                    mask_in = np.squeeze(mask[b,:,:,:])
-                    y_in = np.squeeze(y[b,:,:,:])
-                    states = get_states(model)
-                    predict = eval_model.predict_on_batch(x=[x_in,mask_in])
-                    set_states(eval_model, states)
-                    #
-                    x_part = x_in[:, 0:args.process_frames, :]
-                    mask_part = mask_in[:, 0:args.process_frames, :]
-
-                f.create_dataset(keys[0], predict)
-    '''
 
 if __name__ == "__main__":
     main()

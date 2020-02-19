@@ -11,8 +11,8 @@ import utils
 
 class FixedDataGenerator(Sequence):
 
-    def __init__(self, file, batch_size=64, feat_dim=40, n_labels=1024,
-        procs=10, extras=10, shuffle=True):
+    def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024,
+        procs=10, extras=10, shuffle=False):
 
         self.file=file
         self.batch_size=batch_size
@@ -22,14 +22,26 @@ class FixedDataGenerator(Sequence):
         self.extras=extras
         self.shuffle=shuffle
         self.keys=[]
+        self.sorted_keys=[]
+
+        self.h5fd = h5py.File(self.file, 'r')
+        self.n_samples = len(self.h5fd.keys())
+        if key_file is not None:
+            with open(key_file, 'r') as f:
+                for line in f:
+                    self.sorted_keys.append(line.strip())
+        for key in self.h5fd.keys():
+            self.keys.append(key)
 
         self.h5fd = h5py.File(self.file, 'r')
         self.n_samples = len(self.h5fd.keys())
         for key in self.h5fd.keys():
             self.keys.append(key)
+        if len(self.sorted_keys) > 0:
+            self.keys = self.sorted_keys
 
-        if self.shuffle:
-            random.shuffle(self.keys)
+        #if self.shuffle:
+        #    random.shuffle(self.keys)
 
     def __len__(self):
         return int(np.ceil(self.n_samples)/self.batch_size)
