@@ -87,7 +87,7 @@ def main():
     parser.add_argument('--feat-dim', default=40, type=int, help='feats dim')
     parser.add_argument('--n-labels', default=1024, type=int, required=True,
                         help='number of output labels')
-    parser.add_argument('--batch-size', default=64, type=int, help='mini-batch size')
+    parser.add_argument('--batch-size', default=1, type=int, help='mini-batch size')
     parser.add_argument('--snapshot', type=str, default='./',
                         help='snapshot directory')
     parser.add_argument('--snapshot-prefix', type=str, default='snapshot',
@@ -103,20 +103,20 @@ def main():
     parser.add_argument('--vgg', action='store_true')
     args = parser.parse_args()
 
-    eval_in = Input(batch_shape=(1, None, args.feat_dim))
-    eval_mask = Input(batch_shape=(1, None, args.feat_dim))
+    eval_in = Input(batch_shape=(args.batch_size, None, args.feat_dim))
+    eval_mask = Input(batch_shape=(args.batch_size, None, args.feat_dim))
     eval_model = build_model(eval_in, eval_mask, args.units, args.n_labels, args.feat_dim, args.learn_rate)
     path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
     eval_model.load_weights(path, by_name=True)
 
     eval_generator = DataGenerator(
-        args.eval, 1, args.feat_dim, args.n_labels,
-        args.process_frames, args.extra_frames)
+        args.eval, args.batch_size, args.feat_dim, args.n_labels,
+        args.process_frames, args.extra_frames, mode='eval')
     path=os.path.join(args.snapshot,args.eval_out+'.ark')
-
     with h5py.File(path, 'w') as f:
         for smp in range(eval_generator.__len()__):
-            x, mask, y, keys = eval_generator.__getitem__(smp)
+            processed_list=[]
+            x, mask, y, len, keys = eval_generator.__getitem__(smp)
             model.reset_states()
             for b in range(x.shape[0]):
                 x_in = np.squeeze(x[b,:,:,:])
@@ -125,11 +125,15 @@ def main():
                 states = get_states(model)
                 predict = eval_model.predict_on_batch(x=[x_in,mask_in])
                 set_states(eval_model, states)
-                #
-                x_part = x_in[:, 0:args.process_frames, :]
-                mask_part = mask_in[:, 0:args.process_frames, :]
-
-            f.create_dataset(keys[0], predict)
+                for n in x.shape[1]:
+                    processed = predict[b, 0:len[b,n,0], :]
+                    processed = processed.reshape([-1, args.feat_dim])
+                    if len(processed_list) == args.batch_size:
+                        processd_list.append(processed)
+                    else:
+                        processd_list[n] = np.vstack(processed_list[n], processed)
+            for n, key in enumerate(keys):
+                f.create_dataset(key, processd_list[n])
 
 if __name__ == "__main__":
     main()

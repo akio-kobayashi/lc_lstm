@@ -25,6 +25,7 @@ def split_utt(mat, procs, extras, n_blocks, feat_dim, max_blocks):
     src=np.zeros(shape=(max_blocks, procs+extras, feat_dim))
     mask=np.zeros(shape=(max_blocks, proc+extras, feat_dim))
     start = 0
+    true_length=[]
     for b in range(n_blocks):
         end = np.min(length, start+procs+extras)
         if length < start+procs+extras:
@@ -34,9 +35,12 @@ def split_utt(mat, procs, extras, n_blocks, feat_dim, max_blocks):
             # or procs+extras in case all input-farmes are used
         mask[b, 0:frames, :] = 1.0
         src[b, 0:frames, :] = np.expand_dims(mat[start:end, :], axis=0)
+        true_legnth.append(frames)
+        if length < start+procs+extras:
+            break
         start += procs
 
-    return [src, mask]
+    return src, mask, true_length
 
 def split_label(label, procs, extras, n_blocks, n_classes, max_blocks):
     '''
@@ -45,6 +49,7 @@ def split_label(label, procs, extras, n_blocks, n_classes, max_blocks):
     length = len(label)
     src=np.zeros(shape=(max_blocks, proc+extras, n_classes))
     start = 0
+    true_length=[]
     for b in range(n_blocks):
         end = np.min(length, start+procs+extras)
         if length < start+procs+extras:
@@ -53,6 +58,9 @@ def split_label(label, procs, extras, n_blocks, n_classes, max_blocks):
             frames = procs+extras
         labels = keras.utils.to_categorical(np.array(label[start:end]), num_classes=n_classes)
         src[b, 0:frames:, :] = np.expand_dims(labels, axis=0)
+        true_length.append(frames)
+        if length < start+procs+extras:
+            break
         start += procs
 
-    return return src;
+    return src, true_length;

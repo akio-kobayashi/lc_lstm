@@ -140,7 +140,7 @@ def main():
 
         for bt in range(training_generator.__len__()):
             # transposed---(blocks, batch, time, feats)
-            x, mask, y = training_generator.__getitem__(bt)
+            x, mask, y, len = training_generator.__getitem__(bt)
             model.reset_states()
             for b in range(x.shape[0]):
                 x_in = np.squeeze(x[b,:,:,:])
@@ -173,7 +173,7 @@ def main():
         curr_val_samples = 0
 
         for bt in range(valid_generator.__len__()):
-            x,mask,y = valid_generator.__getitem__(bt)
+            x,mask,y,len = valid_generator.__getitem__(bt)
             model.reset_states()
             for b in range(x.shape[0]):
                 x_in = np.squeeze(x[b,:,:,:])
