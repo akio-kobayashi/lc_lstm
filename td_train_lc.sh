@@ -1,6 +1,7 @@
 #!/bin/sh
 
 direction=bi
+
 host=`hostname`
 if [ $host == "brandy" ];then
     device=1
@@ -32,7 +33,7 @@ n_labels=49
 feat_dim=40
 
 #training
-batch_size=16
+batch_size=32
 epochs=50
 factor=0.5
 optim=adadelta
@@ -49,21 +50,21 @@ do
         do
           for extra_frames in 10 20 30 50;
           do
-            snapdir=./td/lc_model_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_p${proc_frames}_e${extra_ferames}_${optim}_${direction}
-            logdir=./td/lc_logs_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_p${proc_frames}_e${extra_ferames}_${optim}_${direction}
+            snapdir=./td/lc_model_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_p${proc_frames}_e${extra_frames}_${optim}_${direction}
+            logdir=./td/lc_logs_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_p${proc_frames}_e${extra_frames}_${optim}_${direction}
             mkdir -p $snapdir
             mkdir -p $logdir
 
             python lc_lstm.py --data $train --valid $valid \
 		          --key-file $key_file --valid-key-file $valid_key_file \
-		          --direction ${direction} --feat-dim $feat_dim \
+		          --feat-dim $feat_dim \
 		          --n-labels $n_labels --batch-size ${batch_size} \
 		          --epochs $epochs --filters ${filters} \
 		          --snapshot $snapdir  --learn-rate $learn_rate \
 		          --log-dir $logdir --max-patient 3 \
 		          --units $units --lstm-depth $lstm_depth \
-		          --factor $factor --optim ${optim} \
-              --proc-frames $proc_frames --extra-frames $extra_frames
+		          --factor $factor --optim ${optim} --lstm \
+			  --process-frames $proc_frames --extra-frames $extra_frames
           done
         done
       done

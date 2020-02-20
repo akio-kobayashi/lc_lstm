@@ -53,11 +53,13 @@ class FixedDataGenerator(Sequence):
                                                       len(self.keys) ) )]
 
         # [input_sequences, label_sequences, inputs_lengths, labels_length]
+        x, mask, y = self.__data_generation(list_keys_temp)
         if self.mode == 'train':
-            x, mask, y, len = self.__data_generation(list_keys_temp)
-            return x, mask, y, len
+            return x, mask, y
+        #, length
         else:
-            return x, mask, y, len, list_keys_temp
+            return x, mask, y, list_key_temp
+        #length, list_keys_temp
 
     def on_epoch_end(self):
         if self.shuffle == True:
@@ -76,17 +78,16 @@ class FixedDataGenerator(Sequence):
             if ex_frames > max_num_frames:
                 max_num_frames = ex_frames
 
-        input_mat=np.zeros(len(list_keys_temp), max_num_blocks, self.procs+self.extras, self.feat_dim)
-        input_mask=np.zeros(len(list_keys_temp), max_num_blocks, self.procs+self.extras, self.feat_dim)
+        input_mat=np.zeros((len(list_keys_temp), max_num_blocks, self.procs+self.extras, self.feat_dim))
+        input_mask=np.zeros((len(list_keys_temp), max_num_blocks, self.procs+self.extras, self.feat_dim))
 
         if self.mode == 'train':
-            output_labels=np.zeros(len(list_keys_temp), max_num_blocks, self.procs+self.extras, self.n_labels+1)
-        output_true_length=np.zeros(len(list_keys_temp), max_num_blocks, 1)
-
+            output_labels=np.zeros((len(list_keys_temp), max_num_blocks, self.procs+self.extras, self.n_labels+1))
+        #output_true_length=np.zeros((len(list_keys_temp), max_num_blocks, 1))
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
             [ex_blocks, ex_frames] = utils.expected_num_blocks(mat, self.procs, self.extras)
-            blocked_mat, mask, true_utt_length = utils.split_utt(mat, self.procs, self.extras, ex_blocks,
+            blocked_mat, mask = utils.split_utt(mat, self.procs, self.extras, ex_blocks,
                 self.feat_dim, max_num_blocks)
             input_mat[i, :, :, :] = np.expand_dims(blocked_mat, axis=0)
             input_mask[i,:,:,:] = np.expand_dims(mask, axis=0)
@@ -94,22 +95,25 @@ class FixedDataGenerator(Sequence):
             if self.mode == 'train':
                 # label is a list of integers starting from 0
                 label = self.h5fd[key+'/labels'][()]
-                blocked_labels, true_lab_length = utils.split_label(label, self.procs, self.extras, ex_blocks,
+                blocked_labels = utils.split_label(label, self.procs, self.extras, ex_blocks,
                     self.n_labels+1, max_num_blocks)
-                assert(true_utt_length == true_lab_length)
+                #assert(true_utt_length == true_lab_length)
                 output_labels[i,:,:,:] = np.expand_dims(blocked_labels, axis=0)
 
-            output_true_length[i,len(true_utt_length),:] = np.array(true_utt_length)
+            #ary=np.array(true_utt_length)
+            #output_true_length[i,len(true_utt_length),:] = np.array(true_utt_length)
 
         # transpose batch and block axes for outer loop in training
         input_mat = input_mat.transpose((1,0,2,3))
         input_mask = input_mask.transpose((1,0,2,3))
         if self.mode == 'train':
             output_labels = output_labels.transpose((1,0,2,3))
-        output_true_length = output_true_length.transpose((1,0,2,3))
+        #output_true_length = output_true_length.transpose((1,0,2,3))
 
         if self.mode == 'train':
-            return input_mat, input_mask, output_labels, output_true_length
+            return input_mat, input_mask, output_labels
+        #, output_true_length
         else:
-            return input_mat, input_mask, output_true_length
+            return input_mat, input_mask
+        #, output_true_length
             

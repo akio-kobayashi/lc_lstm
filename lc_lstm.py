@@ -4,10 +4,10 @@ import sys
 import subprocess
 import time
 from keras.models import Model
-from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation
-from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking
+from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, GRU
+from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, Concatenate
 import keras.utils
-import keras.backend
+import keras.backend as K
 import numpy as np
 import random
 import tensorflow as tf
@@ -15,6 +15,7 @@ import fixed_generator
 import vgg2l
 import vgg1l
 import utils
+import layer_normalization
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -49,33 +50,45 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
     for n in range (depth):
         # forward, keep current states
         # statefule
-        x=GRU(units, kernel_initializer='glorot_uniform',
-                                       return_sequences=True,
-                                       stateful=True,
-                                       unroll=True,
-                                       name='gru_fw_'+str(n))(outputs)
+        if lstm is False:
+            x=GRU(units, kernel_initializer='glorot_uniform',
+                  return_sequences=True,
+                  stateful=True,
+                  unroll=False)(outputs)
+        else:
+            x=LSTM(units, kernel_initializer='glorot_uniform',
+                   return_sequences=True,
+                   stateful=True,
+                   unroll=False)(outputs)
         # backward, not keep current states
         # do not preserve state values for backward pass
-        y=GRU(units, kernel_initializer='glorot_uniform',
-                                       return_sequences=True,
-                                       stateful=False,
-                                       unroll=True,
-                                       go_backwards=True,
-                                       name='lstm_bw_'+str(n))(outputs)
-        outputs = Concatenate([x, y], axis=-1, name='concate_'+str(n))
+        if lstm is False:
+            y=GRU(units, kernel_initializer='glorot_uniform',
+                  return_sequences=True,
+                  stateful=False,
+                  unroll=False,
+                  go_backwards=True)(outputs)
+        else:
+            y=LSTM(units, kernel_initializer='glorot_uniform',
+                  return_sequences=True,
+                  stateful=False,
+                  unroll=False,
+                  go_backwards=True)(outputs)
+            
+        outputs = Concatenate(axis=-1)([x,y])
         outputs=layer_normalization.LayerNormalization()(outputs)
 
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
-    outputs = Lambda(lambda x: tf.muitiply(x[0], x[1]))([outputs, masks])
+    #outputs = Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
 
-    model = Model([inputs, masks], outputs)
+    model = Model([inputs, mask], outputs)
     if optim == 'adam':
-        model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.), loss='categorical_cross_entropy',
-                    metrics='categorical_accuracy')
+        model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.), loss=['categorical_crossentropy'],
+                      metrics=['categorical_accuracy'])
     else:
-        model.compile(kernel.optimizers.Adadelta(lr=init_lr, clipnorm=50.), loss='categorical_cross_entropy',
-                    matrics='categorical_accuracy')
+        model.compile(keras.optimizers.Adadelta(lr=init_lr, clipnorm=50.), loss=['categorical_crossentropy'],
+                      metrics=['categorical_accuracy'])
 
     return model
 
@@ -84,7 +97,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, required=True, help='training data')
     parser.add_argument('--valid', type=str, required=True, help='validation data')
-    parser.add_argument('--eval', type=str, help='evaluation data')
+    #parser.add_argument('--eval', type=str, help='evaluation data')
+    parser.add_argument('--key-file', type=str, help='keys')
+    parser.add_argument('--valid-key-file', type=str, help='valid keys')
     parser.add_argument('--feat-dim', default=40, type=int, help='feats dim')
     parser.add_argument('--n-labels', default=1024, type=int, required=True,
                         help='number of output labels')
@@ -108,26 +123,27 @@ def main():
     parser.add_argument('--extra-frames', type=int, default=10, help='extra frames')
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout rate')
     parser.add_argument('--filters', type=int, default=16, help='number of filters')
-    parser.add_argument('--optim', type=str, default='adadelta', help='optimizer')
+    parser.add_argument('--max-patient', type=int, default=5, help='max patient')
+    parser.add_argument('--optim', type=str, default='adam', help='[adam|adadelta]')
     parser.add_argument('--lstm', action='store_true')
     parser.add_argument('--vgg', action='store_true')
     args = parser.parse_args()
 
     inputs = Input(batch_shape=(args.batch_size, None, args.feat_dim))
     masks = Input(batch_shape=(args.batch_size, None, args.feat_dim))
-    model = buil_model(inputs, masks, args.units, args.lstm_depth, args.n_labels, args.feat_dim,
-                       args.learn_rate, args.dropout, args.filters, args.optim, args.lstm, args.vgg):
+    model = build_model(inputs, masks, args.units, args.lstm_depth, args.n_labels, args.feat_dim, args.learn_rate,
+                       args.dropout, args.filters, args.optim, args.lstm, args.vgg)
 
-    model = build_model(inputs, masks, args.units, args.lstm_depth, args.n_labels, args.feat_dim, args.learn_rate)
+    #model = build_model(inputs, masks, args.units, args.lstm_depth, args.n_labels, args.feat_dim, args.learn_rate)
 
-    training_generator = FixedDataGenerator(
-        args.data, args.batch_size, args.feat_dim, args.n_labels,
+    training_generator = fixed_generator.FixedDataGenerator(
+        args.data, args.key_file, args.batch_size, args.feat_dim, args.n_labels,
         args.process_frames, args.extra_frames)
-    valid_generator = FixedDataGenerator(
-        args.valid, args.batch_size, args.feat_dim, args.n_labels,
+    valid_generator = fixed_generator.FixedDataGenerator(
+        args.valid, args.valid_key_file, args.batch_size, args.feat_dim, args.n_labels,
         args.process_frames, args.extra_frames)
 
-    tensorboard = TensorBoard(log_dir=args.log_dir)
+    #tensorboard = TensorBoard(log_dir=args.log_dir)
 
     prev_val_acc = -1.0e10
     patience = 0
@@ -140,7 +156,7 @@ def main():
 
         for bt in range(training_generator.__len__()):
             # transposed---(blocks, batch, time, feats)
-            x, mask, y, len = training_generator.__getitem__(bt)
+            x, mask, y = training_generator.__getitem__(bt)
             model.reset_states()
             for b in range(x.shape[0]):
                 x_in = np.squeeze(x[b,:,:,:])
@@ -150,6 +166,7 @@ def main():
                 loss,acc = model.train_on_batch(x=[x_in,mask_in], y=y_in)
                 # for micro-mean
                 samples = np.sum(mask_in)
+                curr_samples+=samples
                 curr_loss += loss * samples
                 curr_acc.append(acc)
 
@@ -162,28 +179,29 @@ def main():
             progress_loss = curr_loss/curr_samples
             progress_acc = np.mean(curr_acc)
             print('\rprogress: (%d/%d) loss=%.4f acc=%.4f' % (bt+1,
-                training_generator.__len__(), progress_loss[0], progress_acc[0]),
+                training_generator.__len__(), progress_loss, progress_acc),
                 end='')
         print('\n',end='')
         curr_loss /= curr_samples
         curr_acc = np.mean(curr_acc)
 
         curr_val_loss = 0.0
-        curr_val_acc = 0.0
+        curr_val_acc = []
         curr_val_samples = 0
 
         for bt in range(valid_generator.__len__()):
-            x,mask,y,len = valid_generator.__getitem__(bt)
+            x,mask,y = valid_generator.__getitem__(bt)
             model.reset_states()
             for b in range(x.shape[0]):
                 x_in = np.squeeze(x[b,:,:,:])
                 mask_in = np.squeeze(mask[b,:,:,:])
                 y_in = np.squeeze(y[b,:,:,:])
                 states = get_states(model)
-                loss, acc = model.test_on_batch(x=[x_in,mask_in],y_in)
+                loss, acc = model.test_on_batch(x=[x_in,mask_in],y=y_in)
 
                 # for micro-mean
                 samples = np.sum(mask_in)
+                curr_val_samples += samples
                 curr_val_loss += loss * samples
                 curr_val_acc.append(acc)
 
@@ -199,7 +217,7 @@ def main():
 
         if prev_val_acc > curr_val_acc:
             patience += 1
-            if patience >= max_patience:
+            if patience >= args.max_patience:
                 prev_lr = K.get_value(model.optimizer.lr)
                 curr_lr = prev_lr * args.factor
                 if curr_lr < args.min_lr:

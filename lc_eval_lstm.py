@@ -15,6 +15,7 @@ import fixed_generator
 import vgg2l
 import vgg1l
 import utils
+import layer_normalization
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -49,32 +50,43 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
     for n in range (depth):
         # forward, keep current states
         # statefule
-        x=GRU(units, kernel_initializer='glorot_uniform',
-                                       return_sequences=True,
-                                       stateful=True,
-                                       unroll=True,
-                                       name='gru_fw_'+str(n))(outputs)
+        if lstm is False:
+            x=GRU(units, kernel_initializer='glorot_uniform',
+                  return_sequences=True,
+                  stateful=True,
+                  unroll=False)(outputs)
+        else:
+            x=LSTM(units, kernel_initializer='glorot_uniform',
+                  return_sequences=True,
+                  stateful=True,
+                  unroll=False)(outputs)
         # backward, not keep current states
         # do not preserve state values for backward pass
-        y=GRU(units, kernel_initializer='glorot_uniform',
-                                       return_sequences=True,
-                                       stateful=False,
-                                       unroll=True,
-                                       go_backwards=True,
-                                       name='lstm_bw_'+str(n))(outputs)
-        outputs = Concatenate([x, y], axis=-1, name='concate_'+str(n))
+        if lstm is False:
+            y=GRU(units, kernel_initializer='glorot_uniform',
+                  return_sequences=True,
+                  stateful=False,
+                  unroll=False,
+                  go_backwards=True)(outputs)
+        else:
+            y=LSTM(units, kernel_initializer='glorot_uniform',
+                   return_sequences=True,
+                   stateful=False,
+                   unroll=False,
+                   go_backwards=True)(outputs)
+        outputs = Concatenate(axis=-1)([x,y])
         outputs=layer_normalization.LayerNormalization()(outputs)
 
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
-    outputs = Lambda(lambda x: tf.muitiply(x[0], x[1]))([outputs, masks])
+    #outputs = Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
 
-    model = Model([inputs, masks], outputs)
+    model = Model([inputs, mask], outputs)
     if optim == 'adam':
-        model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.), loss='categorical_cross_entropy',
+        model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.), loss='categorical_crossentropy',
                     metrics='categorical_accuracy')
     else:
-        model.compile(kernel.optimizers.Adadelta(lr=init_lr, clipnorm=50.), loss='categorical_cross_entropy',
+        model.compile(keras.optimizers.Adadelta(lr=init_lr, clipnorm=50.), loss='categorical_crossentropy',
                     matrics='categorical_accuracy')
 
     return model
@@ -109,7 +121,7 @@ def main():
     path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
     eval_model.load_weights(path, by_name=True)
 
-    eval_generator = DataGenerator(
+    eval_generator = fixed_genrator.FixedDataGenerator(
         args.eval, args.batch_size, args.feat_dim, args.n_labels,
         args.process_frames, args.extra_frames, mode='eval')
     path=os.path.join(args.snapshot,args.eval_out+'.ark')
