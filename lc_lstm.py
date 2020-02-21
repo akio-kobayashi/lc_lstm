@@ -127,6 +127,8 @@ def main():
     parser.add_argument('--optim', type=str, default='adam', help='[adam|adadelta]')
     parser.add_argument('--lstm', action='store_true')
     parser.add_argument('--vgg', action='store_true')
+    parser.add_argument('--max-patience', type=int, default=3)
+
     args = parser.parse_args()
 
     inputs = Input(batch_shape=(args.batch_size, None, args.feat_dim))
