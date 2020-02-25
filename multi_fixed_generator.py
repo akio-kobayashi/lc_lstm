@@ -92,7 +92,7 @@ class FixedDataGenerator(Sequence):
             if self.mode == 'train':
                 # label is a list of integers starting from 0
                 label = self.h5fd[key+'/labels'][()]
-                blocked_labels, mask = multi_utils.split_label(label, self.procs, self.extras1,
+                blocked_labels = multi_utils.split_label(label, self.procs, self.extras1,
                         self.extras2, self.num_extras1, ex_blocks,
                         self.n_labels+1, max_num_blocks)
                 output_labels[i,:,:,:] = np.expand_dims(blocked_labels, axis=0)

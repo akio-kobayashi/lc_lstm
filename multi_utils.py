@@ -27,7 +27,7 @@ def expected_num_blocks(mat, procs, extras1, extras2, num_extras1=1):
                 break
         start += procs
         num_blocks += 1
-        
+
     return [num_blocks, num_frames]
 
 def split_utt(mat, procs, extras1, extras2, num_extras1, n_blocks, feat_dim, max_blocks):
@@ -72,7 +72,7 @@ def split_utt(mat, procs, extras1, extras2, num_extras1, n_blocks, feat_dim, max
 
         start += procs
         num_blocks += 1
-        
+
     return src, mask
 
 def split_label(label, procs, extras1, extras2, num_extras1, n_blocks, n_classes, max_blocks):
@@ -82,7 +82,7 @@ def split_label(label, procs, extras1, extras2, num_extras1, n_blocks, n_classes
     length = len(label)
     max_extras = max([extras1, extras2])
     src=np.zeros(shape=(max_blocks, procs+max_extras, n_classes))
-    mask=np.zeros(shape=(max_blocks, procs+max_extras, n_classes))
+    #mask=np.zeros(shape=(max_blocks, procs+max_extras, n_classes))
     start = 0
     num_blocks = 0
     num_frames = 0
@@ -95,27 +95,28 @@ def split_label(label, procs, extras1, extras2, num_extras1, n_blocks, n_classes
             num_frames += procs + extras1
             if length < end:
                 frames = length - start
-                mask_frames = frames
+                #mask_frames = frames
             else:
                 frames = procs + extras1
-                mask_frames = procs + extras1
+                #mask_frames = procs + extras1
             labels = keras.utils.to_categorical(np.array(label[start:end]), num_classes=n_classes)
             src[num_blocks, 0:frames, :] = np.expand_dims(labels, axis=0)
-            mask[num_blocks, 0:mask_frames,:]=1.0
-            
+            #mask[num_blocks, 0:mask_frames,:]=1.0
+
         else:
             end = start + procs + extras2
             num_frames += procs + extras2
             if length < end:
                 frames = length-start
-                mask_frames = frames
+                #mask_frames = frames
             else:
                 frames = procs + extras2
-                mask_frames = procs + extras2
+                #mask_frames = procs + extras2
             labels = keras.utils.to_categorical(np.array(label[start:end]), num_classes=n_classes)
             src[num_blocks, 0:frames, :] = np.expand_dims(labels, axis=0)
-            mask[num_blocks, 0:frames,:]=1.0
+            #mask[num_blocks, 0:frames,:]=1.0
         start += procs
         num_blocks+=1
-        
-    return src, mask
+
+    return src
+    #, mask

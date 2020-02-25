@@ -124,7 +124,6 @@ def main():
     parser.add_argument('--num-extra-frames1', type=int, default=10, help='number of extra frames1')
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout rate')
     parser.add_argument('--filters', type=int, default=16, help='number of filters')
-    parser.add_argument('--max-patient', type=int, default=5, help='max patient')
     parser.add_argument('--optim', type=str, default='adam', help='[adam|adadelta]')
     parser.add_argument('--lstm', action='store_true')
     parser.add_argument('--vgg', action='store_true')
