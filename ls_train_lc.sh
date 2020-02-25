@@ -39,8 +39,7 @@ fi
 # features
 feat_dim=40
 units=160
-#training
-batch_size=16
+batch_size=128
 epochs=50
 factor=0.5
 dropout=0.0
@@ -51,18 +50,29 @@ for lstm_depth in 4;
 do
   for units in 160;
   do
-      for learn_rate in 1.0
+      for learn_rate in 1.0;
       do
-          snapdir=./ls/ce_model_d${lstm_depth}_d${units}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg_${optim}_${direction}
-	  logdir=./ls/ce_logs_d${lstm_depth}_d${units}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg_${optim}_${direction}
+        for proc_frames in 20 30 50;
+        do
+          for extra_frames in 10 20 30 50;
+          do
+            snapdir=./ls/lc_model_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_p${proc_frames}_e${extra_frames}_${optim}_${direction}
+            logdir=./ls/lc_logs_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_p${proc_frames}_e${extra_frames}_${optim}_${direction}
+            mkdir -p $snapdir
+            mkdir -p $logdir
 
-          mkdir -p $snapdir
-          mkdir -p $logdir
-          python ce_lstm.py --data $train --valid $valid --direction $direction \
-		 --key-file $keys --valid-key-file $valid_keys \
-		 --feat-dim $feat_dim --n-labels $n_labels --batch-size $batch_size --epochs $epochs \
-		 --snapshot $snapdir  --learn-rate $learn_rate --log-dir $logdir --filters ${filters} \
-		 --units $units --lstm-depth $lstm_depth --factor $factor  --optim $optim --lstm 
+            python lc_lstm.py --data $train --valid $valid \
+		          --key-file $keys --valid-key-file $valid_keys \
+		          --feat-dim $feat_dim \
+		          --n-labels $n_labels --batch-size ${batch_size} \
+		          --epochs $epochs --filters ${filters} \
+		          --snapshot $snapdir  --learn-rate $learn_rate \
+		          --log-dir $logdir --max-patient 3 \
+		          --units $units --lstm-depth $lstm_depth \
+		          --factor $factor --optim ${optim} --lstm \
+			  --process-frames $proc_frames --extra-frames $extra_frames
+          done
+        done
       done
   done
 done

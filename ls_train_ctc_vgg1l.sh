@@ -39,7 +39,7 @@ batch_size=16
 epochs=50
 factor=0.5
 dropout=0.0
-filters=16
+filters=32
 
 for lstm_depth in 4;
 do
@@ -49,8 +49,9 @@ do
       do
 	  for optim in adadelta;
 	  do
-              snapdir=./ls/model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg_${optim}_ep${epochs}_${direction}
-	      logdir=./ls/logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg_${optim}_ep${epochs}_${direction}
+              snapdir=./js/model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg1l_${optim}_ep${epochs}_${direction}
+	      logdir=./js/logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_LNtrue_BNtrue_B${batch_size}_D${dropout}_f${factor}_vgg1l_${optim}_ep${epochs}_${direction}
+	      
               mkdir -p $snapdir
               mkdir -p $logdir
               python ctc_lstm.py --data $train --valid $valid \
@@ -61,7 +62,7 @@ do
 		     --snapshot $snapdir  --learn-rate $learn_rate \
 		     --log-dir $logdir \
 		     --units $units --lstm-depth $lstm_depth \
-		     --factor $factor  --optim $optim --filters $filters
+		     --factor $factor  --optim $optim --filters $filters --vgg
 	  done
       done
   done
