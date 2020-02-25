@@ -60,8 +60,8 @@ do
             for extra_frames2 in 10 20;
             do
               if [ $extra_frames1 -gt $extra_frames2 ]; then
-                snapdir=./ls/lc_model_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_p${proc_frames}_e1${extra_frames1}_e2${extra_frames2}_${optim}_${direction}
-                logdir=./ls/lc_logs_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_p${proc_frames}_e1${extra_frames1}_e2${extra_frames2}_${optim}_${direction}
+                snapdir=./ls/lc_model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_p${proc_frames}_e1${extra_frames1}_e2${extra_frames2}_${optim}_${direction}
+                logdir=./ls/lc_logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_p${proc_frames}_e1${extra_frames1}_e2${extra_frames2}_${optim}_${direction}
                 mkdir -p $snapdir
                 mkdir -p $logdir
 
