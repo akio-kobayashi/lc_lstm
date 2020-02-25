@@ -80,14 +80,13 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
 
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
-    #outputs = Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
 
     model = Model([inputs, mask], outputs)
     if optim == 'adam':
-        model.compile(keras.optimizers.Adam(lr=init_lr, clipnorm=50.), loss=['categorical_crossentropy'],
+        model.compile(keras.optimizers.Adam(lr=init_lr), loss=['categorical_crossentropy'],
                       metrics=['categorical_accuracy'])
     else:
-        model.compile(keras.optimizers.Adadelta(lr=init_lr, clipnorm=50.), loss=['categorical_crossentropy'],
+        model.compile(keras.optimizers.Adadelta(lr=init_lr), loss=['categorical_crossentropy'],
                       metrics=['categorical_accuracy'])
 
     return model
