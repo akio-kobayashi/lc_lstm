@@ -33,13 +33,13 @@ n_labels=49
 # features
 feat_dim=40
 #training
-batch_size=32
+batch_size=16
 epochs=100
 factor=0.9
 optim=adadelta
 #optim=adam
 dropout=0.0
-filters=16
+filters=32
 
 for lstm_depth in 3;
 do
