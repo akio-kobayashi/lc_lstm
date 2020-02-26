@@ -33,7 +33,7 @@ n_labels=49
 feat_dim=40
 
 #training
-batch_size=32
+batch_size=128
 epochs=50
 factor=0.5
 optim=adadelta
