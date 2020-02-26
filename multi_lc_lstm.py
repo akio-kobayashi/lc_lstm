@@ -16,6 +16,7 @@ import vgg2l
 import vgg1l
 import multi_utils
 import layer_normalization
+import network
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -47,40 +48,8 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
     else:
         outputs = vgg1l.VGG(outputs, init_filters, feat_dim)
 
-    for n in range (depth):
-        # forward, keep current states
-        # statefule
-        if lstm is False:
-            x=GRU(units, kernel_initializer='glorot_uniform',
-                  return_sequences=True,
-                  stateful=True,
-                  unroll=False)(outputs)
-        else:
-            x=LSTM(units, kernel_initializer='glorot_uniform',
-                   return_sequences=True,
-                   stateful=True,
-                   unroll=False)(outputs)
-        # backward, not keep current states
-        # do not preserve state values for backward pass
-        if lstm is False:
-            y=GRU(units, kernel_initializer='glorot_uniform',
-                  return_sequences=True,
-                  stateful=False,
-                  unroll=False,
-                  go_backwards=True)(outputs)
-        else:
-            y=LSTM(units, kernel_initializer='glorot_uniform',
-                  return_sequences=True,
-                  stateful=False,
-                  unroll=False,
-                  go_backwards=True)(outputs)
-
-        outputs = Concatenate(axis=-1)([x,y])
-        outputs=layer_normalization.LayerNormalization()(outputs)
-
-    outputs = TimeDistributed(Dense(n_labels+1))(outputs)
-    outputs = Activation('softmax')(outputs)
-
+    outputs = network.lc_network(outputs, units, depth, n_labels, dropout, lstm)
+    
     model = Model([inputs, mask], outputs)
     if optim == 'adam':
         model.compile(keras.optimizers.Adam(lr=init_lr), loss=['categorical_crossentropy'],

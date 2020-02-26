@@ -51,10 +51,10 @@ def split_utt(mat, procs, extras1, extras2, num_extras1, n_blocks, feat_dim, max
             end = start + procs + extras1
             num_frames += procs + extras1
             if length < end:
-                mask_frames = length - start
+                mask_frames = length-start
                 frames = mask_frames
             else:
-                mask_frames = procs
+                mask_frames = procs+extras1
                 frames = procs + extras1
             mask[num_blocks, 0:mask_frames, :] = 1.0
             src[num_blocks, 0:frames, :] = np.expand_dims(mat[start:start+frames, :], axis=0)
@@ -62,7 +62,7 @@ def split_utt(mat, procs, extras1, extras2, num_extras1, n_blocks, feat_dim, max
             end = start + procs + extras2
             num_frames += procs + extras2
             if length < end:
-                mask_frames = length - start
+                mask_frames = length-start
                 frames = mask_frames
             else:
                 mask_frames = procs
@@ -94,15 +94,14 @@ def split_label(label, procs, extras1, extras2, num_extras1, n_blocks, n_classes
             end = start + procs + extras1
             num_frames += procs + extras1
             if length < end:
-                frames = length - start
+                frames = length-start
                 #mask_frames = frames
             else:
-                frames = procs + extras1
+                frames = procs+extras1
                 #mask_frames = procs + extras1
             labels = keras.utils.to_categorical(np.array(label[start:end]), num_classes=n_classes)
             src[num_blocks, 0:frames, :] = np.expand_dims(labels, axis=0)
             #mask[num_blocks, 0:mask_frames,:]=1.0
-
         else:
             end = start + procs + extras2
             num_frames += procs + extras2
@@ -117,7 +116,6 @@ def split_label(label, procs, extras1, extras2, num_extras1, n_blocks, n_classes
             #mask[num_blocks, 0:frames,:]=1.0
         start += procs
         num_blocks+=1
-        
 
     return src
     #, mask

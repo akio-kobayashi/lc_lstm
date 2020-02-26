@@ -18,6 +18,7 @@ import dynamic_programming
 import layer_normalization
 import vgg2l
 import vgg1l
+import network
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -40,26 +41,10 @@ def build_model(inputs, units, depth, n_labels, feat_dim,
         outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
     else:
         outputs = vgg1l.VGG(inputs, init_filters, feat_dim)
-        
-    for n in range (depth):
-        if direction == 'bi':
-            if lstm is True:
-                outputs=Bidirectional(CuDNNLSTM(units,
-                    return_sequences=True))(outputs)
-            else:
-                outputs=Bidirectional(CuDNNGRU(units,
-                    return_sequences=True))(outputs)
-        else:
-            if lstm is True:
-                outputs = CuDNNLSTM(units, return_sequences=True)(outputs)
-            else:
-                outputs=CuDNNGRU(units,return_sequences=True)(outputs)
-        outputs=layer_normalization.LayerNormalization()(outputs)
 
-    outputs = TimeDistributed(Dense(n_labels+1))(outputs)
-    outputs = Activation('softmax')(outputs)
+    outputs = network.network(outputs,units, depth, n_labels, direction, dropout, lstm)
+
     model=Model(inputs, outputs)
-    #model.summary()
     
     return model
 
@@ -136,20 +121,6 @@ def main():
                 pr = pr[:data[2][i], :]
                 f.create_group(key)
                 f.create_dataset(key+'/likelihood', data=pr)
-
-                '''
-                #if args.align is True:
-                if False:
-                    lb = data[1][i].reshape((data[1][i].shape[0],))
-                    lb = lb[0:data[3][i]]
-                    print(key)
-                    align = dynamic_programming.dynamic_programming(pr, lb,
-                                                                    data[2][i], data[3][i],
-                                                                    blank=args.n_labels,
-                                                                    skip_state=False)
-                    align = align.reshape((1,align.shape[0]))
-                    f.create_dataset(key+'/align', data=align)
-                '''
                 
 if __name__ == "__main__":
     main()

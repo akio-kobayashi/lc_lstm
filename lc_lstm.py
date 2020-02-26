@@ -54,11 +54,14 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
             x=GRU(units, kernel_initializer='glorot_uniform',
                   return_sequences=True,
                   stateful=True,
+                  dropout=dropout,
                   unroll=False)(outputs)
         else:
             x=LSTM(units, kernel_initializer='glorot_uniform',
                    return_sequences=True,
+                   unit_forget_bias=True,
                    stateful=True,
+                   dropout=dropout,
                    unroll=False)(outputs)
         # backward, not keep current states
         # do not preserve state values for backward pass
@@ -67,13 +70,16 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
                   return_sequences=True,
                   stateful=False,
                   unroll=False,
+                  dropout=dropout,
                   go_backwards=True)(outputs)
         else:
             y=LSTM(units, kernel_initializer='glorot_uniform',
-                  return_sequences=True,
-                  stateful=False,
-                  unroll=False,
-                  go_backwards=True)(outputs)
+                   return_sequences=True,
+                   unit_forget_bias=True,
+                   stateful=False,
+                   unroll=False,
+                   dropout=dropout,
+                   go_backwards=True)(outputs)
             
         outputs = Concatenate(axis=-1)([x,y])
         outputs=layer_normalization.LayerNormalization()(outputs)

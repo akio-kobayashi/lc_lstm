@@ -15,6 +15,7 @@ import vgg2l
 import vgg1l
 import ce_generator
 import layer_normalization
+import network
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)
@@ -40,23 +41,7 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr, directi
     else:
         outputs = vgg1l.VGG(inputs, init_filters, feat_dim)
 
-    for n in range (depth):
-        if direction == 'bi':
-            if lstm == True:
-                outputs=Bidirectional(CuDNNLSTM(units,
-                    return_sequences=True))(outputs)
-            else:
-                outputs=Bidirectional(CuDNNGRU(units,
-                    return_sequences=True))(outputs)
-        else:
-            if lstm == True:
-                outputs = CuDNNLSTM(units, return_sequences=True)(outputs)
-            else:
-                outputs=CuDNNGRU(units,return_sequences=True)(outputs)
-        outputs=layer_normalization.LayerNormalization()(outputs)
-
-    outputs = TimeDistributed(Dense(n_labels+1))(outputs)
-    outputs = Activation('softmax')(outputs)
+    outputs = network.network(outputs,units, depth, n_labels, direction, dropout, lstm)
 
     model=Model([inputs, mask], outputs)
     # we can get accuracy from data along with batch/temporal axes.
@@ -103,7 +88,7 @@ def main():
     parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
-    parser.add_argument('--max-patient', type=int, default=5, help='max patient')
+    parser.add_argument('--max-patience', type=int, default=5, help='max patient')
     parser.add_argument('--optim', type=str, default='adam', help='[adam|adadelta]')
     parser.add_argument('--lstm', action='store_true')
     parser.add_argument('--vgg', action='store_true')
@@ -121,7 +106,7 @@ def main():
 
     prev_val_acc = -1.0e10
     patience = 0
-    max_patience=args.max_patient
+    max_patience=args.max_patience
     max_val_acc = -1.0e10
     curr_lr=args.learn_rate
     ep=0

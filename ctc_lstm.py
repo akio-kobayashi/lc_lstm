@@ -20,6 +20,7 @@ import layer_normalization
 import bipolar
 import vgg2l
 import vgg1l
+import network
 #import AdaBound
 
 os.environ['PYTHONHASHSEED']='0'
@@ -36,6 +37,7 @@ K.set_session(sess)
 
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
                 dropout, init_filters, optim, lstm=False, vgg=False):
+
     #outputs = Masking(mask_value=0.0)(inputs)
     #outputs=inputs
 
@@ -43,28 +45,9 @@ def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
         outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
     else:
         outputs = vgg1l.VGG(inputs, init_filters, feat_dim)
-        
-    for n in range (depth):
-        if direction == 'bi':
-            if lstm is True:
-                outputs=Bidirectional(CuDNNLSTM(units,
-                    return_sequences=True))(outputs)
-            else:
-                outputs=Bidirectional(CuDNNGRU(units,
-                    return_sequences=True))(outputs)
-        else:
-            if lstm is True:
-                outputs = CuDNNLSTM(units, return_sequences=True)(outputs)
-            else:
-                outputs=CuDNNGRU(units,return_sequences=True)(outputs)
-        outputs=layer_normalization.LayerNormalization()(outputs)
 
-    outputs = TimeDistributed(Dense(n_labels+1))(outputs)
-    outputs = Activation('softmax')(outputs)
+    outputs = network.network(outputs,units, depth, n_labels, direction, dropout, lstm)
 
-    #dummy = Model(inputs, outputs)
-    #dummy.summary()
-    #exit
     model=CTCModel.CTCModel([inputs], [outputs], greedy=True)
     if optim == 'adam':
         model.compile(keras.optimizers.Adam(lr=init_lr))
@@ -116,7 +99,7 @@ def main():
     parser.add_argument('--direction', type=str, default='bi', help='RNN direction')
     parser.add_argument('--dropout', type=float, default=0.0, help='dropout')
     parser.add_argument('--filters', type=int, default=64, help='number of filters for CNNs')
-    parser.add_argument('--max-patient', type=int, default=5, help='max patient')
+    parser.add_argument('--max-patience', type=int, default=5, help='max patient')
     parser.add_argument('--optim', type=str, default='adam', help='optimizer [adam|adadelta]')
     parser.add_argument('--bipolar', action='store_true')
     parser.add_argument('--vgg', action='store_true')
@@ -155,7 +138,7 @@ def main():
     '''
     prev_val_ler = 1.0e10
     patience = 0
-    max_patience=args.max_patient
+    max_patience=args.max_patience
     min_val_ler = 1.0e10
     curr_lr=args.learn_rate
     ep=0
