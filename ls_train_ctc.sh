@@ -49,7 +49,7 @@ epochs=100
 factor=0.9
 min_lr=1.0e-2
 dropout=0.0
-filters=16
+filters=32
 
 for lstm_depth in 3;
 do
