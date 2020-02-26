@@ -54,8 +54,8 @@ def network(outputs, units, depth, n_labels, direction,
                                 unroll=False)(outputs)
         outputs=layer_normalization.LayerNormalization()(outputs)
 
-    outputs = TimeDistributed(Dense(n_labels+1))(outputs)
-    outputs = Activation('softmax')(outputs)
+    #outputs = TimeDistributed(Dense(n_labels+1))(outputs)
+    #outputs = Activation('softmax')(outputs)
 
     return outputs
 
@@ -98,7 +98,7 @@ def lc_network(outputs, units, depth, n_labels, direction,
         outputs = Concatenate(axis=-1)([x,y])
         outputs=layer_normalization.LayerNormalization()(outputs)
 
-    outputs = TimeDistributed(Dense(n_labels+1))(outputs)
-    outputs = Activation('softmax')(outputs)
+    #outputs = TimeDistributed(Dense(n_labels+1))(outputs)
+    #outputs = Activation('softmax')(outputs)
 
     return outputs

@@ -8,6 +8,7 @@ from keras.utils import Sequence
 import keras.utils
 from keras.preprocessing import sequence
 import tensorflow as tf
+import mat_utils
 
 SORT_BLOCK_SIZE=256
 
@@ -104,16 +105,13 @@ class DataGenerator(Sequence):
 
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
+            mat = mat_utils.pad_mat(mat)
             if mat.shape[0] > max_input_len:
               max_input_len = mat.shape[0]
-            in_seq.append(mat.shape[0])
+            in_seq.append(int(mat.shape[0])/2)
 
             # label is a list of integers starting from 0
             label = self.h5fd[key+'/labels'][()]
-            #print (key)
-            #print(mat)
-            #print(label)
-            #print(mat.shape[0])
             labels.append(np.array(label))
             if len(label) > max_output_len:
               max_output_len = len(label)
@@ -122,6 +120,7 @@ class DataGenerator(Sequence):
         input_sequences = np.zeros((self.batch_size, max_input_len, self.feat_dim))
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
+            mat = mat_utils.pad_mat(mat)
             input_sequences[i, 0:mat.shape[0], :] = np.expand_dims(mat, axis=0)
 
         label_sequences=sequence.pad_sequences(labels, maxlen=max_output_len, padding='post', value=0)

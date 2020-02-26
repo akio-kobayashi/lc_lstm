@@ -21,6 +21,7 @@ import bipolar
 import vgg2l
 import vgg1l
 import network
+import dilation
 #import AdaBound
 
 os.environ['PYTHONHASHSEED']='0'
@@ -38,15 +39,15 @@ K.set_session(sess)
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
                 dropout, init_filters, optim, lstm=False, vgg=False):
 
-    #outputs = Masking(mask_value=0.0)(inputs)
-    #outputs=inputs
-
-    if vgg is False:
-        outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
-    else:
-        outputs = vgg1l.VGG(inputs, init_filters, feat_dim)
+    #if vgg is False:
+    #outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
+    #else:
+    #    outputs = vgg1l.VGG(inputs, init_filters, feat_dim)
+    outputs = dilation.VGG2L_Strides(inputs, init_filters, feat_dim)
 
     outputs = network.network(outputs,units, depth, n_labels, direction, dropout, lstm)
+    outputs = TimeDistributed(Dense(n_labels+1))(outputs)
+    outputs = Activation('softmax')(outputs)
 
     model=CTCModel.CTCModel([inputs], [outputs], greedy=True)
     if optim == 'adam':

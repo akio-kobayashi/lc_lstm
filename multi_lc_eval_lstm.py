@@ -49,6 +49,8 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
         outputs = vgg1l.VGG(outputs, init_filters, feat_dim)
 
     outputs = network.lc_network(outputs, units, depth, n_labels, dropout, lstm)
+    outputs = TimeDistributed(Dense(n_labels+1))(outputs)
+    outputs = Activation('softmax')(outputs)
 
     model = Model([inputs, mask], outputs)
     if optim == 'adam':
