@@ -44,7 +44,7 @@ feat_dim=40
 #units=160
 
 #training
-batch_size=32
+batch_size=16
 epochs=100
 factor=0.9
 min_lr=1.0e-2
