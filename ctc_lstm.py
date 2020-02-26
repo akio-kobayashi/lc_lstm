@@ -140,17 +140,6 @@ def main():
     max_early_stop=5
     early_stop=0
 
-    '''
-    if os.path.isfile(args.log_dir+'/epochs'):
-        with(open(args.log_dir+'/epochs', r)) as f:
-            ep=f.readline()
-    if os.path.isfile(args.log_dir+'/prev_val_ler'):
-        with(open(args.log_dir+'/prev_val_ler', r)) as f:
-            prev_val_ler=f.readline()
-    if os.path.isfile(args.log_dir+'/prev_val_ler'):
-        with(open(args.log_dir+'/min_val_ler', r)) as f:
-            min_val_ler=f.readline()
-    '''
     with open(args.log_dir+'/logs', 'w') as logs:
         #for ep in range(args.epochs):
         while ep < args.epochs:
@@ -172,18 +161,12 @@ def main():
 
                 # progress report
                 progress_loss = curr_loss/curr_samples
-                #progress_ler = np.mean(curr_ler)*100.0
-                #msg='progress: (%d/%d) loss=%.4f ler=%.4f' % (bt+1,training_generator.__len__(),
-                #progress_loss, progress_ler)
                 msg='progress: (%d/%d) loss=%.4f' % (bt+1,training_generator.__len__(), progress_loss)
-                #print(msg,file=sys.stderr,flush=True)
                 print(msg)
                 logs.write(msg+'\n')
 
-                #tensorboard.on_epoch_end(bt, named_logs(model, loss))
 
             logs.flush()
-            #print('\n',end='',file=sys.stderr,flush=True)
             print('')
             curr_loss /= curr_samples
             #curr_ler = np.mean(curr_ler)*100.0
@@ -203,39 +186,15 @@ def main():
                 curr_val_samples += samples
                 curr_val_ler.append(ler)
 
-            #msg='Epoch %d (train) loss=%.4f ler=%.4f' % (ep+1, curr_loss, curr_ler)
             msg='Epoch %d (train) loss=%.4f' % (ep+1, curr_loss)
             logs.write(msg+'\n')
-            #print(msg,file=sys.stderr, flush=True)
             print(msg)
             logs.flush()
 
             curr_val_loss /= curr_val_samples
-            #curr_val_ler = np.mean(curr_val_ler)*100.0
             curr_val_ler = np.mean(curr_val_ler)*100.0
-            '''
-            if prev_val_ler < curr_val_ler:
-                patience += 1
-                if patience >= max_patience:
-                    prev_lr = K.get_value(model.model_train.optimizer.lr)
-                    curr_lr = prev_lr * args.factor
-                    if curr_lr < args.min_lr:
-                        curr_lr = args.min_lr
-                        early_stop+=1
-                    else:
-                        msg="lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr)
-                        logs.write(msg+'\n')
-                        #print(msg, file=sys.stderr,flush=True)
-                        print(msg)
-                        K.set_value(model.model_train.optimizer.lr,curr_lr)
-                    patience=0
-            else:
-                patience=0
-            '''
-            #print('Epoch %d (valid) ler=%.4f' % (ep+1, curr_val_ler), file=sys.stderr)
             msg='Epoch %d (valid) loss=%.4f ler=%.4f' % (ep+1, curr_val_loss, curr_val_ler)
             logs.write(msg+'\n')
-            #print(msg, file=sys.stderr,flush=True)
             print(msg)
             logs.flush()
 
@@ -275,40 +234,9 @@ def main():
             print(msg)
 
             # keep stats
-            '''
-            with open(args.log_dir+'/epochs', 'w') as f:
-                f.write(str(ep))
-            with open(args.log_dir+'/learn_rate', 'w') as f:
-                f.write(str(curr_lr))
-            with open(args.log_dir+'/prev_val_ler', 'w') as f:
-                f.write(str(prev_val_ler))
-            with open(args.log_dir+'/min_val_ler', 'w') as f:
-                f.write(str(min_val_ler))
-            '''
 
     print("Training End.")
-    #tensorboard.on_train_end(None)
 
-    # evaluation
-    '''
-    if args.eval is not None:
-
-        eval_in = Input(shape=(None, args.feat_dim))
-        eval_model = build_model(eval_in, args.units, args.n_labels, args.feat_dim, args.learn_rate)
-        path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
-        eval_model.load_weights(path, by_name=True)
-
-        eval_generator = DataGenerator(args.eval, None, 1,
-                            args.feat_dim, args.n_labels)
-        path=os.path.join(args.snapshot,args.eval_out+'.h5')
-
-        with h5py.File(path, 'w') as f:
-            for smp in range(eval_generator.__len()__):
-                data, keys = eval_generator.__getitem__(smp, return_keys=True)
-                predict = eval_model.predict_on_batch(x=data)
-                rolled=np.roll(predict, 1, axis=2) # shift for <blk>
-                f.create_dataset(keys[0], data=rolled)
-    '''
 
 if __name__ == "__main__":
     main()

@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 import layer_normalization
 
-cudnn=False
+cudnn=True
 
 def network(outputs, units, depth, n_labels, direction,
             dropout, init_filters, lstm=False):
