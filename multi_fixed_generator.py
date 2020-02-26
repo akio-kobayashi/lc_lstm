@@ -55,10 +55,10 @@ class FixedDataGenerator(Sequence):
 
         # [input_sequences, label_sequences, inputs_lengths, labels_length]
         if self.mode == 'train':
-            x, mask, y = self.__data_generation(list_keys_temp)
-            return x, mask, y
+            x, mask, label_mask, y = self.__data_generation(list_keys_temp)
+            return x, mask, label_mask, y
         else:
-            return x, mask, y, list_keys_temp
+            return x, mask, label_mask, y, list_keys_temp
 
     def on_epoch_end(self):
         if self.shuffle == True:
@@ -87,8 +87,9 @@ class FixedDataGenerator(Sequence):
                             self.procs+max(self.extras1, self.extras2), self.feat_dim))
         input_mask=np.zeros((len(list_keys_temp), max_num_blocks,
                              self.procs+max(self.extras1, self.extras2), self.feat_dim))
-
         if self.mode == 'train':
+            output_mask=np.zeros((len(list_keys_temp), max_num_blocks,
+                                  self.procs+max(self.extras1, self.extras2), 1))
             output_labels=np.zeros((len(list_keys_temp), max_num_blocks,
                                     self.procs+max(self.extras1, self.extras2), self.n_labels+1))
 
@@ -100,9 +101,11 @@ class FixedDataGenerator(Sequence):
                                                                      self.extras1,
                                                                      self.extras2,
                                                                      self.num_extras1)
-            blocked_mat, mask = multi_utils.split_utt(mat, self.procs, self.extras1,
-                                                      self.extras2, self.num_extras1, ex_blocks,
-                                                      self.feat_dim, max_num_blocks)
+            blocked_mat, mask , label_mask = multi_utils.split_utt(mat, self.procs, self.extras1,
+                                                                   self.extras2,
+                                                                   self.num_extras1,
+                                                                   ex_blocks,
+                                                                   self.feat_dim, max_num_blocks)
             input_mat[i, :, :, :] = np.expand_dims(blocked_mat, axis=0)
             input_mask[i,:,:,:] = np.expand_dims(mask, axis=0)
 
@@ -113,14 +116,15 @@ class FixedDataGenerator(Sequence):
                         self.extras2, self.num_extras1, ex_blocks,
                         self.n_labels+1, max_num_blocks)
                 output_labels[i,:,:,:] = np.expand_dims(blocked_labels, axis=0)
-
+                output_mask[i,:,:,:] = np.expand_dims(label_mask, axis=0)
         # transpose batch and block axes for outer loop in training
         input_mat = input_mat.transpose((1,0,2,3))
         input_mask = input_mask.transpose((1,0,2,3))
         if self.mode == 'train':
             output_labels = output_labels.transpose((1,0,2,3))
-
+            output_mask = output_mask.transpose((1,0,2,3))
+            
         if self.mode == 'train':
-            return input_mat, input_mask, output_labels
+            return input_mat, input_mask, output_mask, output_labels
         else:
-            return input_mat, input_mask
+            return input_mat, input_mask, output_mask

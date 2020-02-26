@@ -40,7 +40,8 @@ def split_utt(mat, procs, extras1, extras2, num_extras1, n_blocks, feat_dim, max
     max_extras = max([extras1, extras2])
     src=np.zeros(shape=(max_blocks, procs+max_extras, feat_dim))
     mask=np.zeros(shape=(max_blocks, procs+max_extras, feat_dim))
-
+    label_mask = np.zeros(shape=(max_blocks, procs+max_extras, 1))
+    
     start = 0
     num_blocks = 0
     num_frames = 0
@@ -53,27 +54,33 @@ def split_utt(mat, procs, extras1, extras2, num_extras1, n_blocks, feat_dim, max
             if length < end:
                 mask_frames = length-start
                 frames = mask_frames
+                mask_label_frames = mask_frames
             else:
                 mask_frames = procs+extras1
                 frames = procs + extras1
+                mask_label_frames = procs
             mask[num_blocks, 0:mask_frames, :] = 1.0
             src[num_blocks, 0:frames, :] = np.expand_dims(mat[start:start+frames, :], axis=0)
+            label_mask[num_blocks, 0:mask_label_frames, :] = 1.0
         else:
             end = start + procs + extras2
             num_frames += procs + extras2
             if length < end:
                 mask_frames = length-start
                 frames = mask_frames
+                mask_label_frames = mask_frames
             else:
                 mask_frames = procs
                 frames = procs + extras2
+                mask_label_frames = procs
             mask[num_blocks, 0:frames, :] = 1.0
             src[num_blocks, 0:frames, :] = np.expand_dims(mat[start:start+frames, :], axis=0)
+            label_mask[num_blocks, 0:mask_label_frames, :] = 1.0
 
         start += procs
         num_blocks += 1
 
-    return src, mask
+    return src, mask, label_mask
 
 def split_label(label, procs, extras1, extras2, num_extras1, n_blocks, n_classes, max_blocks):
     '''
@@ -82,7 +89,6 @@ def split_label(label, procs, extras1, extras2, num_extras1, n_blocks, n_classes
     length = len(label)
     max_extras = max([extras1, extras2])
     src=np.zeros(shape=(max_blocks, procs+max_extras, n_classes))
-    #mask=np.zeros(shape=(max_blocks, procs+max_extras, n_classes))
     start = 0
     num_blocks = 0
     num_frames = 0
@@ -95,27 +101,20 @@ def split_label(label, procs, extras1, extras2, num_extras1, n_blocks, n_classes
             num_frames += procs + extras1
             if length < end:
                 frames = length-start
-                #mask_frames = frames
             else:
                 frames = procs+extras1
-                #mask_frames = procs + extras1
             labels = keras.utils.to_categorical(np.array(label[start:end]), num_classes=n_classes)
             src[num_blocks, 0:frames, :] = np.expand_dims(labels, axis=0)
-            #mask[num_blocks, 0:mask_frames,:]=1.0
         else:
             end = start + procs + extras2
             num_frames += procs + extras2
             if length < end:
                 frames = length-start
-                #mask_frames = frames
             else:
                 frames = procs + extras2
-                #mask_frames = procs + extras2
             labels = keras.utils.to_categorical(np.array(label[start:end]), num_classes=n_classes)
             src[num_blocks, 0:frames, :] = np.expand_dims(labels, axis=0)
-            #mask[num_blocks, 0:frames,:]=1.0
         start += procs
         num_blocks+=1
 
     return src
-    #, mask
