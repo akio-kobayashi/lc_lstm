@@ -70,6 +70,7 @@ class FixedDataGenerator(Sequence):
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
             [ex_blocks,ex_frames] = multi_utils.expected_num_blocks(mat, self.procs, self.extras1, self.extras2, self.num_extras1)
+            print("%d %d %d", % (mat.shape[0], ex_blocks, ex_frames))
             if ex_blocks > max_num_blocks:
                 max_num_blocks = ex_blocks
             if ex_frames > max_num_frames:

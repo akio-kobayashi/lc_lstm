@@ -44,14 +44,14 @@ feat_dim=40
 #units=160
 
 #training
-batch_size=16
+batch_size=32
 epochs=100
 factor=0.9
 min_lr=1.0e-2
 dropout=0.0
 filters=16
 
-for lstm_depth in 4;
+for lstm_depth in 3;
 do
   for units in 256;
   do

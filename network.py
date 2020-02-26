@@ -5,11 +5,12 @@ import keras.utils
 import keras.backend as K
 import numpy as np
 import tensorflow as tf
+import layer_normalization
 
 cudnn=False
 
 def network(outputs, units, depth, n_labels, direction,
-            dropout, init_filters, optim, lstm=False):
+            dropout, init_filters, lstm=False):
     for n in range (depth):
         if direction == 'bi':
             if lstm is True:
@@ -41,7 +42,7 @@ def network(outputs, units, depth, n_labels, direction,
                                  return_sequences=True,
                                  use_forget_bias=True,
                                  dropout=dropout,
-                                 unroll=False))(outputs)
+                                 unroll=False)(outputs)
             else:
                 if cudnn is True:
                     outputs=CuDNNGRU(units,return_sequences=True)(outputs)
@@ -59,7 +60,7 @@ def network(outputs, units, depth, n_labels, direction,
     return outputs
 
 def lc_network(outputs, units, depth, n_labels, direction,
-               dropout, init_filters, optim, lstm=False):
+               dropout, init_filters, lstm=False):
     for n in range (depth):
         # forward, keep current states
         # statefule
