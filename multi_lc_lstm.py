@@ -49,7 +49,7 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
     else:
         outputs = vgg1l.VGG(outputs, init_filters, feat_dim)
 
-    outputs = network.lc_network(outputs, units, depth, n_labels, dropout, lstm)
+    outputs = network.lc_network(outputs, units, depth, n_labels, dropout, init_filters, lstm)
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
 
@@ -163,7 +163,7 @@ def main():
 
             for bt in range(valid_generator.__len__()):
                 x,mask,label_mask,y = valid_generator.__getitem__(bt)
-                shp = label_mask.shape()
+                shp = label_mask.shape
                 model.reset_states()
                 for b in range(x.shape[0]):
                     x_in = np.squeeze(x[b,:,:,:])
@@ -173,12 +173,12 @@ def main():
                     mask_out.reshape((shp[1],shp[2],shp[3]))
 
                     states = get_states(model)
-                    y_pred = model.predict_on_batch(x=[x_in,mask_in],y=y_in)
+                    y_pred = model.predict_on_batch(x=[x_in,mask_in])
 
                     loss, acc = part_acc.part_loss_acc(y_in, y_pred, mask_out)
                     # for micro-mean
-                    curr_val_acc.append(acc)
-                    curr_val_loss.append(loss)
+                    curr_val_acc.extend(acc)
+                    curr_val_loss.extend(loss)
                     
                     set_states(model, states)
                     x_part = x_in[:, 0:args.process_frames,:]
@@ -191,7 +191,7 @@ def main():
             curr_val_loss = np.mean(curr_val_loss)
             curr_val_acc = np.mean(curr_val_acc)
 
-            if prev_val_acc > mean_curr_val_acc:
+            if prev_val_acc > curr_val_acc:
                 patience += 1
                 if patience >= args.max_patience:
                     prev_lr = K.get_value(model.optimizer.lr)

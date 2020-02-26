@@ -8,6 +8,7 @@ from keras.utils import Sequence
 import keras.utils
 import tensorflow as tf
 import multi_utils
+import mat_utils
 
 class FixedDataGenerator(Sequence):
 
@@ -77,7 +78,7 @@ class FixedDataGenerator(Sequence):
                                                                     self.extras1,
                                                                     self.extras2,
                                                                     self.num_extras1)
-            print("%d %d %d", % (mat.shape[0], ex_blocks, ex_frames))
+            #print("%d %d %d" % (mat.shape[0], ex_blocks, ex_frames))
             if ex_blocks > max_num_blocks:
                 max_num_blocks = ex_blocks
             if ex_frames > max_num_frames:

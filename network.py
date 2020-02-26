@@ -1,6 +1,6 @@
 from keras.models import Model
 from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, CuDNNGRU, GRU, Reshape
-from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, Conv2D, CuDNNLSTM
+from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, Conv2D, CuDNNLSTM, Concatenate
 import keras.utils
 import keras.backend as K
 import numpy as np
