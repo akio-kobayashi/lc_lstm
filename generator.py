@@ -14,7 +14,7 @@ SORT_BLOCK_SIZE=256
 
 class DataGenerator(Sequence):
 
-    def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024, shuffle=True):
+    def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024, shuffle=True, mod=1):
 
         self.file=file
         self.batch_size=batch_size
@@ -25,7 +25,8 @@ class DataGenerator(Sequence):
         self.starts=[]
         # input-length-ordered keys
         self.sorted_keys=[]
-
+        self.mod=mod
+        
         self.h5fd = h5py.File(self.file, 'r')
         self.n_samples = len(self.h5fd.keys())
         if key_file is not None:
@@ -105,11 +106,12 @@ class DataGenerator(Sequence):
 
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
-            mat = mat_utils.pad_mat(mat)
+            mat = mat_utils.pad_mat(mat, self.mod)
             if mat.shape[0] > max_input_len:
               max_input_len = mat.shape[0]
-            in_seq.append(int(mat.shape[0])/2)
-
+            #in_seq.append(int(mat.shape[0])/self.mod)
+            in_seq.append(mat.shape[0])
+            
             # label is a list of integers starting from 0
             label = self.h5fd[key+'/labels'][()]
             labels.append(np.array(label))
@@ -120,7 +122,7 @@ class DataGenerator(Sequence):
         input_sequences = np.zeros((self.batch_size, max_input_len, self.feat_dim))
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
-            mat = mat_utils.pad_mat(mat)
+            mat = mat_utils.pad_mat(mat, self.mod)
             input_sequences[i, 0:mat.shape[0], :] = np.expand_dims(mat, axis=0)
 
         label_sequences=sequence.pad_sequences(labels, maxlen=max_output_len, padding='post', value=0)

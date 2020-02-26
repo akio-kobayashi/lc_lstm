@@ -13,7 +13,8 @@ SORT_BLOCK_SIZE=256
 
 class CEDataGenerator(Sequence):
 
-    def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024, shuffle=False):
+    def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024,
+                 shuffle=False, mod=1):
 
         self.file=file
         self.batch_size=batch_size
@@ -24,7 +25,8 @@ class CEDataGenerator(Sequence):
         self.starts=[]
         # input-length-ordered keys
         self.sorted_keys=[]
-
+        self.mod = mod
+        
         self.h5fd = h5py.File(self.file, 'r')
         self.n_samples = len(self.h5fd.keys())
         if key_file is not None:
@@ -95,15 +97,16 @@ class CEDataGenerator(Sequence):
         max_output_len=0
         labels=[]
         in_seq=[]
-        #mats=[]
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
+            mat = mat_utils.pad_mat(mat,self.mod)
             label = self.h5fd[key+'/labels'][()]
 
             if mat.shape[0] > max_input_len:
               max_input_len = mat.shape[0]
+            #in_seq.append(int(mat.shape[0]/self.mod))
             in_seq.append(mat.shape[0])
-
+            
             # label is a list of integers starting from 0
             if len(label) > max_output_len:
                 max_output_len = len(label)
@@ -113,8 +116,6 @@ class CEDataGenerator(Sequence):
         input_sequences = np.zeros((self.batch_size, max_input_len, self.feat_dim))
         label_sequences = np.zeros((self.batch_size, max_output_len, self.n_labels+1))
         masks = np.zeros((self.batch_size, max_output_len, 1))
-        #print("%d %d" % (max_input_len, max_output_len))
-        #print("%d %d" % (len(mats), len(labels)))
         '''
         if max_input_len == 0 or max_output_len == 0:
             for i in range(len(mats)):
@@ -122,8 +123,8 @@ class CEDataGenerator(Sequence):
                 print(labels[i].shape)
         '''
         for i, key in enumerate(list_keys_temp):
-            #mat = mats[i]
             mat = self.h5fd[key+'/data'][()]
+            mat = mat_utils.pad_mat(mat, self.mod)
             input_sequences[i, 0:mat.shape[0], :] = np.expand_dims(mat, axis=0)
             # lseq = (time, category)
             lseq = keras.utils.to_categorical(labels[i], num_classes=self.n_labels+1)

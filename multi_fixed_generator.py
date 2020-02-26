@@ -12,7 +12,8 @@ import multi_utils
 class FixedDataGenerator(Sequence):
 
     def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024,
-        procs=10, extras1=10, extras2=10, num_extras1=1, mode='train', shuffle=False):
+                 procs=10, extras1=10, extras2=10, num_extras1=1, mode='train', shuffle=False,
+                 mod=1):
 
         self.file=file
         self.batch_size=batch_size
@@ -26,7 +27,8 @@ class FixedDataGenerator(Sequence):
         self.keys=[]
         self.sorted_keys=[]
         self.mode=mode
-
+        self.mod=1
+        
         self.h5fd = h5py.File(self.file, 'r')
         self.n_samples = len(self.h5fd.keys())
         if key_file is not None:
@@ -69,24 +71,38 @@ class FixedDataGenerator(Sequence):
 
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
-            [ex_blocks,ex_frames] = multi_utils.expected_num_blocks(mat, self.procs, self.extras1, self.extras2, self.num_extras1)
+            mat = mat_utils.pad_mat(mat, self.mod)
+            [ex_blocks,ex_frames] = multi_utils.expected_num_blocks(mat,
+                                                                    self.procs,
+                                                                    self.extras1,
+                                                                    self.extras2,
+                                                                    self.num_extras1)
             print("%d %d %d", % (mat.shape[0], ex_blocks, ex_frames))
             if ex_blocks > max_num_blocks:
                 max_num_blocks = ex_blocks
             if ex_frames > max_num_frames:
                 max_num_frames = ex_frames
 
-        input_mat=np.zeros((len(list_keys_temp), max_num_blocks, self.procs+max(self.extras1, self.extras2), self.feat_dim))
-        input_mask=np.zeros((len(list_keys_temp), max_num_blocks, self.procs+max(self.extras1, self.extras2), self.feat_dim))
+        input_mat=np.zeros((len(list_keys_temp), max_num_blocks,
+                            self.procs+max(self.extras1, self.extras2), self.feat_dim))
+        input_mask=np.zeros((len(list_keys_temp), max_num_blocks,
+                             self.procs+max(self.extras1, self.extras2), self.feat_dim))
 
         if self.mode == 'train':
-            output_labels=np.zeros((len(list_keys_temp), max_num_blocks, self.procs+max(self.extras1, self.extras2), self.n_labels+1))
+            output_labels=np.zeros((len(list_keys_temp), max_num_blocks,
+                                    self.procs+max(self.extras1, self.extras2), self.n_labels+1))
 
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
-            [ex_blocks, ex_frames] = multi_utils.expected_num_blocks(mat, self.procs, self.extras1, self.extras2, self.num_extras1)
-            blocked_mat, mask = multi_utils.split_utt(mat, self.procs, self.extras1, self.extras2, self.num_extras1, ex_blocks,
-                self.feat_dim, max_num_blocks)
+            mat = mat_utils.pad_mat(mat, self.mod)
+            [ex_blocks, ex_frames] = multi_utils.expected_num_blocks(mat,
+                                                                     self.procs,
+                                                                     self.extras1,
+                                                                     self.extras2,
+                                                                     self.num_extras1)
+            blocked_mat, mask = multi_utils.split_utt(mat, self.procs, self.extras1,
+                                                      self.extras2, self.num_extras1, ex_blocks,
+                                                      self.feat_dim, max_num_blocks)
             input_mat[i, :, :, :] = np.expand_dims(blocked_mat, axis=0)
             input_mask[i,:,:,:] = np.expand_dims(mask, axis=0)
 

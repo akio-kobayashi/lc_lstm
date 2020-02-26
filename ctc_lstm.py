@@ -39,13 +39,14 @@ K.set_session(sess)
 def build_model(inputs, units, depth, n_labels, feat_dim, init_lr, direction,
                 dropout, init_filters, optim, lstm=False, vgg=False):
 
-    #if vgg is False:
-    #outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
-    #else:
-    #    outputs = vgg1l.VGG(inputs, init_filters, feat_dim)
-    outputs = dilation.VGG2L_Strides(inputs, init_filters, feat_dim)
+    if vgg is False:
+        outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
+    else:
+        outputs = vgg1l.VGG(inputs, init_filters, feat_dim)
+    #outputs = dilation.VGG2L_Strides(inputs, init_filters, feat_dim)
 
     outputs = network.network(outputs,units, depth, n_labels, direction, dropout, lstm)
+    #outputs = dilation.VGG2L_Transpose(outputs, init_filters, units*2)
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
 
@@ -124,19 +125,11 @@ def main():
                             args.filters, args.optim, args.lstm, args.vgg)
 
     training_generator = generator.DataGenerator(args.data, args.key_file,
-                        args.batch_size, args.feat_dim, args.n_labels, shuffle=True)
+                                                 args.batch_size, args.feat_dim,
+                                                 args.n_labels, shuffle=True, mod=2)
     valid_generator = generator.DataGenerator(args.valid, args.valid_key_file,
-                        args.batch_size, args.feat_dim, args.n_labels, shuffle=False)
-    '''
-    tensorboard = keras.callbacks.TensorBoard(
-            log_dir=args.log_dir+'tf_logs',
-            histogram_freq=0,
-            batch_size=args.batch_size,
-            write_graph=True,
-            write_grads=True
-            )
-    tensorboard.set_model(model)
-    '''
+                                              args.batch_size, args.feat_dim,
+                                              args.n_labels, shuffle=False,mod=2)
     prev_val_ler = 1.0e10
     patience = 0
     max_patience=args.max_patience

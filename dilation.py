@@ -5,7 +5,7 @@ import subprocess
 import time
 from keras.models import Model
 from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, CuDNNGRU, GRU, Reshape
-from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, Conv2D, MaxPooling2D, Conv2DTranspose
+from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, Conv2D, MaxPooling2D, Conv2DTranspose, UpSampling2D
 import keras.utils
 import keras.backend as K
 import numpy as np
@@ -102,7 +102,7 @@ def VGG2L_QuadStrides(inputs, filters, feat_dim):
 
 def VGG2L_Transpose(inputs, filters, units):
     outputs = Lambda(lambda x: tf.expand_dims(x, -1))(inputs)
-    outputs = UpSampling2D(size=(2,1), data_format='channels_last')
+    outputs = UpSampling2D(size=(2,1), data_format='channels_last')(outputs)
     outputs = Conv2D(filters=filters,
                      kernel_size=3, padding='same',
                      strides=(1,1),
