@@ -182,42 +182,42 @@ def main():
                 logs.write('progress: (%d/%d) loss=%.4f acc=%.4f\n' % (bt+1,
                     training_generator.__len__(), progress_loss, progress_acc))
 
-                curr_loss /= curr_samples
-                curr_acc = np.mean(curr_acc)
+            curr_loss /= curr_samples
+            mean_curr_acc = np.mean(curr_acc)
 
-                curr_val_loss = 0.0
-                curr_val_acc = []
-                curr_val_samples = 0
+            curr_val_loss = 0.0
+            curr_val_acc = []
+            curr_val_samples = 0
 
-                for bt in range(valid_generator.__len__()):
-                    x,mask,y = valid_generator.__getitem__(bt)
-                    model.reset_states()
-                    for b in range(x.shape[0]):
-                        x_in = np.squeeze(x[b,:,:,:])
-                        mask_in = np.squeeze(mask[b,:,:,:])
-                        y_in = np.squeeze(y[b,:,:,:])
-                        states = get_states(model)
-                        loss, acc = model.test_on_batch(x=[x_in,mask_in],y=y_in)
+            for bt in range(valid_generator.__len__()):
+                x,mask,y = valid_generator.__getitem__(bt)
+                model.reset_states()
+                for b in range(x.shape[0]):
+                    x_in = np.squeeze(x[b,:,:,:])
+                    mask_in = np.squeeze(mask[b,:,:,:])
+                    y_in = np.squeeze(y[b,:,:,:])
+                    states = get_states(model)
+                    loss, acc = model.test_on_batch(x=[x_in,mask_in],y=y_in)
 
-                        # for micro-mean
-                        samples = np.sum(mask_in)
-                        curr_val_samples += samples
-                        curr_val_loss += loss * samples
-                        curr_val_acc.append(acc)
+                    # for micro-mean
+                    samples = np.sum(mask_in)
+                    curr_val_samples += samples
+                    curr_val_loss += loss * samples
+                    curr_val_acc.append(acc)
 
-                        set_states(model, states)
-                        x_part = x_in[:, 0:args.process_frames,:]
-                        mask_part = mask_in[:, 0:args.process_frames,:]
-                        model.predict_on_batch(x=[x_part, mask_part])
+                    set_states(model, states)
+                    x_part = x_in[:, 0:args.process_frames,:]
+                    mask_part = mask_in[:, 0:args.process_frames,:]
+                    model.predict_on_batch(x=[x_part, mask_part])
 
-                print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, curr_acc))
-                logs.write('Epoch %d (train) loss=%.4f acc=%.4f\n' % (ep+1, curr_loss, curr_acc))
+            print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, mean_curr_acc))
+            logs.write('Epoch %d (train) loss=%.4f acc=%.4f\n' % (ep+1, curr_loss, mean_curr_acc))
 
-                curr_val_loss /= curr_val_samples
-                curr_val_acc = np.mean(curr_val_acc)
+            curr_val_loss /= curr_val_samples
+            mean_curr_val_acc = np.mean(curr_val_acc)
 
-                if prev_val_acc > curr_val_acc:
-                    patience += 1
+            if prev_val_acc > mean_curr_val_acc:
+                patience += 1
                 if patience >= args.max_patience:
                     prev_lr = K.get_value(model.optimizer.lr)
                     curr_lr = prev_lr * args.factor
@@ -231,16 +231,16 @@ def main():
                 else:
                     patience=0
 
-                print('Epoch %d (valid) loss=%.4f acc=%.4f' % (ep+1, curr_val_loss, curr_val_acc))
-                logs.write('Epoch %d (valid) loss=%.4f acc=%.4f\n' % (ep+1, curr_val_loss, curr_val_acc))
+            print('Epoch %d (valid) loss=%.4f acc=%.4f' % (ep+1, curr_val_loss, mean_curr_val_acc))
+            logs.write('Epoch %d (valid) loss=%.4f acc=%.4f\n' % (ep+1, curr_val_loss,mean_curr_val_acc))
 
-                # save best model in .h5
-                if min_val_acc < curr_val_acc:
-                    min_val_acc = curr_val_acc
-                    path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
-                    model.save_weights(path)
+            # save best model in .h5
+            if min_val_acc < mean_curr_val_acc:
+                min_val_acc = mean_curr_val_acc
+                path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
+                model.save_weights(path)
 
-                prev_val_acc = curr_val_acc
+            prev_val_acc = mean_curr_val_acc
 
 if __name__ == "__main__":
     main()

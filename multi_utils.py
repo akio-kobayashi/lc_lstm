@@ -44,7 +44,7 @@ def split_utt(mat, procs, extras1, extras2, num_extras1, n_blocks, feat_dim, max
     start = 0
     num_blocks = 0
     num_frames = 0
-    while True:
+    while num_blocks < max_blocks:
         if start > length:
             break
         if num_blocks < num_extras1:
@@ -87,7 +87,7 @@ def split_label(label, procs, extras1, extras2, num_extras1, n_blocks, n_classes
     num_blocks = 0
     num_frames = 0
 
-    while True:
+    while num_blocks < max_blocks:
         if start > length:
             break
         if num_blocks < num_extras1:

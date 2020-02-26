@@ -65,7 +65,7 @@ do
 		              --n-labels $n_labels --batch-size ${batch_size} \
 		              --epochs $epochs --filters ${filters} \
 		              --snapshot $snapdir  --learn-rate $learn_rate \
-		              --log-dir $logdir --max-patient 3 \
+		              --log-dir $logdir --max-patience 3 \
 		              --units $units --lstm-depth $lstm_depth \
 		              --factor $factor --optim ${optim} --lstm \
 			      --process-frames $proc_frames --extra-frames1 $extra_frames1 \
