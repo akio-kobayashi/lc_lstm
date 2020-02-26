@@ -113,6 +113,7 @@ class FixedDataGenerator(Sequence):
             if self.mode == 'train':
                 # label is a list of integers starting from 0
                 label = self.h5fd[key+'/labels'][()]
+                label = mat_utils.pad_label(label, self.mod)
                 blocked_labels = multi_utils.split_label(label, self.procs, self.extras1,
                         self.extras2, self.num_extras1, ex_blocks,
                         self.n_labels+1, max_num_blocks)

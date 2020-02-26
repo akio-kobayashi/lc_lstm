@@ -68,7 +68,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, required=True, help='training data')
     parser.add_argument('--valid', type=str, required=True, help='validation data')
-    #parser.add_argument('--eval', type=str, help='evaluation data')
     parser.add_argument('--key-file', type=str, help='keys')
     parser.add_argument('--valid-key-file', type=str, help='valid keys')
     parser.add_argument('--feat-dim', default=40, type=int, help='feats dim')

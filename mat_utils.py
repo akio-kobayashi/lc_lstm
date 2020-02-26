@@ -16,3 +16,9 @@ def pad_mat(mat, mod=1):
 
     return mat
 
+def pad_label(label, mod=1):
+    m = len(label)%mod
+    temp = label
+    for k in range(mod-m):
+        temp.append(label[-1])
+    return temp
