@@ -106,7 +106,7 @@ def main():
     args = parser.parse_args()
 
     inputs = Input(batch_shape=(args.batch_size, None, args.feat_dim))
-    masks = Input(batch_shape=(args.batch_size, None, args.feat_dim))
+    masks = Input(batch_shape=(args.batch_size, None, args.feat_dim*args.units*2))
     model = build_model(inputs, masks, args.units, args.lstm_depth,
                         args.n_labels, args.feat_dim, args.learn_rate,
                         args.dropout, args.filters, args.optim, args.lstm, args.vgg)
@@ -134,6 +134,7 @@ def main():
                 model.reset_states()
                 for b in range(x.shape[0]):
                     x_in = np.squeeze(x[b,:,:,:])
+                    mask_in = np.repeat(mask[b,:,:,:], args.feat_dim*args.filters*2, axis=-1)
                     mask_in = np.squeeze(mask[b,:,:,:])
                     y_in = np.squeeze(y[b,:,:,:])
                     states = get_states(model)
@@ -145,9 +146,10 @@ def main():
                     curr_acc.append(acc)
 
                     set_states(model, states)
-                    x_part = x_in[:, 0:args.process_frames,:]
-                    mask_part = mask_in[:, 0:args.process_frames,:]
-                    model.predict_on_batch(x=[x_part, mask_part])
+                    #x_part = x_in[:, 0:args.process_frames,:]
+                    #mask_part = mask_in[:, 0:args.process_frames,:]
+                    mask_in[:, args.process_frames:, :]=0.0
+                    model.predict_on_batch(x=[x_in, mask_in])
 
                 # progress report
                 progress_loss = curr_loss/curr_samples
