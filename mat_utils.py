@@ -20,5 +20,5 @@ def pad_label(label, mod=1):
     m = len(label)%mod
     temp = label
     for k in range(mod-m):
-        temp.append(label[-1])
+        temp[k] = label[-1]
     return temp
