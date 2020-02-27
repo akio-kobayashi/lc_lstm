@@ -135,7 +135,8 @@ def main():
                 for b in range(x.shape[0]):
                     x_in = np.squeeze(x[b,:,:,:])
                     mask_in = np.repeat(mask[b,:,:,:], args.feat_dim*args.filters*2, axis=-1)
-                    mask_in = np.squeeze(mask[b,:,:,:])
+                    #print(mask_in.shape)
+                    #mask_in = np.squeeze(mask[b,:,:,:])
                     y_in = np.squeeze(y[b,:,:,:])
                     states = get_states(model)
                     loss,acc = model.train_on_batch(x=[x_in,mask_in], y=y_in)
@@ -172,7 +173,7 @@ def main():
                 for b in range(x.shape[0]):
                     x_in = np.squeeze(x[b,:,:,:])
                     mask_in = np.repeat(mask[b, :, :, :], args.feat_dim*args.filters*2, axis=-1)
-                    mask_in = np.squeeze(mask[b,:,:,:])
+                    #mask_in = np.squeeze(mask[b,:,:,:])
                     y_in = np.squeeze(y[b,:,:,:])
                     mask_out = label_mask[b,:,:,:]
                     mask_out.reshape((shp[1],shp[2],shp[3]))
