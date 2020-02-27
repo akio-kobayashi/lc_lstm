@@ -49,6 +49,9 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
     else:
         outputs = vgg1l.VGG(outputs, init_filters, feat_dim)
 
+    outputs = Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
+    outputs = Masking(mask_value=0.0)(outputs)
+
     outputs = network.lc_network(outputs, units, depth, n_labels, dropout, init_filters, lstm)
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
@@ -166,6 +169,7 @@ def main():
                 model.reset_states()
                 for b in range(x.shape[0]):
                     x_in = np.squeeze(x[b,:,:,:])
+                    mask_in = np.repeat(mask[b, :, :, :], args.feat_dim*args.filters*2, axis=-1)
                     mask_in = np.squeeze(mask[b,:,:,:])
                     y_in = np.squeeze(y[b,:,:,:])
                     mask_out = label_mask[b,:,:,:]
@@ -178,11 +182,12 @@ def main():
                     # for micro-mean
                     curr_val_acc.extend(acc)
                     curr_val_loss.extend(loss)
-                    
+
                     set_states(model, states)
-                    x_part = x_in[:, 0:args.process_frames,:]
-                    mask_part = mask_in[:, 0:args.process_frames,:]
-                    model.predict_on_batch(x=[x_part, mask_part])
+                    #x_part = x_in[:, 0:args.process_frames,:]
+                    #mask_part = mask_in[:, 0:args.process_frames,:]
+                    mask_in[:, args.process_frames:, :] = 0.0
+                    model.predict_on_batch(x=[x_in, mask_in])
 
             print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, mean_curr_acc))
             logs.write('Epoch %d (train) loss=%.4f acc=%.4f\n' % (ep+1, curr_loss, mean_curr_acc))
