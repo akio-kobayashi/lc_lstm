@@ -106,7 +106,7 @@ def main():
     args = parser.parse_args()
 
     inputs = Input(batch_shape=(args.batch_size, None, args.feat_dim))
-    masks = Input(batch_shape=(args.batch_size, None, args.feat_dim*args.units*2))
+    masks = Input(batch_shape=(args.batch_size, None, args.feat_dim*args.filters*2))
     model = build_model(inputs, masks, args.units, args.lstm_depth,
                         args.n_labels, args.feat_dim, args.learn_rate,
                         args.dropout, args.filters, args.optim, args.lstm, args.vgg)
