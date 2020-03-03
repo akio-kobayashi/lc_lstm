@@ -15,7 +15,7 @@ if [ $host == "brandy" ];then
     valid_keys=./dev_clean.sorted
 elif [ ! -e /mnt/ssd1/ ];then
     export CUDA_VISIBLE_DEVICES=$device
-    cd /home/akio/lc_lstm
+    #cd /home/akio/lc_lstm
     train=./train_clean_100.h5
     valid=./dev_clean.h5
     test=./test_clean.h5
@@ -23,7 +23,7 @@ elif [ ! -e /mnt/ssd1/ ];then
     valid_keys=./dev_clean.sorted
 elif [ $host == "asr04" ];then
     export CUDA_VISIBLE_DEVICES=0 # always 0
-    cd /home/akio/lc_lstm
+    #cd /home/akio/lc_lstm
     train=./train_clean_100.h5
     valid=./dev_clean.h5
     test=./test_clean.h5
@@ -51,7 +51,7 @@ min_lr=1.0e-2
 dropout=0.0
 filters=32
 
-for lstm_depth in 3;
+for lstm_depth in 4;
 do
   for units in 256;
   do

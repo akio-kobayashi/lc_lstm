@@ -8,6 +8,7 @@ from keras.utils import Sequence
 import keras.utils
 from keras.preprocessing import sequence
 import tensorflow as tf
+import mat_utils
 
 SORT_BLOCK_SIZE=256
 

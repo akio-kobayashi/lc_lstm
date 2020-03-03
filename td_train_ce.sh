@@ -1,7 +1,9 @@
 #!/bin/sh
 
 direction=bi
-host=`hostname`
+#host=`hostname`
+host=asr02
+
 if [ $host == "brandy" ];then
     device=1
     export CUDA_VISIBLE_DEVICES=$device
@@ -19,11 +21,12 @@ elif [ -e /mnt/ssd1/ ];then
     key_file=${root}/${path}/ce_train.sorted.checked
     valid_key_file=${root}/${path}/ce_dev.sorted.checked
 else
-    path=td/model_d4_d160_f16_l1.0_B16_D0.0_f0.5_P3_LNtrue_BNtrue_vgg_adadelta_${direction}
+    #path=td/model_d4_d160_f16_l1.0_B16_D0.0_f0.5_P3_LNtrue_BNtrue_vgg_adadelta_${direction}
+    path=td/model_d4_d256_f32_l1.0_B16_D0.0_f0.9_LNtrue_BNtrue_vgg_lstm_adadelta_ep100_bi/
     train=${path}/ce_train.h5
     valid=${path}/ce_dev.h5
-    key_file=${path}/ce_train.sorted.checked
-    valid_key_file=${path}/ce_dev.sorted.checked
+    key_file=${path}/ce_train.sorted
+    valid_key_file=${path}/ce_dev.sorted
 fi
 
 n_labels=49
@@ -33,20 +36,20 @@ feat_dim=40
 
 #training
 batch_size=16
-epochs=50
-factor=0.5
+epochs=100
+factor=0.9
 optim=adadelta
 dropout=0.0
-filters=16
+filters=32
 
 for lstm_depth in 4;
 do
-  for units in 160;
+  for units in 256;
   do
       for learn_rate in 1.0;
       do
-         snapdir=./td/ce_model_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_vgg_${optim}_${direction}
-         logdir=./td/ce_logs_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_P3_LNtrue_vgg_${optim}_${direction}
+         snapdir=./td/ce_model_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_${optim}_${direction}
+         logdir=./td/ce_logs_d${lstm_depth}_d${units}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_${optim}_${direction}
          mkdir -p $snapdir
          mkdir -p $logdir
 
@@ -56,9 +59,9 @@ do
 		--n-labels $n_labels --batch-size ${batch_size} \
 		--epochs $epochs --filters ${filters} \
 		--snapshot $snapdir  --learn-rate $learn_rate \
-		--log-dir $logdir --max-patient 3 \
+		--log-dir $logdir --max-patience 3 \
 		--units $units --lstm-depth $lstm_depth \
-		--factor $factor --optim ${optim}
+		--factor $factor --optim ${optim} --lstm
       done
   done
 done

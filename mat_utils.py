@@ -17,8 +17,9 @@ def pad_mat(mat, mod=1):
     return mat
 
 def pad_label(label, mod=1):
-    m = len(label)%mod
-    temp = label
+    m = label.shape[0]%mod
+    temp = np.zeros(label.shape[0]+(mod-m),)
+    temp[0:label.shape[0],] = label
     for k in range(mod-m):
-        temp.append(label[-1])
+        temp[label.shape[0]+k,] = label[-1]
     return temp

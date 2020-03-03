@@ -16,6 +16,7 @@ import vgg1l
 import ce_generator
 import layer_normalization
 import network
+import mat_utils
 
 os.environ['PYTHONHASHSEED']='0'
 np.random.seed(1024)

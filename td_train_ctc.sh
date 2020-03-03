@@ -1,7 +1,7 @@
 #!/bin/sh
 device=$1
 export CUDA_VISIBLE_DEVICES=$device
-cd /home/akio/lc_lstm
+#cd /home/akio/lc_lstm
 
 direction=$2
 
@@ -15,17 +15,21 @@ if [ $host == "brandy" ];then
     valid_key_file=./dev.sorted
 elif [ $host == "asr03" ];then
     export CUDA_VISIBLE_DEVICES=$device
-    cd /home/akio/lc_lstm
+    #cd /home/akio/lc_lstm
     train=./train.h5
     valid=./dev.h5
     key_file=./train.sorted
     valid_key_file=./dev.sorted
 else
-    root=/mnt/ssd1/eesen_20191228/eesen/asr_egs/tedlium/v1/data/
-    train=${root}/train/train.h5
-    valid=${root}/dev/dev.h5
-    key_file=${root}/train/train.sorted
-    valid_key_file=${root}/dev/dev.sorted
+    train=./train.h5
+    valid=./dev.h5
+    key_file=./train.sorted
+    valid_key_file=./dev.sorted
+    #root=/mnt/ssd1/eesen_20191228/eesen/asr_egs/tedlium/v1/data/
+    #train=${root}/train/train.h5
+    #valid=${root}/dev/dev.h5
+    #key_file=${root}/train/train.sorted
+    #valid_key_file=${root}/dev/dev.sorted
 fi
 
 n_labels=49
@@ -41,7 +45,7 @@ optim=adadelta
 dropout=0.0
 filters=32
 
-for lstm_depth in 3;
+for lstm_depth in 4;
 do
   for units in 256;
   do

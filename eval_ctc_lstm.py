@@ -42,7 +42,7 @@ def build_model(inputs, units, depth, n_labels, feat_dim,
     else:
         outputs = vgg1l.VGG(inputs, init_filters, feat_dim)
 
-    outputs = network.network(outputs,units, depth, n_labels, direction, dropout, lstm)
+    outputs = network.network(outputs,units, depth, n_labels, direction, 0.0, lstm)
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
 
