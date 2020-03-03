@@ -29,7 +29,7 @@ class FixedDataGenerator(Sequence):
         self.sorted_keys=[]
         self.mode=mode
         self.mod=1
-        
+
         self.h5fd = h5py.File(self.file, 'r')
         self.n_samples = len(self.h5fd.keys())
         if key_file is not None:
@@ -87,7 +87,7 @@ class FixedDataGenerator(Sequence):
         input_mat=np.zeros((len(list_keys_temp), max_num_blocks,
                             self.procs+max(self.extras1, self.extras2), self.feat_dim))
         input_mask=np.zeros((len(list_keys_temp), max_num_blocks,
-                             self.procs+max(self.extras1, self.extras2), self.feat_dim))
+                             self.procs+max(self.extras1, self.extras2), 1))
         if self.mode == 'train':
             output_mask=np.zeros((len(list_keys_temp), max_num_blocks,
                                   self.procs+max(self.extras1, self.extras2), 1))
@@ -125,7 +125,7 @@ class FixedDataGenerator(Sequence):
         if self.mode == 'train':
             output_labels = output_labels.transpose((1,0,2,3))
             output_mask = output_mask.transpose((1,0,2,3))
-            
+
         if self.mode == 'train':
             return input_mat, input_mask, output_mask, output_labels
         else:

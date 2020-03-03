@@ -122,7 +122,7 @@ def VGG2L_QuadTranspose(inputs, filters, units):
     outputs = UpSampling2D(size=(2,1), data_format='channels_last')
 
     outputs = Conv2D(filters=filters,
-                     kernel_size=3, strides=(1,2),
+                     kernel_size=3, strides=(1,1),
                      padding='same',
                      data_format='channels_last',
                      kernel_initializer='glorot_uniform')(outputs)
@@ -132,7 +132,7 @@ def VGG2L_QuadTranspose(inputs, filters, units):
     outputs = UpSampling2D(size=(2,1), data_format='channels_last')
 
     outputs = Conv2D(filters=filters,
-                     kernel_size=3, strides=(1,2),
+                     kernel_size=3, strides=(1,1),
                      padding='same',
                      data_format='channels_last',
                      kernel_initializer='glorot_uniform')(outputs)
@@ -142,5 +142,3 @@ def VGG2L_QuadTranspose(inputs, filters, units):
     outputs = Reshape(target_shape=(-1, units*filters))(outputs)
 
     return outputs
-
-    

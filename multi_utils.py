@@ -39,9 +39,9 @@ def split_utt(mat, procs, extras1, extras2, num_extras1, n_blocks, feat_dim, max
     length = mat.shape[0]
     max_extras = max([extras1, extras2])
     src=np.zeros(shape=(max_blocks, procs+max_extras, feat_dim))
-    mask=np.zeros(shape=(max_blocks, procs+max_extras, feat_dim))
+    mask=np.zeros(shape=(max_blocks, procs+max_extras, 1))
     label_mask = np.zeros(shape=(max_blocks, procs+max_extras, 1))
-    
+
     start = 0
     num_blocks = 0
     num_frames = 0
