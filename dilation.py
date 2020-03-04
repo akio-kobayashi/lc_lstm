@@ -103,13 +103,14 @@ def VGG2L_QuadStrides(inputs, filters, feat_dim):
 
 def VGG2L_Transpose(inputs, filters, units):
     outputs = Lambda(lambda x: tf.expand_dims(x, -1))(inputs)
+
     outputs = UpSampling2D(size=(2,1), data_format='channels_last')(outputs)
+
     outputs = Conv2D(filters=filters,
                      kernel_size=3, padding='same',
                      strides=(1,2),
                      data_format='channels_last',
                      kernel_initializer='glorot_uniform')(outputs)
-    #print(outputs.shape)
     outputs = BatchNormalization(axis=-1)(outputs)
     outputs = Activation('relu')(outputs)
 
@@ -131,7 +132,6 @@ def VGG2L_Transpose(inputs, filters, units):
 
     # units/8, filters/2
     outputs = Reshape(target_shape=(-1, units)) (outputs)
-    #outputs = TimeDistributed(Dense(units))(outputs)
 
     return outputs
 
@@ -167,6 +167,5 @@ def VGG2L_QuadTranspose(inputs, filters, units):
     outputs = Activation('relu')(outputs)
 
     outputs = Reshape(target_shape=(-1, units))(outputs) # 64*8
-    #outputs = TimeDistributed(Dense(units))(outputs)
 
     return outputs

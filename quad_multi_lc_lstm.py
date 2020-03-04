@@ -55,20 +55,20 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
 
     outputs1 = network.lc_network(outputs, units, depth, n_labels, dropout, init_filters, lstm)
 
-    # 1/2
-    #outputs2 = dilation.VGG2L_Strides(outputs, init_filters, feat_dim)
-    #outputs2 = network.lc_network(outputs, units, depth, n_labels, dropout, init_filters, lstm)
-    #outputs2 = dilation.VGG2L_Transpose(outputs2, init_filters, units*2)
-
-    # 1/4
     depth=2
     init_filters=16
+    # 1/2
+    outputs2 = dilation.VGG2L_Strides(masked, init_filters, feat_dim)
+    outputs2 = network.lc_network(outputs2, units, depth, n_labels, dropout, init_filters, lstm)
+    outputs2 = dilation.VGG2L_Transpose(outputs2, init_filters, units*2)
+
+    # 1/4
     outputs3 = dilation.VGG2L_QuadStrides(masked, init_filters, feat_dim) # output = time/2, feat_dim*filters*2
     outputs3 = network.lc_network(outputs3, units, depth, n_labels, dropout, init_filters, lstm) # output = time/2, units*2
     outputs3 = dilation.VGG2L_QuadTranspose(outputs3, init_filters, units*2) #output = time, units*2
-    
+
     #outputs = Add()([outputs, outputs2, outputs3])
-    outputs = Add()([outputs1, outputs3])
+    outputs = Add()([outputs1, outputs2, outputs3])
 
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
