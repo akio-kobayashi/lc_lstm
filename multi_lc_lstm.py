@@ -110,8 +110,6 @@ def main():
     model = build_model(inputs, masks, args.units, args.lstm_depth,
                         args.n_labels, args.feat_dim, args.learn_rate,
                         args.dropout, args.filters, args.optim, args.lstm, args.vgg)
-    print(model.summary())
-    exit(1)
 
     training_generator = multi_fixed_generator.FixedDataGenerator(
         args.data, args.key_file, args.batch_size, args.feat_dim, args.n_labels,
