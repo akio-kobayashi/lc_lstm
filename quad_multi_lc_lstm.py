@@ -52,17 +52,17 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
     outputs = network.lc_network(outputs, units, depth, n_labels, dropout, init_filters, lstm)
 
     # 1/2
-    outputs2 = dilation.VGG2L_Strides(outputs, init_filters, feat_dim)
-    outputs2 = network.lc_network(outputs, units, depth, n_labels, dropout, init_filters, lstm)
-    outputs2 = dilation.VGG2L_Transpose(outputs2, init_filters, units*2)
+    #outputs2 = dilation.VGG2L_Strides(outputs, init_filters, feat_dim)
+    #outputs2 = network.lc_network(outputs, units, depth, n_labels, dropout, init_filters, lstm)
+    #outputs2 = dilation.VGG2L_Transpose(outputs2, init_filters, units*2)
 
     # 1/4
     outputs3 = dilation.VGG2L_QuadStrides(outputs, init_filters, feat_dim)
-    outputs3 = network.lc_network(outputs, units, depth, n_labels, dropout, init_filters, lstm)
+    outputs3 = network.lc_network(outputs3, units, depth, n_labels, dropout, init_filters, lstm)
     outputs3 = dilation.VGG2L_QuadTranspose(outputs3, init_filters, units*2)
 
-    outputs = Add()([outputs, output2, outputs3])
-
+    #outputs = Add()([outputs, outputs2, outputs3])
+    outputs = Add()([outputs, outputs3])
     outputs = Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
     outputs = Masking(mask_value=0.0)(outputs)
 
@@ -119,7 +119,7 @@ def main():
     args = parser.parse_args()
 
     inputs = Input(batch_shape=(args.batch_size, None, args.feat_dim))
-    masks = Input(batch_shape=(args.batch_size, None, args.feat_dim*args.filters*2))
+    masks = Input(batch_shape=(args.batch_size, None, args.units*2))
     model = build_model(inputs, masks, args.units, args.lstm_depth,
                         args.n_labels, args.feat_dim, args.learn_rate,
                         args.dropout, args.filters, args.optim, args.lstm, args.vgg)
@@ -147,7 +147,7 @@ def main():
                 model.reset_states()
                 for b in range(x.shape[0]):
                     x_in = np.squeeze(x[b,:,:,:])
-                    mask_in = np.repeat(mask[b,:,:,:], args.feat_dim*args.filters*2, axis=-1)
+                    mask_in = np.repeat(mask[b,:,:,:], args.units*2, axis=-1)
                     #print(mask_in.shape)
                     #mask_in = np.squeeze(mask[b,:,:,:])
                     y_in = np.squeeze(y[b,:,:,:])
@@ -185,7 +185,7 @@ def main():
                 model.reset_states()
                 for b in range(x.shape[0]):
                     x_in = np.squeeze(x[b,:,:,:])
-                    mask_in = np.repeat(mask[b, :, :, :], args.feat_dim*args.filters*2, axis=-1)
+                    mask_in = np.repeat(mask[b, :, :, :], args.units*2, axis=-1)
                     #mask_in = np.squeeze(mask[b,:,:,:])
                     y_in = np.squeeze(y[b,:,:,:])
                     mask_out = label_mask[b,:,:,:]

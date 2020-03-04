@@ -29,7 +29,7 @@ def VGG2L_Strides(inputs, filters, feat_dim):
     # half of the stride
     outputs=Conv2D(filters=filters,
                    kernel_size=3, padding='same',
-                   strides=(1,1),
+                   strides=(2,1),
                    data_format='channels_last',
                    kernel_initializer='glorot_uniform')(outputs)
     outputs=BatchNormalization(axis=-1)(outputs)
@@ -47,7 +47,7 @@ def VGG2L_Strides(inputs, filters, feat_dim):
 
     outputs=Conv2D(filters=filters,
                    kernel_size=3, padding='same',
-                   strides=(2,2),
+                   strides=(2,1),
                    data_format='channels_last',
                    kernel_initializer='glorot_uniform')(outputs)
     outputs=BatchNormalization(axis=-1)(outputs)
@@ -72,12 +72,12 @@ def VGG2L_QuadStrides(inputs, filters, feat_dim):
     # half of the stride
     outputs=Conv2D(filters=filters,
                    kernel_size=3, padding='same',
-                   strides=(2,2),
+                   strides=(2,1),
                    data_format='channels_last',
                    kernel_initializer='glorot_uniform')(outputs)
     outputs=BatchNormalization(axis=-1)(outputs)
     outputs=Activation('relu')(outputs)
-    #outputs=MaxPooling2D(pool_size=2, strides=1, padding='same')(outputs)
+    #outputs=MaxPooling2D(pool_size=2, strides=2, padding='same')(outputs)
 
     filters *= 2 # 128
     outputs=Conv2D(filters=filters,
@@ -90,11 +90,12 @@ def VGG2L_QuadStrides(inputs, filters, feat_dim):
 
     outputs=Conv2D(filters=filters,
                    kernel_size=3, padding='same',
-                   strides=(2,2),
+                   strides=(2,1),
                    data_format='channels_last',
                    kernel_initializer='glorot_uniform')(outputs)
     outputs=BatchNormalization(axis=-1)(outputs)
     outputs=Activation('relu')(outputs)
+    #outputs=MaxPooling2D(pool_size=2, strides=2, padding='same')(outputs)
 
     outputs = Reshape(target_shape=(-1, int(feat_dim/4)*filters))(outputs)
 
@@ -108,7 +109,7 @@ def VGG2L_Transpose(inputs, filters, units):
                      strides=(1,1),
                      data_format='channels_last',
                      kernel_initializer='glorot_uniform')(outputs)
-    print(outputs.shape)
+    #print(outputs.shape)
     outputs = BatchNormalization(axis=-1)(outputs)
     outputs = Activation('relu')(outputs)
 
@@ -120,7 +121,7 @@ def VGG2L_Transpose(inputs, filters, units):
 def VGG2L_QuadTranspose(inputs, filters, units):
     outputs=Lambda(lambda x: tf.expand_dims(x, -1))(inputs)
 
-    outputs = UpSampling2D(size=(2,1), data_format='channels_last')
+    outputs = UpSampling2D(size=(2,1), data_format='channels_last')(outputs)
 
     outputs = Conv2D(filters=filters,
                      kernel_size=3, strides=(1,1),
@@ -130,7 +131,7 @@ def VGG2L_QuadTranspose(inputs, filters, units):
     outputs = BatchNormalization(axis=-1)(outputs)
     outputs = Activation('relu')(outputs)
 
-    outputs = UpSampling2D(size=(2,1), data_format='channels_last')
+    outputs = UpSampling2D(size=(2,1), data_format='channels_last')(outputs)
 
     outputs = Conv2D(filters=filters,
                      kernel_size=3, strides=(1,1),

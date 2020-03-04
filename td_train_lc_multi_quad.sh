@@ -1,18 +1,19 @@
 #!/bin/sh
 
 direction=bi
-device=1
+device=0
 
-host="asr03"
+host="brandy"
+
 if [ $host == "brandy" ];then
     device=1
     export CUDA_VISIBLE_DEVICES=$device
-    cd /home/akio/lc_lstm
+    cd /home/akiokobayashi0809/lc_lstm
     # librispeech
-    train=./train.h5
-    valid=./dev.h5
-    key_file=./train.sorted
-    valid_key_file=./dev.sorted
+    train=./td/ce_train.h5
+    valid=./td/ce_dev.h5
+    key_file=./td/ce_train.sorted
+    valid_key_file=./td/ce_dev.sorted
 elif [ -e /mnt/ssd1/ ];then
     root=/mnt/ssd1/eesen_20191228/eesen/asr_egs/tedlium/v1/tensorflow/
     path=model_d4_d160_f16_l1.0_B16_D0.0_f0.5_P3_LNtrue_BNtrue_vgg_adadelta_${direction}
@@ -35,7 +36,7 @@ n_labels=49
 feat_dim=40
 
 #training
-batch_size=256
+batch_size=32
 epochs=50
 factor=0.9
 optim=adadelta
