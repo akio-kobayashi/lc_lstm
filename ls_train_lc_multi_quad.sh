@@ -1,23 +1,23 @@
 #!/bin/sh
 
-device=0
+device=$1
 direction=bi
 #export CUDA_VISIBLE_DEVICES=$device
 #cd /home/akiokobayashi0809/lc_lstm
 
 # librispeech
 
-host="asr04"
+host="brandy"
 n_labels=32
 if [ $host == "brandy" ];then
     export CUDA_VISIBLE_DEVICES=$device
-    path=ls/model_d4_d160_f32_l1.0_LNtrue_BNtrue_B16_D0.0_f0.5_vgg_lstm_adadelta_ep50_${direction}
+    #path=ls/model_d4_d160_f32_l1.0_LNtrue_BNtrue_B16_D0.0_f0.5_vgg_lstm_adadelta_ep50_${direction}
     #cd /home/akiokobayashi0809/lc_lstm
-    train=${path}/ce_train_clean_100.h5
-    valid=${path}/ce_dev_clean.h5
-    test=${path}/ce_test_clean.h5
-    keys=${path}/ce_train_clean_100.sorted.checked
-    valid_keys=${path}/ce_dev_clean.sorted.checked
+    train=./ls/ce_train.h5
+    valid=./ls/ce_dev.h5
+    test=./ls/ce_test.h5
+    keys=./ls/ce_train.sorted
+    valid_keys=./ls/ce_dev.sorted
 #elif [ ! -e /mnt/ssd1/ ];then
 #    export CUDA_VISIBLE_DEVICES=$device
     #path=ls/model_d4_d160_f32_l1.0_LNtrue_BNtrue_B16_D0.0_f0.5_vgg_lstm_adadelta_ep50_${direction}
@@ -58,18 +58,18 @@ do
         do
           for extra_frames1 in 20 30 50;
           do
-	      if [ $proc_frames -gt $extra_frames1 ];then
-		  for extra_frames2 in 10 20 30 50;
+	      if [ $proc_frames -eq $extra_frames1 ];then
+		  for extra_frames2 in 20 30 50;
 		  do
 		      if [ $extra_frames1 -eq $extra_frames2 ];then
-			  snapdir=./ls/lc_model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm
+			  snapdir=./ls/lc_model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_quad
 			  snapdir=${snapdir}_p${proc_frames}_ef${extra_frames1}_es${extra_frames2}_n${num_extra_frames1}_${optim}_${direction}
-			  logdir=./ls/lc_logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm
+			  logdir=./ls/lc_logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_quad
 			  logdir=${logdir}_p${proc_frames}_ef${extra_frames1}_es${extra_frames2}_n${num_extra_frames1}_${optim}_${direction}
 			  mkdir -p $snapdir
 			  mkdir -p $logdir
 
-			  python multi_lc_lstm.py --data $train --valid $valid \
+			  python quad_multi_lc_lstm.py --data $train --valid $valid \
 				 --key-file $keys --valid-key-file $valid_keys \
 				 --feat-dim $feat_dim \
 				 --n-labels $n_labels --batch-size ${batch_size} \
