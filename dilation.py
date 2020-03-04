@@ -53,7 +53,7 @@ def VGG2L_Strides(inputs, filters, feat_dim):
     outputs=BatchNormalization(axis=-1)(outputs)
     outputs=Activation('relu')(outputs)
 
-    outputs = Reshape(target_shape=(-1, int(feat_dim/2)*filters))(outputs)
+    outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
 
     return outputs
 
@@ -79,7 +79,7 @@ def VGG2L_QuadStrides(inputs, filters, feat_dim):
     outputs=Activation('relu')(outputs)
     #outputs=MaxPooling2D(pool_size=2, strides=2, padding='same')(outputs)
 
-    filters *= 2 # 128
+    filters *= 2
     outputs=Conv2D(filters=filters,
                    kernel_size=3, padding='same',
                    strides=1,
@@ -97,7 +97,7 @@ def VGG2L_QuadStrides(inputs, filters, feat_dim):
     outputs=Activation('relu')(outputs)
     #outputs=MaxPooling2D(pool_size=2, strides=2, padding='same')(outputs)
 
-    outputs = Reshape(target_shape=(-1, int(feat_dim/4)*filters))(outputs)
+    outputs = Reshape(target_shape=(-1, feat_dim*filters))(outputs)
 
     return outputs
 
@@ -106,16 +106,33 @@ def VGG2L_Transpose(inputs, filters, units):
     outputs = UpSampling2D(size=(2,1), data_format='channels_last')(outputs)
     outputs = Conv2D(filters=filters,
                      kernel_size=3, padding='same',
-                     strides=(1,1),
+                     strides=(1,2),
                      data_format='channels_last',
                      kernel_initializer='glorot_uniform')(outputs)
     #print(outputs.shape)
     outputs = BatchNormalization(axis=-1)(outputs)
     outputs = Activation('relu')(outputs)
 
-    outputs = Reshape(target_shape=(-1, units*filters))(outputs)
-    outputs = TimeDistributed(Dense(units))(outputs)
-    
+    outputs = Conv2D(filters=int(filters),
+                 kernel_size=3, strides=(1,2),
+                 padding='same',
+                 data_format='channels_last',
+                 kernel_initializer='glorot_uniform')(outputs)
+    outputs = BatchNormalization(axis=-1)(outputs)
+    outputs = Activation('relu')(outputs)
+
+    outputs = Conv2D(filters=int(filters/2),
+             kernel_size=3, strides=(1,2),
+             padding='same',
+             data_format='channels_last',
+             kernel_initializer='glorot_uniform')(outputs)
+    outputs = BatchNormalization(axis=-1)(outputs)
+    outputs = Activation('relu')(outputs)
+
+    # units/8, filters/2
+    outputs = Reshape(target_shape=(-1, units)) (outputs)
+    #outputs = TimeDistributed(Dense(units))(outputs)
+
     return outputs
 
 def VGG2L_QuadTranspose(inputs, filters, units):
@@ -124,7 +141,7 @@ def VGG2L_QuadTranspose(inputs, filters, units):
     outputs = UpSampling2D(size=(2,1), data_format='channels_last')(outputs)
 
     outputs = Conv2D(filters=filters,
-                     kernel_size=3, strides=(1,1),
+                     kernel_size=3, strides=(1,2),
                      padding='same',
                      data_format='channels_last',
                      kernel_initializer='glorot_uniform')(outputs)
@@ -134,14 +151,22 @@ def VGG2L_QuadTranspose(inputs, filters, units):
     outputs = UpSampling2D(size=(2,1), data_format='channels_last')(outputs)
 
     outputs = Conv2D(filters=filters,
-                     kernel_size=3, strides=(1,1),
+                     kernel_size=3, strides=(1,2),
                      padding='same',
                      data_format='channels_last',
                      kernel_initializer='glorot_uniform')(outputs)
     outputs = BatchNormalization(axis=-1)(outputs)
     outputs = Activation('relu')(outputs)
 
-    outputs = Reshape(target_shape=(-1, units*filters))(outputs)
-    outputs = TimeDistributed(Dense(units))(outputs)
-    
+    outputs = Conv2D(filters=int(filters/2),
+                 kernel_size=3, strides=(1,2),
+                 padding='same',
+                 data_format='channels_last',
+                 kernel_initializer='glorot_uniform')(outputs)
+    outputs = BatchNormalization(axis=-1)(outputs)
+    outputs = Activation('relu')(outputs)
+
+    outputs = Reshape(target_shape=(-1, units))(outputs) # 64*16
+    #outputs = TimeDistributed(Dense(units))(outputs)
+
     return outputs

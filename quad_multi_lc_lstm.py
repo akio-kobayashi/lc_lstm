@@ -62,9 +62,10 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
 
     # 1/4
     depth=2
-    outputs3 = dilation.VGG2L_QuadStrides(outputs, init_filters, feat_dim)
-    outputs3 = network.lc_network(outputs3, units, depth, n_labels, dropout, init_filters, lstm)
-    outputs3 = dilation.VGG2L_QuadTranspose(outputs3, init_filters, units*2)
+    init_filters=16
+    outputs3 = dilation.VGG2L_QuadStrides(outputs, init_filters, feat_dim) # output = time/2, feat_dim*filters*2
+    outputs3 = network.lc_network(outputs3, units, depth, n_labels, dropout, init_filters, lstm) # output = time/2, units*2
+    outputs3 = dilation.VGG2L_QuadTranspose(outputs3, init_filters, units*2) #output = time, units*2
 
     #outputs = Add()([outputs, outputs2, outputs3])
     outputs = Add()([outputs1, outputs3])
@@ -129,7 +130,7 @@ def main():
                         args.dropout, args.filters, args.optim, args.lstm, args.vgg)
     print(model.summary())
     exit(1)
-    
+
     training_generator = multi_fixed_generator.FixedDataGenerator(
         args.data, args.key_file, args.batch_size, args.feat_dim, args.n_labels,
         args.process_frames, args.extra_frames1, args.extra_frames2, args.num_extra_frames1, mod=4)
