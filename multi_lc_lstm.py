@@ -50,7 +50,7 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
         outputs = vgg1l.VGG(outputs, init_filters, feat_dim)
 
     outputs = Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
-    #outputs = Masking(mask_value=0.0)(outputs)
+    outputs = Masking(mask_value=0.0)(outputs)
 
     outputs = network.lc_network(outputs, units, depth, n_labels, dropout, init_filters, lstm)
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
@@ -149,7 +149,7 @@ def main():
                     set_states(model, states)
                     #x_part = x_in[:, 0:args.process_frames,:]
                     #mask_part = mask_in[:, 0:args.process_frames,:]
-                    x_in[:, args.process_frames:, :] = 0.0
+                    #x_in[:, args.process_frames:, :] = 0.0
                     mask_in[:, args.process_frames:, :]=0.0
                     model.predict_on_batch(x=[x_in, mask_in])
 
@@ -190,8 +190,8 @@ def main():
                     set_states(model, states)
                     #x_part = x_in[:, 0:args.process_frames,:]
                     #mask_part = mask_in[:, 0:args.process_frames,:]
+                    #x_in[:, args.procss_frames:, :] = 0.0
                     mask_in[:, args.process_frames:, :] = 0.0
-                    x_in[:, args.procss_frames:, :] = 0.0
                     model.predict_on_batch(x=[x_in, mask_in])
 
             print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, mean_curr_acc))
