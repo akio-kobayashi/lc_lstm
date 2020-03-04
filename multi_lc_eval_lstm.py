@@ -48,6 +48,9 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
     else:
         outputs = vgg1l.VGG(outputs, init_filters, feat_dim)
 
+    outputs = Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
+    outputs = Masking(mask_value=0.0)(outputs)
+
     outputs = network.lc_network(outputs, units, depth, n_labels, dropout, lstm)
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
@@ -89,7 +92,7 @@ def main():
     args = parser.parse_args()
 
     eval_in = Input(batch_shape=(args.batch_size, None, args.feat_dim))
-    eval_mask = Input(batch_shape=(args.batch_size, None, args.feat_dim))
+    eval_mask = Input(batch_shape=(args.batch_size, None, args.feat_dim*args.filters*2))
     eval_model = build_model(eval_in, eval_mask, args.units, args.n_labels, args.feat_dim, args.learn_rate)
     path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
     eval_model.load_weights(path, by_name=True)
@@ -109,20 +112,22 @@ def main():
             stack=np.array()
             for b in range(x.shape[0]):
                 x_in = x.reshape((args.batch_size, -1, args.feat_dim))
-                mask_in = mask.reshape((args.batch_size, -1, args.feat_dim))
+                mask_in = np.repeat(mask[b,:,:,:], args.feat_dim*args.filters*2, axis=-1)
+                #mask_in = mask.reshape((args.batch_size, -1, args.feat_dim))
                 states = get_states(model)
                 predict = eval_model.predict_on_batch(x=[x_in,mask_in])
                 set_states(eval_model, states)
-                x_part = x_in[:, 0:args.process_frames,:]
-                mask_part = mask_in[:, 0:args.process_frames,:]
-                eval_model.predict_on_batch(x=[x_part, mask_part])
+                #x_part = x_in[:, 0:args.process_frames,:]
+                #mask_part = mask_in[:, 0:args.process_frames,:]
+                mask_in[:, args.process_frames:, :]=0.0
+                eval_model.predict_on_batch(x=[x_in, mask_in])
 
                 if b < x.shape[0]-1:
                     processed = predict[:,0:args.process_frames, :]
                 else:
-                    length = int(np.sum(mask_in)/args.feat_dim)
+                    length = int(np.sum(mask[b,:,:,:])/args.feat_dim)
                     processed = predict[:, 0:length, feat_dim]
-                processed = processed.reshape([-1, args.feat_dim])
+                processed = processed.reshape([-1, args.n_labels+1])
                 if len(stack) == 0:
                     stack = processed
                 else:

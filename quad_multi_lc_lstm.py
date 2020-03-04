@@ -64,7 +64,7 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
     #outputs = Add()([outputs, outputs2, outputs3])
     outputs = Add()([outputs, outputs3])
     outputs = Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
-    outputs = Masking(mask_value=0.0)(outputs)
+    #outputs = Masking(mask_value=0.0)(outputs)
 
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
@@ -163,6 +163,7 @@ def main():
                     #x_part = x_in[:, 0:args.process_frames,:]
                     #mask_part = mask_in[:, 0:args.process_frames,:]
                     mask_in[:, args.process_frames:, :]=0.0
+                    x_in[:, args.process_frames:, :] = 0.0
                     model.predict_on_batch(x=[x_in, mask_in])
 
                 # progress report
@@ -203,6 +204,7 @@ def main():
                     #x_part = x_in[:, 0:args.process_frames,:]
                     #mask_part = mask_in[:, 0:args.process_frames,:]
                     mask_in[:, args.process_frames:, :] = 0.0
+                    x_in[:, args.process_frames:, :] = 0.0
                     model.predict_on_batch(x=[x_in, mask_in])
 
             print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, mean_curr_acc))
