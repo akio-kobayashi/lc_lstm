@@ -47,7 +47,7 @@ def VGG2L_Strides(inputs, filters, feat_dim):
 
     outputs=Conv2D(filters=filters,
                    kernel_size=3, padding='same',
-                   strides=(2,1),
+                   strides=(1,1),
                    data_format='channels_last',
                    kernel_initializer='glorot_uniform')(outputs)
     outputs=BatchNormalization(axis=-1)(outputs)
