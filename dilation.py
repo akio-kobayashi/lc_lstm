@@ -166,7 +166,7 @@ def VGG2L_QuadTranspose(inputs, filters, units):
     outputs = BatchNormalization(axis=-1)(outputs)
     outputs = Activation('relu')(outputs)
 
-    outputs = Reshape(target_shape=(-1, units))(outputs) # 64*16
+    outputs = Reshape(target_shape=(-1, units))(outputs) # 64*8
     #outputs = TimeDistributed(Dense(units))(outputs)
 
     return outputs

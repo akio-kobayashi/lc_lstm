@@ -43,12 +43,12 @@ def set_states(model, states):
 def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
                 dropout, init_filters, optim, lstm=False, vgg=False):
 
-    outputs = Masking(mask_value=0.0)(inputs)
+    masked = Masking(mask_value=0.0)(inputs)
 
     if vgg is False:
-        outputs = vgg2l.VGG2L(outputs, init_filters, feat_dim)
+        outputs = vgg2l.VGG2L(masked, init_filters, feat_dim)
     else:
-        outputs = vgg1l.VGG(outputs, init_filters, feat_dim)
+        outputs = vgg1l.VGG(masked, init_filters, feat_dim)
 
     outputs = Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
     outputs = Masking(mask_value=0.0)(outputs)
@@ -63,10 +63,10 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
     # 1/4
     depth=2
     init_filters=16
-    outputs3 = dilation.VGG2L_QuadStrides(outputs, init_filters, feat_dim) # output = time/2, feat_dim*filters*2
+    outputs3 = dilation.VGG2L_QuadStrides(masked, init_filters, feat_dim) # output = time/2, feat_dim*filters*2
     outputs3 = network.lc_network(outputs3, units, depth, n_labels, dropout, init_filters, lstm) # output = time/2, units*2
     outputs3 = dilation.VGG2L_QuadTranspose(outputs3, init_filters, units*2) #output = time, units*2
-
+    
     #outputs = Add()([outputs, outputs2, outputs3])
     outputs = Add()([outputs1, outputs3])
 
@@ -128,8 +128,8 @@ def main():
     model = build_model(inputs, masks, args.units, args.lstm_depth,
                         args.n_labels, args.feat_dim, args.learn_rate,
                         args.dropout, args.filters, args.optim, args.lstm, args.vgg)
-    print(model.summary())
-    exit(1)
+    #print(model.summary())
+    #exit(1)
 
     training_generator = multi_fixed_generator.FixedDataGenerator(
         args.data, args.key_file, args.batch_size, args.feat_dim, args.n_labels,
@@ -154,6 +154,7 @@ def main():
                 model.reset_states()
                 for b in range(x.shape[0]):
                     x_in = np.squeeze(x[b,:,:,:])
+                    #print(x_in.shape)
                     mask_in = np.repeat(mask[b,:,:,:], mask_dim, axis=-1)
                     #print(mask_in.shape)
                     #mask_in = np.squeeze(mask[b,:,:,:])
