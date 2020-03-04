@@ -113,7 +113,8 @@ def VGG2L_Transpose(inputs, filters, units):
     outputs = Activation('relu')(outputs)
 
     outputs = Reshape(target_shape=(-1, units*filters))(outputs)
-
+    outputs = TimeDistributed(Dense(units))(outputs)
+    
     return outputs
 
 def VGG2L_QuadTranspose(inputs, filters, units):
@@ -140,5 +141,6 @@ def VGG2L_QuadTranspose(inputs, filters, units):
     outputs = Activation('relu')(outputs)
 
     outputs = Reshape(target_shape=(-1, units*filters))(outputs)
-
+    outputs = TimeDistributed(Dense(units))(outputs)
+    
     return outputs
