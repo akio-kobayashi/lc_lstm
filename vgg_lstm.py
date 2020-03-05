@@ -13,7 +13,7 @@ import random
 import tensorflow as tf
 import layer_normalization
 
-def VGG3(inputs, mask, filters, feat_dim):
+def VGG3(inputs, mask, filters, feat_dim, dropout=0.0):
 
     outputs=Lambda(lambda x: tf.expand_dims(x, -1))(inputs)
     # first convs
@@ -95,7 +95,7 @@ def VGG3(inputs, mask, filters, feat_dim):
 
     return outputs1, outputs2, outputs3, mask2, mask3
 
-def UpConvLSTM(inputs1, inputs2, inputs3, units):
+def UpConvLSTM(inputs1, inputs2, inputs3, units, dropout=0.0):
 
     sunits = int(units/2)
     outputs2 = inputs2
