@@ -91,7 +91,8 @@ def VGG3(inputs, mask, filters, feat_dim, dropout=0.0):
 
     mask2=Lambda(lambda x: tf.expand_dims(x, -1))(mask)
     mask2=MaxPooling2D(pool_size=(1, 1), strides=(2,1), padding='same', data_format='channels_last')(mask2)
-    mask3=MaxPooling2D(pool_size=(1, 1), strides=(2,1), padding='same', data_format='channels_last')(mask2)
+    mask3=MaxPooling2D(pool_size=(1, 1), strides=(2,1), padding='same', data_format='channels_last')(mask)
+    mask3=MaxPooling2D(pool_size=(1, 1), strides=(2,1), padding='same', data_format='channels_last')(mask3)
     mask2 = Reshape(target_shape=(-1, feat_dim*filters))(mask2)
     mask3 = Reshape(target_shape=(-1, feat_dim*filters))(mask3)
 
