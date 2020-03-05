@@ -138,20 +138,20 @@ def UpConvLSTM(inputs1, inputs2, inputs3, units):
     outputs2 = Concatenate(axis=-1)([outputs2,outputs3]) # sunits * 4
 
     for n in range(2):
-    output2f=GRU(sunits, kernel_initializer='glorot_uniform',
-                return_sequences=True,
-                stateful=True,
-                dropout=dropout,
-                unroll=False)(outputs2)
+        output2f=GRU(sunits, kernel_initializer='glorot_uniform',
+                    return_sequences=True,
+                    stateful=True,
+                    dropout=dropout,
+                    unroll=False)(outputs2)
 
-    output2b=GRU(sunits, kernel_initializer='glorot_uniform',
-                return_sequences=True,
-                stateful=False,
-                unroll=False,
-                dropout=dropout,
-                go_backwards=True)(outputs2)
-    outputs2 = Concatenate(axis=-1)([outputs2f,outputs2b])
-    outputs2 = layer_normalization.LayerNormalization()(outputs2)
+        output2b=GRU(sunits, kernel_initializer='glorot_uniform',
+                    return_sequences=True,
+                    stateful=False,
+                    unroll=False,
+                    dropout=dropout,
+                    go_backwards=True)(outputs2)
+        outputs2 = Concatenate(axis=-1)([outputs2f,outputs2b])
+        outputs2 = layer_normalization.LayerNormalization()(outputs2)
 
     outputs2 = Lambda(lambda x: tf.expand_dims(x, -1))(outputs2)
     outputs2 = UpSampling2D(size=(2,1), data_format='channels_last')(outputs2)
