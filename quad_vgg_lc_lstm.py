@@ -143,7 +143,7 @@ def main():
                 model.reset_states()
                 for b in range(x.shape[0]):
                     x_in = np.squeeze(x[b,:,:,:])
-                    #print(x_in.shape)
+                    print(x_in.shape)
                     mask_in = np.repeat(mask[b,:,:,:], mask_dim, axis=-1)
                     #print(mask_in.shape)
                     #mask_in = np.squeeze(mask[b,:,:,:])
