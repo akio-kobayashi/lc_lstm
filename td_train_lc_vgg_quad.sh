@@ -1,0 +1,86 @@
+#!/bin/sh
+
+direction=bi
+device=$1
+
+host="brandy"
+
+if [ $host == "brandy" ];then
+    export CUDA_VISIBLE_DEVICES=$device
+    cd /home/akiokobayashi0809/lc_lstm
+    # librispeech
+    train=./td/ce_train.h5
+    valid=./td/ce_dev.h5
+    key_file=./td/ce_train.sorted
+    valid_key_file=./td/ce_dev.sorted
+elif [ -e /mnt/ssd1/ ];then
+    root=/mnt/ssd1/eesen_20191228/eesen/asr_egs/tedlium/v1/tensorflow/
+    path=model_d4_d160_f16_l1.0_B16_D0.0_f0.5_P3_LNtrue_BNtrue_vgg_adadelta_${direction}
+    train=${root}/${path}/ce_train.h5
+    valid=${root}/${path}/ce_dev.h5
+    key_file=${root}/${path}/ce_train.sorted.checked
+    valid_key_file=${root}/${path}/ce_dev.sorted.checked
+else
+    export CUDA_VISIBLE_DEVICES=$device
+    path=td/model_d4_d256_f32_l1.0_B16_D0.0_f0.9_LNtrue_BNtrue_vgg_lstm_adadelta_ep100_bi/
+    train=${path}/ce_train.h5
+    valid=${path}/ce_dev.h5
+    key_file=${path}/ce_train.sorted
+    valid_key_file=${path}/ce_dev.sorted
+fi
+
+n_labels=49
+
+# features
+feat_dim=40
+
+#training
+batch_size=256
+epochs=50
+factor=0.9
+optim=adadelta
+dropout=0.0
+filters=32
+num_extra_frames1=1
+
+for lstm_depth in 4;
+do
+  for units in 256;
+  do
+      for learn_rate in 1.0;
+      do
+        for proc_frames in 20 30 50;
+        do
+            for extra_frames1 in 20 30 50;
+	    do
+		if [ $proc_frames -eq $extra_frames1 ];then
+		    for extra_frames2 in 20 30 50;
+		    do
+			if [ $extra_frames1 -eq $extra_frames2 ]; then
+			    echo $proc_frames $extra_frames1 $extra_frames2
+			    snapdir=./td/lc_model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_quad2_
+			    snapdir=${snapdir}p${proc_frames}_e1${extra_frames1}_e2${extra_frames2}_${optim}_${direction}
+			    logdir=./td/lc_logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_quad2_
+			    logdir=${logdir}p${proc_frames}_e1${extra_frames1}_e2${extra_frames2}_${optim}_${direction}
+			    mkdir -p $snapdir
+			    mkdir -p $logdir
+
+			    python quad_vgg_lc_lstm.py --data $train --valid $valid \
+			           --key-file $key_file --valid-key-file $valid_key_file \
+			           --feat-dim $feat_dim \
+			           --n-labels $n_labels --batch-size ${batch_size} \
+			           --epochs $epochs --filters ${filters} \
+			           --snapshot $snapdir  --learn-rate $learn_rate \
+			           --log-dir $logdir --max-patience 3 \
+			           --units $units --lstm-depth $lstm_depth \
+			           --factor $factor --optim ${optim} --lstm \
+				   --process-frames $proc_frames --extra-frames1 $extra_frames1 \
+				   --extra-frames2 $extra_frames2 --num-extra-frames1 $num_extra_frames1
+			fi
+		    done
+		fi
+            done
+        done
+      done
+  done
+done
