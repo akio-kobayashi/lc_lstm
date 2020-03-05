@@ -3,7 +3,7 @@
 device=$1
 direction=bi
 #export CUDA_VISIBLE_DEVICES=$device
-#cd /home/akiokobayashi0809/lc_lstm
+cd /home/akiokobayashi0809/lc_lstm
 
 # librispeech
 
@@ -39,7 +39,6 @@ fi
 
 # features
 feat_dim=40
-units=160
 batch_size=256
 epochs=50
 factor=0.9

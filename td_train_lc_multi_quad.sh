@@ -1,12 +1,11 @@
 #!/bin/sh
 
 direction=bi
-device=0
+device=$1
 
 host="brandy"
 
 if [ $host == "brandy" ];then
-    device=1
     export CUDA_VISIBLE_DEVICES=$device
     cd /home/akiokobayashi0809/lc_lstm
     # librispeech
@@ -36,7 +35,7 @@ n_labels=49
 feat_dim=40
 
 #training
-batch_size=32
+batch_size=256
 epochs=50
 factor=0.9
 optim=adadelta
@@ -50,12 +49,12 @@ do
   do
       for learn_rate in 1.0;
       do
-        for proc_frames in 20;
+        for proc_frames in 20 30 50;
         do
-            for extra_frames1 in 20;
+            for extra_frames1 in 20 30 50;
 	    do
 		if [ $proc_frames -eq $extra_frames1 ];then
-		    for extra_frames2 in 20;
+		    for extra_frames2 in 20 30 50;
 		    do
 			if [ $extra_frames1 -eq $extra_frames2 ]; then
 			    echo $proc_frames $extra_frames1 $extra_frames2
