@@ -104,13 +104,13 @@ def UpConvLSTM(inputs1, inputs2, inputs3, units, dropout=0.0):
     outputs2 = inputs2
     outputs3 = inputs3
     for n in range(2):
-        output2f=GRU(sunits, kernel_initializer='glorot_uniform',
+        outputs2f=GRU(sunits, kernel_initializer='glorot_uniform',
                     return_sequences=True,
                     stateful=True,
                     dropout=dropout,
                     unroll=False)(outputs2)
 
-        output2b=GRU(sunits, kernel_initializer='glorot_uniform',
+        outputs2b=GRU(sunits, kernel_initializer='glorot_uniform',
                     return_sequences=True,
                     stateful=False,
                     unroll=False,
@@ -119,13 +119,13 @@ def UpConvLSTM(inputs1, inputs2, inputs3, units, dropout=0.0):
         outputs2 = Concatenate(axis=-1)([outputs2f,outputs2b])
         outputs2 = layer_normalization.LayerNormalization()(outputs2)
 
-        output3f=GRU(sunits, kernel_initializer='glorot_uniform',
+        outputs3f=GRU(sunits, kernel_initializer='glorot_uniform',
                     return_sequences=True,
                     stateful=True,
                     dropout=dropout,
                     unroll=False)(outputs3)
 
-        output3b=GRU(sunits, kernel_initializer='glorot_uniform',
+        outputs3b=GRU(sunits, kernel_initializer='glorot_uniform',
                     return_sequences=True,
                     stateful=False,
                     unroll=False,
@@ -141,13 +141,13 @@ def UpConvLSTM(inputs1, inputs2, inputs3, units, dropout=0.0):
     outputs2 = Concatenate(axis=-1)([outputs2,outputs3]) # sunits * 4
 
     for n in range(2):
-        output2f=GRU(sunits, kernel_initializer='glorot_uniform',
+        outputs2f=GRU(sunits, kernel_initializer='glorot_uniform',
                     return_sequences=True,
                     stateful=True,
                     dropout=dropout,
                     unroll=False)(outputs2)
 
-        output2b=GRU(sunits, kernel_initializer='glorot_uniform',
+        outputs2b=GRU(sunits, kernel_initializer='glorot_uniform',
                     return_sequences=True,
                     stateful=False,
                     unroll=False,
@@ -162,13 +162,13 @@ def UpConvLSTM(inputs1, inputs2, inputs3, units, dropout=0.0):
 
     outputs1 = inputs1
     for n in range(2):
-        output1f=GRU(units, kernel_initializer='glorot_uniform',
+        outputs1f=GRU(units, kernel_initializer='glorot_uniform',
                     return_sequences=True,
                     stateful=True,
                     dropout=dropout,
                     unroll=False)(outputs1)
 
-        output1b=GRU(units, kernel_initializer='glorot_uniform',
+        outputs1b=GRU(units, kernel_initializer='glorot_uniform',
                     return_sequences=True,
                     stateful=False,
                     unroll=False,
@@ -180,13 +180,13 @@ def UpConvLSTM(inputs1, inputs2, inputs3, units, dropout=0.0):
     outputs1 = Concatenate(axis=-1)([outputs1,outputs2]) # units*2 + sunits*2
 
     for n in range(2):
-        output1f=GRU(units, kernel_initializer='glorot_uniform',
+        outputs1f=GRU(units, kernel_initializer='glorot_uniform',
                     return_sequences=True,
                     stateful=True,
                     dropout=dropout,
                     unroll=False)(outputs1)
 
-        output1b=GRU(units, kernel_initializer='glorot_uniform',
+        outputs1b=GRU(units, kernel_initializer='glorot_uniform',
                     return_sequences=True,
                     stateful=False,
                     unroll=False,
