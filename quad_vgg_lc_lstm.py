@@ -57,7 +57,7 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
     outputs3 = Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs3, mask3])
     outputs3 = Masking(mask_value=0.0)(outputs3)
 
-    outputs = vgg_lstm.UpConvLSTM(inputs1, intputs2, inputs3, units)
+    outputs = vgg_lstm.UpConvLSTM(outputs1, outputs2, outputs3, units)
 
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
