@@ -5,7 +5,7 @@ import subprocess
 import time
 from keras.models import Model
 from keras.layers import Dense,Input,BatchNormalization,Softmax,LSTM,Activation, CuDNNGRU, GRU, Reshape, UpSampling2D
-from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, Conv2D, MaxPooling2D
+from keras.layers import TimeDistributed, Bidirectional, Dropout, Lambda, Masking, Conv2D, MaxPooling2D, Concatenate
 import keras.utils
 import keras.backend as K
 import numpy as np
@@ -99,7 +99,7 @@ def VGG3(inputs, mask, filters, feat_dim, dropout=0.0):
 
 def UpConvLSTM(inputs1, inputs2, inputs3, units, dropout=0.0):
 
-    print(inputs2.shape)
+    #print(inputs2.shape)
     sunits = int(units/2)
     outputs2 = inputs2
     outputs3 = inputs3
