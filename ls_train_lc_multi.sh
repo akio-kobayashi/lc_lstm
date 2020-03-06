@@ -48,7 +48,7 @@ optim=adadelta
 filters=32
 num_extra_frames1=1
 
-for lstm_depth in 3;
+for lstm_depth in 4;
 do
   for units in 256;
   do
