@@ -143,7 +143,6 @@ def main():
                 model.reset_states()
                 for b in range(x.shape[0]):
                     x_in = np.squeeze(x[b,:,:,:])
-                    print(x_in.shape)
                     mask_in = np.repeat(mask[b,:,:,:], mask_dim, axis=-1)
                     #print(mask_in.shape)
                     #mask_in = np.squeeze(mask[b,:,:,:])
@@ -170,7 +169,8 @@ def main():
                     training_generator.__len__(), progress_loss, progress_acc))
                 logs.write('progress: (%d/%d) loss=%.4f acc=%.4f\n' % (bt+1,
                     training_generator.__len__(), progress_loss, progress_acc))
-
+                logs.flush()
+                
             curr_loss /= curr_samples
             mean_curr_acc = np.mean(curr_acc)
 
@@ -206,7 +206,7 @@ def main():
 
             print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, mean_curr_acc))
             logs.write('Epoch %d (train) loss=%.4f acc=%.4f\n' % (ep+1, curr_loss, mean_curr_acc))
-
+            logs.flush()
             curr_val_loss = np.mean(curr_val_loss)
             curr_val_acc = np.mean(curr_val_acc)
 
@@ -221,13 +221,15 @@ def main():
                         print("lerning rate chaged %.4f to %.4f" % (prev_lr, curr_lr))
                         logs.write("lerning rate chaged %.4f to %.4f\n" % (prev_lr, curr_lr))
                         K.set_value(model.optimizer.lr,curr_lr)
+                        logs.flush()
                     patience=0
                 else:
                     patience=0
 
             print('Epoch %d (valid) loss=%.4f acc=%.4f' % (ep+1, curr_val_loss, curr_val_acc))
             logs.write('Epoch %d (valid) loss=%.4f acc=%.4f\n' % (ep+1, curr_val_loss,curr_val_acc))
-
+            logs.flush()
+            
             # save best model in .h5
             if min_val_acc < curr_val_acc:
                 min_val_acc = curr_val_acc

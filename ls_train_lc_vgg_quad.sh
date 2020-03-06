@@ -39,7 +39,7 @@ fi
 
 # features
 feat_dim=40
-batch_size=256
+batch_size=512
 epochs=50
 factor=0.9
 dropout=0.0
