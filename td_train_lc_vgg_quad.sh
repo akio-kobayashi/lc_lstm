@@ -58,14 +58,14 @@ do
 		    do
 			if [ $extra_frames1 -eq $extra_frames2 ]; then
 			    echo $proc_frames $extra_frames1 $extra_frames2
-			    snapdir=./td/lc_model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_quad_
+			    snapdir=./td/lc_model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_quad2_
 			    snapdir=${snapdir}p${proc_frames}_e1${extra_frames1}_e2${extra_frames2}_${optim}_${direction}
-			    logdir=./td/lc_logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_quad_
+			    logdir=./td/lc_logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm_quad2_
 			    logdir=${logdir}p${proc_frames}_e1${extra_frames1}_e2${extra_frames2}_${optim}_${direction}
 			    mkdir -p $snapdir
 			    mkdir -p $logdir
 
-			    python quad_multi_lc_lstm.py --data $train --valid $valid \
+			    python quad_vgg_lc_lstm.py --data $train --valid $valid \
 			           --key-file $key_file --valid-key-file $valid_key_file \
 			           --feat-dim $feat_dim \
 			           --n-labels $n_labels --batch-size ${batch_size} \
