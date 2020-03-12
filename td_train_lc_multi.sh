@@ -36,7 +36,7 @@ feat_dim=40
 
 #training
 batch_size=256
-epochs=50
+epochs=25
 factor=0.9
 optim=adadelta
 dropout=0.0
@@ -49,12 +49,12 @@ do
   do
       for learn_rate in 1.0;
       do
-        for proc_frames in 20 30 50;
+        for proc_frames in 10 50;
         do
-            for extra_frames1 in 20 30 50;
+            for extra_frames1 in 10 50;
 	    do
-		if [ $proc_frames -ge $extra_frames1 ];then
-		    for extra_frames2 in 10 20 30 50;
+		if [ $proc_frames -eq $extra_frames1 ];then
+		    for extra_frames2 in 10 50;
 		    do
 			if [ $extra_frames1 -eq $extra_frames2 ]; then
 			    echo $proc_frames $extra_frames1 $extra_frames2

@@ -4,9 +4,9 @@ export CUDA_VISIBLE_DEVICES=1
 cd /home/akio/lc_lstm
 
 # librispeech
-train=./train_clean_100.h5
+#train=./train_clean_100.h5
 valid=./dev_clean.h5
-sorted=./train_clean_100.sorted
+#sorted=./train_clean_100.sorted
 valid_keys=./dev_clean.sorted
 test=./test_clean.h5
 n_labels=32
@@ -14,32 +14,33 @@ prior=./ls_label_counts.h5
 
 # features
 feat_dim=40
-units=160
-lstm_depth=5
+units=256
+lstm_depth=4
 direction=bi
-batch_size=32
-learn_rate=4.0e-4
-factor=0.5
+batch_size=16
+learn_rate=1.0
+factor=0.9
 dropout=0.0
 optim=adadelta
+filters=32
 
-# logs_d5_d160_l4.0e-4_LNtrue_B32_D0.0_f0.5_P3_vgg_adadelta_bi/
-snapdir=./model_ce_d${lstm_depth}_d${units}_l${learn_rate}_LNtrue_B${batch_size}_D${dropout}_f${factor}_P3_vgg_${optim}_${direction}
+snapdir=./ce_model_d${lstm_depth}_d${units}_f{filters}_l${learn_rate}
+snapdir=${snapdir}_LNtrue_BNtrue_B${batch_size}_D${dropout}
+snapdir=${snapdir}_f${factor}_vgg_lstm_${optim}_${direction}
 weights=${snapdir}/snapshot.h5
 
 if [ -e $weights ]; then
-    python eval_ce_lstm.py --data $train --key-file $sorted --prior $prior --direction ${direction} \
+    python eval_ce_lstm.py --data $valid --key-file $valid_keys \
+	   --prior $prior --direction ${direction} \
 	   --feat-dim $feat_dim --n-labels $n_labels \
-	   --snapshot $snapdir  --snapshot-prefix train --weight $weights \
-	   --units $units --lstm-depth $lstm_depth
+	   --snapshot $snapdir  --snapshot-prefix ce_dev \
+	   --weight $weights --lstm \
+	   --units $units --lstm-depth $lstm_depth --filters $filters
 
-    python eval_ce_lstm.py --data $valid --key-file $valid_keys --prior $prior --direction ${direction} \
+    python eval_ce_lstm.py --data $test --prior $prior \
+	   --direction ${direction} \
 	   --feat-dim $feat_dim --n-labels $n_labels \
-	   --snapshot $snapdir  --snapshot-prefix dev --weight $weights \
-	   --units $units --lstm-depth $lstm_depth
-
-    python eval_ce_lstm.py --data $test --prior $prior --direction ${direction} \
-	   --feat-dim $feat_dim --n-labels $n_labels \
-	   --snapshot $snapdir  --snapshot-prefix test --weight $weights \
+	   --snapshot $snapdir  --snapshot-prefix ce_test \
+	   --weight $weights --filters $filters --lstm \
 	   --units $units --lstm-depth $lstm_depth
 fi
