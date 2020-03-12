@@ -1,6 +1,7 @@
 #!/bin/sh
 
-direction=bi
+device=0
+direction=uni
 #host=`hostname`
 host=asr02
 

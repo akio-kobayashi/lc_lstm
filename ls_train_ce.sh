@@ -1,6 +1,6 @@
 #!/bin/sh
 
-direction=bi
+direction=uni
 device=0
 #direction=$2
 #export CUDA_VISIBLE_DEVICES=$device
