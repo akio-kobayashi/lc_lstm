@@ -35,14 +35,15 @@ K.set_session(sess)
 max_label_len=1024
 
 def build_model(inputs, units, depth, n_labels, feat_dim,
-                direction, init_filters, lstm=False, vgg=False):
+                direction, init_filters, dropout, lstm=False, vgg=False):
 
     if vgg is False:
         outputs = vgg2l.VGG2L(inputs, init_filters, feat_dim)
     else:
         outputs = vgg1l.VGG(inputs, init_filters, feat_dim)
 
-    outputs = network.network(outputs,units, depth, n_labels, direction, dropout, lstm)
+    outputs = network.network(outputs,units, depth, n_labels,
+                              direction, dropout, lstm)
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
 
@@ -85,12 +86,14 @@ def main():
     parser.add_argument('--vgg', action='store_true', help='use vgg-like layers')
     parser.add_argument('--lstm', action='store_true')
     parser.add_argument('--filters', type=int, default=16, help='number of filters for CNNs')
+    parser.add_argument('--dropout', type=float, default=0.0)
+    
     args = parser.parse_args()
 
     inputs = Input(shape=(None, args.feat_dim))
     model = build_model(inputs, args.units, args.lstm_depth, args.n_labels,
                         args.feat_dim, args.direction,
-                        args.filters, args.lstm, args.vgg)
+                        args.filters, args.dropout, args.lstm, args.vgg)
     model.load_weights(args.weights, by_name=True)
 
     prior = np.zeros((1, args.n_labels+1))

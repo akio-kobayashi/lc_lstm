@@ -1,7 +1,7 @@
 #!/bin/sh
 
-export CUDA_VISIBLE_DEVICES=1
-cd /home/akio/lc_lstm
+export CUDA_VISIBLE_DEVICES=0
+#cd /home/akio/lc_lstm
 
 # librispeech
 #train=./train_clean_100.h5
@@ -24,7 +24,7 @@ dropout=0.0
 optim=adadelta
 filters=32
 
-snapdir=./ce_model_d${lstm_depth}_d${units}_f{filters}_l${learn_rate}
+snapdir=./ls/ce_model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}
 snapdir=${snapdir}_LNtrue_BNtrue_B${batch_size}_D${dropout}
 snapdir=${snapdir}_f${factor}_vgg_lstm_${optim}_${direction}
 weights=${snapdir}/snapshot.h5
