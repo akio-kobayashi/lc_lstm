@@ -10,7 +10,7 @@ import tensorflow as tf
 import multi_utils
 import mat_utils
 
-class FixedDataGenerator(Sequence):
+class PostFixedDataGenerator(Sequence):
 
     def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024,
                  procs=10, extras1=10, extras2=10, num_extras1=1, mode='train', shuffle=False,
@@ -96,7 +96,8 @@ class FixedDataGenerator(Sequence):
 
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
-            mat = mat_utils.pad_mat(mat, self.mod)
+            # w/o  padding
+            #mat = mat_utils.pad_mat(mat, self.mod)
             [ex_blocks, ex_frames] = multi_utils.expected_num_blocks(mat,
                                                                      self.procs,
                                                                      self.extras1,
@@ -111,19 +112,23 @@ class FixedDataGenerator(Sequence):
             input_mask[i,:,:,:] = np.expand_dims(mask, axis=0)
 
             if self.mode == 'train':
-                # label is a list of integers starting from 0
-                label = self.h5fd[key+'/labels'][()]
-                label = mat_utils.pad_label(label, self.mod)
-                # splitting labels 
-                blocked_labels = multi_utils.split_label(label, self.procs, self.extras1,
-                        self.extras2, self.num_extras1, ex_blocks,
-                        self.n_labels+1, max_num_blocks)
+                # label is a list of string starting from 0
+                posts = self.h5fd[key+'/labels'][()]
+                # str to dict
+                post_labels = multi_utils.str2dict(posts)
+                # w/o padding for convenience
+                # splitting labels
+                blocked_labels = multi_utils.split_post_label(post_labels, self.procs, self.extras1,
+                            self.extras2, self.num_extras1, ex_blocks,
+                            self.n_labels+1, max_num_blocks)
+                # expand dimensions along with batch dim.
                 output_labels[i,:,:,:] = np.expand_dims(blocked_labels, axis=0)
                 output_mask[i,:,:,:] = np.expand_dims(label_mask, axis=0)
         # transpose batch and block axes for outer loop in training
         input_mat = input_mat.transpose((1,0,2,3))
         input_mask = input_mask.transpose((1,0,2,3))
         if self.mode == 'train':
+            # transpose batch dim. <-> block dim.
             output_labels = output_labels.transpose((1,0,2,3))
             output_mask = output_mask.transpose((1,0,2,3))
 
