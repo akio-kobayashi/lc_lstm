@@ -35,7 +35,7 @@ n_labels=49
 feat_dim=40
 
 #training
-batch_size=256
+batch_size=128
 epochs=25
 factor=0.9
 optim=adadelta
@@ -49,9 +49,9 @@ do
   do
       for learn_rate in 1.0;
       do
-        for proc_frames in 10 50;
+        for proc_frames in 50;
         do
-            for extra_frames1 in 10 50;
+            for extra_frames1 in 50;
 	    do
 		if [ $proc_frames -eq $extra_frames1 ];then
 		    for extra_frames2 in 10 50;

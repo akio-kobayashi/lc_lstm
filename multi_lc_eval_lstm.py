@@ -167,6 +167,7 @@ def main():
         args.extra_frames2, args.num_extra_frames1, mode='eval')
 
     path=os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
+    print
     with h5py.File(path, 'w') as f:
         for smp in range(eval_generator.__len__()):
             processed_list=[]
