@@ -129,8 +129,8 @@ def lc_part_network(inputs1, inputs2, units, depth, n_labels, direction,
         outputs = Concatenate(axis=-1)([x,y])
         outputs=layer_normalization.LayerNormalization()(outputs)
 
-        inputs1 = Lambda(lambda x: x[;,0:proc_frames, :])(outputs)
-        inputs2 = Lambda(lambda x: x[;,proc_frames:, :])(outputs)
+        inputs1 = Lambda(lambda x: x[:,0:proc_frames, :])(outputs)
+        inputs2 = Lambda(lambda x: x[:,proc_frames:, :])(outputs)
 
         forward_rnn_layer.reset_states(h1)
 

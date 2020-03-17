@@ -12,7 +12,7 @@ import mat_utils
 
 class FixedDataGenerator(Sequence):
 
-    def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024,
+    def __init__(self, file, key_file=None, batch_size=64, feat_dim=40, n_labels=1024,
                  procs=10, extras1=10, extras2=10, num_extras1=1, mode='train', shuffle=False,
                  mod=1):
 
@@ -39,13 +39,13 @@ class FixedDataGenerator(Sequence):
         for key in self.h5fd.keys():
             self.keys.append(key)
 
-        self.h5fd = h5py.File(self.file, 'r')
+        #self.h5fd = h5py.File(self.file, 'r')
         self.n_samples = len(self.h5fd.keys())
         for key in self.h5fd.keys():
             self.keys.append(key)
         if len(self.sorted_keys) > 0:
             self.keys = self.sorted_keys
-
+        
     def __len__(self):
         return int(np.ceil(self.n_samples)/self.batch_size)
 
@@ -59,7 +59,8 @@ class FixedDataGenerator(Sequence):
             x, mask, label_mask, y = self.__data_generation(list_keys_temp)
             return x, mask, label_mask, y
         else:
-            return x, mask, label_mask, y, list_keys_temp
+            x, mask = self.__data_generation(list_keys_temp)
+            return x, mask, list_keys_temp
 
     def on_epoch_end(self):
         if self.shuffle == True:
@@ -130,4 +131,4 @@ class FixedDataGenerator(Sequence):
         if self.mode == 'train':
             return input_mat, input_mask, output_mask, output_labels
         else:
-            return input_mat, input_mask, output_mask
+            return input_mat, input_mask
