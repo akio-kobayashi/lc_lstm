@@ -39,8 +39,7 @@ fi
 
 # features
 feat_dim=40
-units=160
-batch_size=256
+batch_size=128
 epochs=25
 factor=0.9
 dropout=0.0
@@ -54,12 +53,12 @@ do
   do
       for learn_rate in 1.0;
       do
-        for proc_frames in 20 30 50;
+        for proc_frames in 50;
         do
-          for extra_frames1 in 20 30 50;
+          for extra_frames1 in 50;
           do
 	      if [ $proc_frames -eq $extra_frames1 ];then
-		  for extra_frames2 in 10 20 30 50;
+		  for extra_frames2 in 50;
 		  do
 		      if [ $extra_frames1 -eq $extra_frames2 ];then
 			  snapdir=./ls/lc_model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm
