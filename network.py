@@ -134,7 +134,7 @@ def lc_part_network(inputs, units, depth, n_labels, direction,
 
     rnn_model = Model(inputs, z)
 
-    trunc_z = Lambda(lambda x: x[;,0:proc_frames, :])(inputs)
+    trunc_z = Lambda(lambda x: x[:,0:proc_frames, :])(inputs)
     for n in range (depth):
         x = forward_rnn_layers[n](trunc_z)
         y = backward_rnn_layers[n](trunc_z)
