@@ -97,9 +97,13 @@ def lc_network(outputs, units, depth, n_labels, direction,
 
     return outputs
 
-def lc_part_network(inputs1, inputs2, units, depth, n_labels, direction,
+def lc_part_network(inputs, units, depth, n_labels, direction,
                dropout, init_filters, proc_frames, lstm=False):
 
+    forward_rnn_layers=[]
+    backward_rnn_layers=[]
+
+    z = inputs
     for n in range (depth):
         # forward, keep current states
         # statefule
@@ -109,6 +113,7 @@ def lc_part_network(inputs1, inputs2, units, depth, n_labels, direction,
         else:
             forward_rnn_layer = LSTM(units, kernel_initializer='glorot_uniform', return_sequences=True, return_state=True,
                                         stateful=True, use_forget_bias=True, dropout=dropout, unroll=False)
+        forward_rnn_layers.append(forward_rnn_layer)
         # backward, not keep current states
         # do not preserve state values for backward pass
         if lstm is False:
@@ -118,21 +123,25 @@ def lc_part_network(inputs1, inputs2, units, depth, n_labels, direction,
             backward_rnn_layer = LSTM(units, kernel_initializer='glorot_uniform', return_sequences=True, stateful=False,
                                     unroll=False, usne_forget_bias=True, dropout=dropout, go_backwards=True)
 
-        x1,h1 = forward_rnn_layer(inputs1)
-        x2,h2 = forward_rnn_layer(inputs2)
+        backward_rnn_layers.append(forward_rnn_layer)
+        # concate
+        x = forward_rnn_layer(z)
+        y = backward_rnn_layer(z)
 
-        x = Concatenate()([x1, x2], axis=1)
-        y = Concatenate()([inputs1, inputs2], axis=1)
+        z = Concatenate(axis=-1)([x,y])
 
-        y = backward_rnn_layer(y)
+        z = layer_normalization.LayerNormalization()(z)
 
-        outputs = Concatenate(axis=-1)([x,y])
-        outputs=layer_normalization.LayerNormalization()(outputs)
+    rnn_model = Model(inputs, z)
 
-        inputs1 = Lambda(lambda x: x[;,0:proc_frames, :])(outputs)
-        inputs2 = Lambda(lambda x: x[;,proc_frames:, :])(outputs)
+    trunc_z = Lambda(lambda x: x[;,0:proc_frames, :])(inputs)
+    for n in range (depth):
+        x = forward_rnn_layers[n](trunc_z)
+        y = backward_rnn_layers[n](trunc_z)
 
-        forward_rnn_layer.reset_states(h1)
+        trun_z = Concatenate(axis=-1)([x,y])
 
-    outputs = Concatenate()([inputs1, inputs2])
-    return outputs
+    rnn_trunc_model = Model(inputs, trunc_z)
+    rnn_trunc_model.trainable = False
+
+    return rnn_model, rnn_trunc_model

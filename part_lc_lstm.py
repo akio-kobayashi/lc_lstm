@@ -39,7 +39,7 @@ def set_states(model, states):
     for (d,_), s in zip(model.state_updates, states):
         K.set_value(d, s)
 
-def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
+def build_model(file, inputs, mask, units, depth, n_labels, feat_dim, init_lr,
                 dropout, init_filters, optim, proc_frames, lstm=False, vgg=False):
 
     outputs = Masking(mask_value=0.0)(inputs)
@@ -49,14 +49,21 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
     else:
         outputs = vgg1l.VGG(outputs, init_filters, feat_dim)
 
-    outputs = Lambda(lambda x: tf.multiply(x[0], x[1]))([outputs, mask])
-    outputs = Masking(mask_value=0.0)(outputs)
+    vgg_model = Model(inputs, outputs)
+    vgg_model.trainable=False
 
-    outputs = network.part_lc_network(outputs, units, depth, n_labels, dropout, init_filters, proc_frames, lstm)
+    inputs = vgg_model.outputs
+    outputs = Lambda(lambda x: tf.multiply(x[0], x[1]))([inputs, mask])
+    rnn_inputs = Masking(mask_value=0.0)(outputs)
+
+    rnn_model, rnn_trunc_model = network.lc_network(rnn_inputs, units, depth, n_labels, dropout, init_filters, proc_frames, lstm)
+    outputs = rnn_model.outputs
     outputs = TimeDistributed(Dense(n_labels+1))(outputs)
     outputs = Activation('softmax')(outputs)
 
-    model = Model([inputs, mask], outputs)
+    model = Model(inputs=[vgg_model.inputs, mask], outputs)
+    valid_model = Model(inputs=[vgg_model.inputs, mask], rnn_trunc_model.outputs)
+
     if optim == 'adam':
         model.compile(keras.optimizers.Adam(lr=init_lr), loss=['categorical_crossentropy'],
                       metrics=['categorical_accuracy'])
@@ -64,7 +71,7 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
         model.compile(keras.optimizers.Adadelta(lr=init_lr), loss=['categorical_crossentropy'],
                       metrics=['categorical_accuracy'])
 
-    return model
+    return model, valid_model
 
 def main():
 
@@ -102,15 +109,17 @@ def main():
     parser.add_argument('--lstm', action='store_true')
     parser.add_argument('--vgg', action='store_true')
     parser.add_argument('--max-patience', type=int, default=3)
+    parser.add_argument('--weights', type=str)
 
     args = parser.parse_args()
 
-    inputs = Input(batch_shape=(args.batch_size, None, args.feat_dim))
-    masks = Input(batch_shape=(args.batch_size, None, args.feat_dim*args.filters*2))
-    model = build_model(inputs, masks, args.units, args.lstm_depth,
-                        args.n_labels, args.feat_dim, args.learn_rate,
-                        args.dropout, args.filters, args.optim,
-                        args.process_frames, args.lstm, args.vgg)
+    time_length = args.process_frames + max(args.extra_frames1, args.extra_frames2)
+    inputs = Input(batch_shape=(args.batch_size, time_length, args.feat_dim))
+    masks = Input(batch_shape=(args.batch_size, time_length, args.feat_dim*args.filters*2))
+    model, valid_model = build_model(args.weights, inputs, masks, args.units, args.lstm_depth,
+                            args.n_labels, args.feat_dim, args.learn_rate,
+                            args.dropout, args.filters, args.optim,
+                            args.process_frames, args.lstm, args.vgg)
 
     training_generator = multi_fixed_generator.FixedDataGenerator(
         args.data, args.key_file, args.batch_size, args.feat_dim, args.n_labels,
@@ -145,6 +154,8 @@ def main():
                     curr_loss += loss * samples
                     curr_acc.append(acc)
 
+                    set_states(model, states)
+                    valid_model.predict_on_batch(x=[x_in, mask_in])
 
                 # progress report
                 progress_loss = curr_loss/curr_samples
@@ -178,6 +189,9 @@ def main():
                     # for micro-mean
                     curr_val_acc.extend(acc)
                     curr_val_loss.extend(loss)
+
+                    set_states(model, states)
+                    valid_model.predict_on_batch(x=[x_in, mask_in])
 
             print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, mean_curr_acc))
             logs.write('Epoch %d (train) loss=%.4f acc=%.4f\n' % (ep+1, curr_loss, mean_curr_acc))
