@@ -60,10 +60,12 @@ def build_model(inputs, mask, units, depth, n_labels, feat_dim, init_lr,
     model = Model([inputs, mask], outputs)
     if optim == 'adam':
         model.compile(keras.optimizers.Adam(lr=init_lr), loss=[multi_utils.soft_loss],
-                      metrics=[multi_utils.soft_acc])
-    else:
-        model.compile(keras.optimizers.Adadelta(lr=init_lr), loss=['categorical_crossentropy'],
                       metrics=['categorical_accuracy'])
+                      #metrics=[multi_utils.soft_acc])
+    else:
+        model.compile(keras.optimizers.Adadelta(lr=init_lr), loss=[multi_utils.soft_loss],
+                      metrics=['categorical_accuracy'])
+                      #metrics=[multi_utils.soft_acc])
 
     return model
 
@@ -115,7 +117,7 @@ def main():
     training_generator = post_multi_fixed_generator.PostFixedDataGenerator(
         args.data, args.key_file, args.batch_size, args.feat_dim, args.n_labels,
         args.process_frames, args.extra_frames1, args.extra_frames2, args.num_extra_frames1)
-    valid_generator =multi_fixed_generator.FixedDataGenerator(
+    valid_generator = multi_fixed_generator.FixedDataGenerator(
         args.valid, args.valid_key_file, args.batch_size, args.feat_dim, args.n_labels,
         args.process_frames, args.extra_frames1, args.extra_frames2, args.num_extra_frames1)
 
@@ -175,13 +177,18 @@ def main():
                     mask_out.reshape((shp[1],shp[2],shp[3]))
 
                     states = get_states(model)
+                    '''
                     y_pred = model.predict_on_batch(x=[x_in,mask_in])
 
                     loss, acc = part_acc.part_loss_acc(y_in, y_pred, mask_out)
+                    '''
+                    loss, acc = model.test_on_batch(x=[x_in, mask_in],y=y_in)
                     # for micro-mean
-                    curr_val_acc.extend(acc)
-                    curr_val_loss.extend(loss)
-
+                    #curr_val_acc.extend(acc)
+                    #curr_val_loss.extend(loss)
+                    curr_val_acc.append(acc)
+                    curr_val_loss.append(loss)
+                    
                     set_states(model, states)
                     mask_in[:, args.process_frames:, :] = 0.0
                     model.predict_on_batch(x=[x_in, mask_in])

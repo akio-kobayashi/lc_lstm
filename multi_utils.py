@@ -1,29 +1,30 @@
 import numpy as np
 import keras.utils
 import ast
+import tensorflow as tf
 
-def soft_loss(y_true, y_pred):
+def soft_loss(target, output):
     ''' y_true '''
-
-    loss = np.reduce_mean(np.multiply(y_true, np.log(y_pred)), axis=-1)
+    #output = output / tf.reduce_sum(output, axis=-1)
+    #output = tf.clip_by_value(output, 1e-7, 1-1e-7)
+    loss = -tf.reduce_sum(target * tf.math.log(output), axis=-1)
+    #loss = -tf.reduce_mean(tf.multiply(y_true, tf.log(y_pred)), axis=-1)
 
     return loss
 
-def soft_acc(y_true, y_pred):
+def soft_acc(target, output):
     ''' y_true: (batch, time, feats) '''
+    error = tf.reduce_sum(np.multiply(1.0-target, output), axis=-1)
+    accuracy = 1.0 - error
 
-    hots = np.where(y_true > 0.0).astype(np.float)
-    numer = np.sum(np.sum(np.multiply(hots, y_pred), axis=-1), axis=-1)
-    # denom = (batch,)
-    denom = np.sum(np.where(np.sum(np.where(y_true > 0.0).astype(np.int), axis=-1) > 0.0).astype(float), axis=-1)
-
-    return np.divide(numer, denom)
+    return accuracy
 
 def str2dict(posts):
     post_labels=[]
 
     for n in range(len(posts)):
-        d = ast.literal_eval(posts[n])
+        #d = ast.literal_eval(posts[n])
+        d=eval(posts[n])
         for k in d:
             d[k] = float(d[k])
         post_labels.append(d)
@@ -153,7 +154,7 @@ def split_post_label(post_labels, procs, extras1, extras2, num_extras1, n_blocks
     post_labels = list including dict
     return matrix w/ shape=[block_size, procs+extras, n_classes]
     '''
-    length = len(label)
+    length = len(post_labels)
     max_extras = max([extras1, extras2])
     src=np.zeros(shape=(max_blocks, procs+max_extras, n_classes))
     start = 0
@@ -170,10 +171,10 @@ def split_post_label(post_labels, procs, extras1, extras2, num_extras1, n_blocks
                 frames = length-start
             else:
                 frames = procs+extras1
-            for k in range(len(end - start)):
+            for k in range(frames):
                 d = post_labels[start+k]
-                for key, val in d:
-                    src[num_blocks, k, key] = val
+                for key in d:
+                    src[num_blocks, k, key] = d[key]
         else:
             end = start + procs + extras2
             num_frames += procs + extras2
@@ -181,10 +182,10 @@ def split_post_label(post_labels, procs, extras1, extras2, num_extras1, n_blocks
                 frames = length-start
             else:
                 frames = procs + extras2
-            for k in range(len(end - start)):
+            for k in range(frames):
                 d = post_labels[start+k]
-                for key, val in d:
-                    src[num_blocks, k, key] = val
+                for key in d:
+                    src[num_blocks, k, key] = d[key]
         start += procs
         num_blocks+=1
 

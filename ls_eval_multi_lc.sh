@@ -13,16 +13,16 @@ feat_dim=40
 units=256
 lstm_depth=4
 direction=bi
-batch_size=256
+batch_size=128
 learn_rate=1.0
 factor=0.9
 dropout=0.0
 optim=adadelta
 filters=32
 
-proc_frames=20
-extra_frames1=20
-extra_frames2=20
+proc_frames=50
+extra_frames1=50
+extra_frames2=50
 num_procs=1
 
 snapdir=./ls/lc_model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}
@@ -46,7 +46,7 @@ if [ -e $weights ]; then
 
     python multi_lc_eval_lstm.py --data $test --prior $prior \
 	   --feat-dim $feat_dim --n-labels $n_labels \
-	   --snapshot $snapdir  --snapshot-prefix ce_test \
+	   --snapshot $snapdir  --snapshot-prefix lc_test \
 	   --weight $weights --filters $filters --lstm \
 	   --units $units --lstm-depth $lstm_depth \
 	   --process-frames $proc_frames --extra-frames1 $extra_frames1 \

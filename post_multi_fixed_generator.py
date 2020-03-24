@@ -39,7 +39,7 @@ class PostFixedDataGenerator(Sequence):
         for key in self.h5fd.keys():
             self.keys.append(key)
 
-        self.h5fd = h5py.File(self.file, 'r')
+        #self.h5fd = h5py.File(self.file, 'r')
         self.n_samples = len(self.h5fd.keys())
         for key in self.h5fd.keys():
             self.keys.append(key)
