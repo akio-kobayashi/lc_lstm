@@ -126,6 +126,7 @@ def main():
                 # must be partiall
                 pr = pr[:data[2][i], :]
                 f.create_group(key)
+                pr[np.isinf(pr)] = -99.9999
                 f.create_dataset(key+'/likelihood', data=pr)
                 
 if __name__ == "__main__":

@@ -201,6 +201,8 @@ def main():
             for n, key in enumerate(keys):
                 print(key)
                 f.create_group(key)
+                # check inf
+                stack[np.isinf(stack)] = -99.9999
                 f.create_dataset(key+'/likelihood', data=stack)
             f.flush()
             
