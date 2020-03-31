@@ -138,6 +138,7 @@ def main():
                     #print(mask_in.shape)
                     #mask_in = np.squeeze(mask[b,:,:,:])
                     y_in = np.squeeze(y[b,:,:,:])
+
                     states = get_states(model)
                     loss,acc = model.train_on_batch(x=[x_in,mask_in], y=y_in)
                     # for micro-mean
@@ -145,13 +146,15 @@ def main():
                     curr_samples+=samples
                     curr_loss += loss * samples
                     curr_acc.append(acc)
-
                     set_states(model, states)
-                    #x_part = x_in[:, 0:args.process_frames,:]
-                    #mask_part = mask_in[:, 0:args.process_frames,:]
+
+                    x_part = x_in[:, 0:args.process_frames,:]
+                    mask_part = mask_in[:, 0:args.process_frames,:]
+                    model.predict_on_batch(x=[x_part, mask_part])
+                    #original
                     #x_in[:, args.process_frames:, :] = 0.0
-                    mask_in[:, args.process_frames:, :]=0.0
-                    model.predict_on_batch(x=[x_in, mask_in])
+                    #mask_in[:, args.process_frames:, :]=0.0
+                    #model.predict_on_batch(x=[x_in, mask_in])
 
                 # progress report
                 progress_loss = curr_loss/curr_samples
@@ -188,11 +191,14 @@ def main():
                     curr_val_loss.extend(loss)
 
                     set_states(model, states)
-                    #x_part = x_in[:, 0:args.process_frames,:]
-                    #mask_part = mask_in[:, 0:args.process_frames,:]
+                    # another part
+                    x_part = x_in[:, 0:args.process_frames,:]
+                    mask_part = mask_in[:, 0:args.process_frames,:]
+                    model.predict_on_batch(x=[x_part, mask_part])
+                    # original part
                     #x_in[:, args.procss_frames:, :] = 0.0
-                    mask_in[:, args.process_frames:, :] = 0.0
-                    model.predict_on_batch(x=[x_in, mask_in])
+                    #mask_in[:, args.process_frames:, :] = 0.0
+                    #model.predict_on_batch(x=[x_in, mask_in])
 
             print('Epoch %d (train) loss=%.4f acc=%.4f' % (ep+1, curr_loss, mean_curr_acc))
             logs.write('Epoch %d (train) loss=%.4f acc=%.4f\n' % (ep+1, curr_loss, mean_curr_acc))
