@@ -7,29 +7,17 @@ direction=bi
 
 # librispeech
 
-host="asr04"
+host=`hostname`
 n_labels=32
 if [ $host == "brandy" ];then
     export CUDA_VISIBLE_DEVICES=$device
-    path=ls/model_d4_d160_f32_l1.0_LNtrue_BNtrue_B16_D0.0_f0.5_vgg_lstm_adadelta_ep50_${direction}
-    #cd /home/akiokobayashi0809/lc_lstm
-    train=${path}/ce_train_clean_100.h5
-    valid=${path}/ce_dev_clean.h5
-    test=${path}/ce_test_clean.h5
-    keys=${path}/ce_train_clean_100.sorted.checked
-    valid_keys=${path}/ce_dev_clean.sorted.checked
-#elif [ ! -e /mnt/ssd1/ ];then
-#    export CUDA_VISIBLE_DEVICES=$device
-    #path=ls/model_d4_d160_f32_l1.0_LNtrue_BNtrue_B16_D0.0_f0.5_vgg_lstm_adadelta_ep50_${direction}
-    #cd /home/akio/lc_lstm
-#    train=${path}/ce_train_clean_100.h5
-#    valid=${path}/ce_dev_clean.h5
-#    test=${path}/ce_test_clean.h5
-#    keys=${path}/ce_train_clean_100.sorted.checked
-#    valid_keys=${path}/ce_dev_clean.sorted.checked
+    cd /home/akiokobayashi0809/lc_lstm
+    train=./ls/ce_train.h5
+    valid=./ls/ce_dev.h5
+    test=./ls/ce_test.h5
+    keys=./ls/ce_train.sorted
+    valid_keys=./ls/ce_dev.sorted
 else
-    #path=ls/model_d4_d160_f32_l1.0_LNtrue_BNtrue_B16_D0.0_f0.5_vgg_lstm_adadelta_ep50_${direction}
-    #root=/mnt/ssd1/eesen_20191228/eesen/asr_egs/librispeech/
     path=ls/model_d4_d256_f32_l1.0_ml1.0e-2_LNtrue_BNtrue_B16_D0.0_f0.9_vgg_lstm_adadelta_ep100_bi/
     train=${path}/ce_train.h5
     valid=${path}/ce_dev.h5
@@ -39,7 +27,7 @@ fi
 
 # features
 feat_dim=40
-batch_size=128
+batch_size=256
 epochs=25
 factor=0.9
 dropout=0.0
@@ -53,20 +41,20 @@ do
   do
       for learn_rate in 1.0;
       do
-        for proc_frames in 50;
+        for proc_frames in 5 10 20 30;
         do
-          for extra_frames1 in 50;
+          for extra_frames1 in 5 10 20 30;
           do
-	      if [ $proc_frames -eq $extra_frames1 ];then
-		  for extra_frames2 in 50;
-		  do
+	           if [ $proc_frames -eq $extra_frames1 ];then
+		             for extra_frames2 in 5 10 20 30;
+		             do
 		      if [ $extra_frames1 -eq $extra_frames2 ];then
-			  snapdir=./ls/lc_model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm
-			  snapdir=${snapdir}_p${proc_frames}_ef${extra_frames1}_es${extra_frames2}_n${num_extra_frames1}_${optim}_${direction}
-			  logdir=./ls/lc_logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm
-			  logdir=${logdir}_p${proc_frames}_ef${extra_frames1}_es${extra_frames2}_n${num_extra_frames1}_${optim}_${direction}
-			  mkdir -p $snapdir
-			  mkdir -p $logdir
+			         snapdir=./ls/lc_model_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm
+			         snapdir=${snapdir}_p${proc_frames}_ef${extra_frames1}_es${extra_frames2}_n${num_extra_frames1}_${optim}_${direction}
+			         logdir=./ls/lc_logs_d${lstm_depth}_d${units}_f${filters}_l${learn_rate}_B${batch_size}_D${dropout}_f${factor}_LNtrue_vgg_lstm
+			         logdir=${logdir}_p${proc_frames}_ef${extra_frames1}_es${extra_frames2}_n${num_extra_frames1}_${optim}_${direction}
+			         mkdir -p $snapdir
+			         mkdir -p $logdir
 
 			  python multi_lc_lstm.py --data $train --valid $valid \
 				 --key-file $keys --valid-key-file $valid_keys \
