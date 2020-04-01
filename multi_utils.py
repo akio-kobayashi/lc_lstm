@@ -3,6 +3,8 @@ import keras.utils
 import ast
 import tensorflow as tf
 
+MAX_NBEST=10
+
 def soft_loss(target, output):
     ''' y_true '''
     #output = output / tf.reduce_sum(output, axis=-1)
@@ -18,6 +20,13 @@ def soft_acc(target, output):
     accuracy = 1.0 - error
 
     return accuracy
+
+def str2nbest(strlist):
+    nbest=[]
+    for n in range(strlist):
+        labels = str2dict(strlist[n])
+        nbest.append(labels)
+    return nbest
 
 def str2dict(posts):
     post_labels=[]
@@ -188,5 +197,52 @@ def split_post_label(post_labels, procs, extras1, extras2, num_extras1, n_blocks
                     src[num_blocks, k, key] = d[key]
         start += procs
         num_blocks+=1
+
+    return src
+
+def split_nbest_label(nbest_labels, procs, extras1, extras2, num_extras1, n_blocks, n_classes, max_blocks):
+    '''
+    post_labels = list of (list of dict)
+    return matrix w/ shape=[nbest, block_size, procs+extras, n_classes]
+    '''
+
+    nbest=len(nbest_labels)
+    length = len(nbest_labels[0])
+    
+    max_extras = max([extras1, extras2])
+    src=np.zeros(shape=(MAX_NBEST, max_blocks, procs+max_extras, n_classes))
+
+    for n in range(nbest):    
+        start = 0
+        num_blocks = 0
+        num_frames = 0
+
+        while num_blocks < max_blocks:
+            if start > length:
+                break
+            if num_blocks < num_extras1:
+                end = start + procs + extras1
+                num_frames += procs + extras1
+                if length < end:
+                    frames = length-start
+                else:
+                    frames = procs+extras1
+                for k in range(frames):
+                    d = post_labels[start+k]
+                    for key in d:
+                        src[n, num_blocks, k, key] = d[key]
+            else:
+                end = start + procs + extras2
+                num_frames += procs + extras2
+                if length < end:
+                    frames = length-start
+                else:
+                    frames = procs + extras2
+                for k in range(frames):
+                    d = post_labels[start+k]
+                    for key in d:
+                        src[n, num_blocks, k, key] = d[key]
+            start += procs
+            num_blocks+=1
 
     return src
