@@ -92,7 +92,7 @@ def main():
 
     eval_in = Input(batch_shape=(args.batch_size, None, args.feat_dim))
     eval_mask = Input(batch_shape=(args.batch_size, None, args.feat_dim*args.filters*2))
-    
+
     outputs = Masking(mask_value=0.0)(inputs)
 
     if vgg is False:
@@ -149,7 +149,7 @@ def main():
                              args.filters, args.lstm)
     #path = os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
     eval_model.load_weights(args.weights, by_name=True)
-    
+
     prior = np.zeros((1, args.n_labels+1))
     if args.prior is not None:
         with h5py.File(args.prior, 'r') as f:
@@ -160,12 +160,12 @@ def main():
     prior=np.expand_dims(prior, axis=0) # for broadcasting
     prior *= args.prior_scale;
     prior = np.roll(prior, -1)
-    
+
     eval_generator = multi_fixed_generator.FixedDataGenerator(
         args.data, None, args.batch_size, args.feat_dim, args.n_labels,
         args.process_frames, args.extra_frames1,
         args.extra_frames2, args.num_extra_frames1, mode='eval')
-   
+
     path=os.path.join(args.snapshot,args.snapshot_prefix+'.h5')
     with h5py.File(path, 'w') as f:
         for smp in range(eval_generator.__len__()):
@@ -178,15 +178,21 @@ def main():
             for b in range(x.shape[0]):
                 x_in = x[b].reshape((args.batch_size, -1, args.feat_dim))
                 mask_in = np.repeat(mask[b,:,:,:], args.feat_dim*args.filters*2, axis=-1)
+
                 states = get_states(eval_model)
                 predict = eval_model.predict_on_batch(x=[x_in,mask_in])
                 predict = np.log(predict)
                 predict -= prior
-                
                 set_states(eval_model, states)
-                mask_in[:, args.process_frames:, :]=0.0
-                eval_model.predict_on_batch(x=[x_in, mask_in])
-                #print(predict.shape)
+
+                # another part
+                x_part = x_in[:, 0:args.process_frames,:]
+                mask_part = mask_in[:, 0:args.process_frames,:]
+                model.predict_on_batch(x=[x_part, mask_part])
+                # original part
+                #mask_in[:, args.process_frames:, :]=0.0
+                #eval_model.predict_on_batch(x=[x_in, mask_in])
+
                 if b < x.shape[0]-1:
                     processed = predict[:,0:args.process_frames, :]
                 else:
@@ -194,6 +200,7 @@ def main():
                     #processed = predict[:, 0:length, args.feat_dim]
                     processd = predict
                 processed = processed.reshape([-1, args.n_labels+1])
+
                 if stack is None:
                     stack = processed
                 else:
@@ -205,6 +212,6 @@ def main():
                 stack[np.isinf(stack)] = -99.9999
                 f.create_dataset(key+'/likelihood', data=stack)
             f.flush()
-            
+
 if __name__ == "__main__":
     main()
