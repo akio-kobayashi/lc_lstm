@@ -173,7 +173,6 @@ def main():
             x, mask, keys = eval_generator.__getitem__(smp)
             eval_model.reset_states()
             # (block , batch, frames, fesats)
-            stack=np.array(0)
             stack = None
             for b in range(x.shape[0]):
                 x_in = x[b].reshape((args.batch_size, -1, args.feat_dim))
