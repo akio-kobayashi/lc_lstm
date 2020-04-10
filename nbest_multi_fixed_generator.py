@@ -13,7 +13,7 @@ import mat_utils
 class NbestFixedDataGenerator(Sequence):
 
     def __init__(self, file, key_file, batch_size=64, feat_dim=40, n_labels=1024,
-                 procs=10, extras1=10, extras2=10, num_extras1=1, mode='train', shuffle=False,
+                 procs=10, extras1=10, extras2=10, num_extras1=1, nbest=100, mode='train', shuffle=False,
                  mod=1):
 
         self.file=file
@@ -24,6 +24,7 @@ class NbestFixedDataGenerator(Sequence):
         self.extras1=extras1
         self.extras2=extras2
         self.num_extras1=num_extras1
+        self.nbest=nbest
         self.shuffle=shuffle
         self.keys=[]
         self.sorted_keys=[]
@@ -55,10 +56,17 @@ class NbestFixedDataGenerator(Sequence):
 
         # [input_sequences, label_sequences, inputs_lengths, labels_length]
         if self.mode == 'train':
-            x, mask, numer_labels, denom_labels = self.__data_generation(list_keys_temp)
-            return x, mask, numer_labels, denom_labels
+            x, mask, y = self.__data_generation(list_keys_temp)
+            if return_keys == True:
+                return x, mask, y, list_keys_temp
+            else:
+                return x, mask, y
         else:
-            return x, mask, numer_labels, denom_labels, list_keys_temp
+            x, mask = self.__data_generation(list_keys_temp)
+            if return_keys == True:
+                return x, mask, list_keys_temp
+            else:
+                return x, mask
 
     def on_epoch_end(self):
         if self.shuffle == True:
@@ -90,11 +98,11 @@ class NbestFixedDataGenerator(Sequence):
             numer_labels=np.zeros((len(list_keys_temp), max_num_blocks,
                                    self.procs+max(self.extras1, self.extras2), self.n_labels+1))
             numer_lmscores = np.zros((len(list_keys_temp), 1))
-            
-            denom_labels=np.zeros((self.nbest, len(list_keys_temp), max_num_blocks,
+
+            denom_labels=np.zeros((len(list_keys_temp), self.nbest, max_num_blocks,
                                    self.procs+max(self.extras1, self.extras2), self.n_labels+1))
-            denom_lmlscores = np.zeros((len(list_keys_temp), nbest, 1))
-            
+            denom_lmlscores = np.zeros((len(list_keys_temp), self.nbest, 1))
+
         for i, key in enumerate(list_keys_temp):
             mat = self.h5fd[key+'/data'][()]
             [ex_blocks, ex_frames] = multi_utils.expected_num_blocks(mat,
@@ -115,11 +123,11 @@ class NbestFixedDataGenerator(Sequence):
                 numer = self.h5fd[key+'/1best'][()]
                 numer_labels = multi_utils.str2dict(numer)
                 numer_lmscores[i,0] = self.h5fd[key+'/1best_scores'][()]
-                
+
                 denom = self.h5fd[key+'/nbest'][()]
                 denom_labels = multi_utils.str2nbest(denom)
                 denom_lmscores[i, :, 0] = self.h5fd[key+'/nbest_scores'][()]
-                
+
                 # w/o padding for convenience
                 # splitting labels
                 # (blocks, frames, feats)
@@ -134,16 +142,16 @@ class NbestFixedDataGenerator(Sequence):
                                                                     self.extra2, self.num_extras1, ex_blocks,
                                                                     self.n_labels+1, max_num_blocks)
                 denom_labels[i,:,:,:,:] = np.expand_dims(denom_blocked_labels, axis=0)
-                
+
         # transpose batch and block axes for outer loop in training
         input_mat = input_mat.transpose((1,0,2,3))
         input_mask = input_mask.transpose((1,0,2,3))
         if self.mode == 'train':
             # transpose batch dim. <-> block dim.
-            number_labels = numer_labels.transpose((1,0,2,3))
+            number_labels = numer_labels.transpose((1,0,2,3)) # (batch,, blocks, time, feats) -> (blocks, batch, time, feats)
             denom_labels = denom_labels.transpose((2,1,0,3,4)) # (batch, nbest, blocks, time, feats)->(nbest, blocks, batch, time, feats)
 
         if self.mode == 'train':
-            return input_mat, input_mask, numer_labels, denom_labels
+            return input_mat, input_mask, [numer_labels, numer_lmscores, denom_labels, denom_lmscores]
         else:
             return input_mat, input_mask
